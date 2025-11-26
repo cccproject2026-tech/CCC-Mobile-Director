@@ -1,10 +1,10 @@
+import "@/services/api/interceptors";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
-import "@/services/api/interceptors";
 // Initialize TanStack Query
 const queryClient = new QueryClient({
   defaultOptions: {

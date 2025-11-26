@@ -60,4 +60,5 @@ export const icons = {
     myProfile: require('@/assets/images/app/myProfile.png'),
     duoMeet: require('@/assets/images/app/zoom_icon.png'),
     googleMeet: require('@/assets/images/app/google_meet_icon.png'),
+    search: require('@/assets/images/app/search.png'),
 }

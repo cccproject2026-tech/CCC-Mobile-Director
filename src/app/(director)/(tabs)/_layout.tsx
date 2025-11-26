@@ -1,15 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname } from "expo-router";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function DirectorTabLayout() {
     const pathname = usePathname();
-    const [isTabBarVisible, setIsTabBarVisible] = useState(true);
     const { bottom } = useSafeAreaInsets();
 
-    /** HIDE TAB BAR ON SPECIFIC ROUTES */
-    useEffect(() => {
+    /** HIDE TAB BAR ON SPECIFIC ROUTES - Computed during render to avoid lag */
+    const isTabBarVisible = useMemo(() => {
         const hideWhenMatches = [
             /revitalization-roadmaps\/\([^\/]+\)/,
             /revitalization-roadmaps\/[^\/]+$/,
@@ -25,7 +24,7 @@ export default function DirectorTabLayout() {
             /assessments\/create-assessment$/,
         ];
 
-        setIsTabBarVisible(!hideWhenMatches.some((p) => p.test(pathname)));
+        return !hideWhenMatches.some((p) => p.test(pathname));
     }, [pathname]);
 
     return (
@@ -34,14 +33,17 @@ export default function DirectorTabLayout() {
                 headerShown: false,
                 tabBarActiveTintColor: "#fff",
                 tabBarInactiveTintColor: "#BFC6DF",
-                tabBarStyle: {
-                    backgroundColor: "#221C70",
-                    borderTopWidth: 0,
-                    height: 60 + bottom,
-                    paddingBottom: bottom,
-                    paddingTop: 8,
-                    display: isTabBarVisible ? "flex" : "none",
-                },
+                tabBarStyle: isTabBarVisible
+                    ? {
+                        backgroundColor: "#221C70",
+                        borderTopWidth: 0,
+                        height: 60 + bottom,
+                        paddingBottom: bottom,
+                        paddingTop: 8,
+                    }
+                    : {
+                        display: "none",
+                    },
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: "600",

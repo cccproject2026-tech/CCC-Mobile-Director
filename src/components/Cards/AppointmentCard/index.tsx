@@ -113,7 +113,7 @@ const AppointmentCard: React.FC<Props> = ({
 
                     <View style={styles.personRow}>
                         {avatar ? (
-                            <Image source={{ uri: avatar }} style={styles.avatar} />
+                            <Image source={avatar} style={styles.avatar} />
                         ) : (
                             <View style={[styles.avatar, { backgroundColor: 'rgba(255, 255, 255, 0.3)', justifyContent: 'center', alignItems: 'center' }]}>
                                 <Ionicons name="person-circle-outline" size={24} color="#fff" />
