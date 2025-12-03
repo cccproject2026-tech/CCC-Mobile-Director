@@ -1,5 +1,6 @@
 import WelcomeCard from "@/components/Cards/WelcomeCard";
 import HeaderHero from "@/components/Header/HeroHeader";
+import ActionCardSection from "@/components/Home/ActionCardSection";
 import AddUserSection from "@/components/Home/AddUserSection";
 import AppointmentsSection from "@/components/Home/AppointmentsSection";
 import InterestsSection from "@/components/Home/InterestsSection";
@@ -33,7 +34,6 @@ export default function Index() {
     return "Good Evening";
   }, [greetingPeriod]);
 
-  const testUserName = 'John Doe';
   return (
     <LinearGradient colors={[Colors.lightBlue, '#1D548D', '#264387']} style={{ flex: 1 }}>
       <Animated.ScrollView
@@ -57,8 +57,7 @@ export default function Index() {
             <WelcomeCard
               onClick={() => { }}
               avatar={user?.profilePicture || undefined}
-              message={`${testUserName}, Welcome!`}
-            // message={`${user?.firstName} ${user?.lastName}, Welcome!`}
+              message={`${user?.firstName} ${user?.lastName}, Welcome!`}
             />
           </View>
 
@@ -68,6 +67,7 @@ export default function Index() {
             <AppointmentsSection />
             <InterestsSection />
             <AddUserSection />
+            <ActionCardSection />
           </View>
         </LinearGradient>
       </Animated.ScrollView>

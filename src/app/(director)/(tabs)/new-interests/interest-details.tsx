@@ -1,7 +1,6 @@
 
-// TODO : change interest id to userId ( yet to get from the backend )
-import InterestRejectedModal from '@/components/Modals/InterestRejectedModal';
-import RejectInterestModal from '@/components/Modals/RejectInterestModal';
+import TopBar from '@/components/Header/TopBar';
+import AppModal from '@/components/Modals/AppModal';
 import { useInterests, useUpdateInterestStatus } from '@/hooks/useInterest';
 import { InterestItem } from '@/types/interest.types';
 import { Ionicons } from '@expo/vector-icons';
@@ -73,6 +72,7 @@ export default function InterestFormScreen() {
         return interestsData?.find(i => i.id === interestId);
     }, [interestsData, interestId]);
 
+    console.log("Interest ID:", interestId, "Found Interest status:", interest?.status);
     const formData = useMemo(() => (interest ? extractFormData(interest) : null), [interest]);
 
     const userName = interest
@@ -91,12 +91,32 @@ export default function InterestFormScreen() {
         if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
 
         updateStatus(
-            { interestId: interest.id, status: 'accepted' },
+            { interestId: interest.user?._id as string, status: 'accepted' },
             {
                 onSuccess: () => {
                     Alert.alert("Success", "Request accepted", [
                         { text: "OK", onPress: () => router.push("/(director)/(tabs)/new-interests/assign-scholorship") }
                     ]);
+                },
+                onError: (error) => {
+                    Alert.alert("Error", error.message || "Failed to accept the request");
+                }
+            }
+        );
+    };
+
+    const handleAddToPending = () => {
+        if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
+        updateStatus(
+            { interestId: interest.user?._id as string, status: 'pending' },
+            {
+                onSuccess: () => {
+                    Alert.alert("Success", "Request moved to pending", [
+                        { text: "OK", onPress: () => router.back() }
+                    ]);
+                },
+                onError: (error) => {
+                    Alert.alert("Error", error.message || "Failed to update the request");
                 }
             }
         );
@@ -106,15 +126,19 @@ export default function InterestFormScreen() {
         if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
 
         updateStatus(
-            { interestId: interest.id, status: 'rejected' },
+            { interestId: interest.user?._id as string, status: 'rejected' },
             {
                 onSuccess: () => {
                     setShowRejectModal(false);
                     setShowRejectedConfirmation(true);
+                },
+                onError: (error) => {
+                    Alert.alert("Error", error.message || "Failed to reject request");
                 }
             }
         );
     };
+
 
     if (!formData) {
         return (
@@ -144,36 +168,21 @@ export default function InterestFormScreen() {
     return (
         <LinearGradient
             colors={['#176192', '#1D548D', '#264387']}
-            style={[styles.container, { paddingTop: top }]}
+            style={[styles.container]}
         >
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
             >
+                <View style={styles.header}>
+                    <TopBar showUserName showDrawer={false} showNotifications={false} customTitle='Interest Form' />
+                </View>
                 <ScrollView
                     style={{ flex: 1 }}
                     contentContainerStyle={{ paddingBottom: bottom + 20 }}
                     showsVerticalScrollIndicator={false}
                 >
                     {/* HEADER */}
-                    <View style={styles.header}>
-                        <View style={styles.headerCenter}>
-                            <LinearGradient
-                                colors={["#7C3AED", "#38BDF8"]}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.gradientBorder}
-                            >
-                                <View style={styles.titleContainer}>
-                                    <Text style={styles.titleText}>Interest Form</Text>
-                                </View>
-                            </LinearGradient>
-                        </View>
-
-                        <Pressable hitSlop={10} style={styles.logoButton}>
-                            <Image source={LOGO} style={styles.logo} />
-                        </Pressable>
-                    </View>
 
                     {/* LOADING */}
                     {isLoading ? (
@@ -412,7 +421,7 @@ export default function InterestFormScreen() {
                             <View style={styles.pendingButtonContainer}>
                                 <Pressable
                                     style={styles.pendingButton}
-                                    onPress={() => router.back()}
+                                    onPress={handleAddToPending}
                                 >
                                     <Ionicons name="arrow-back" size={20} color="#fff" />
                                     <Text style={styles.pendingButtonText}>Add to Pending</Text>
@@ -424,13 +433,22 @@ export default function InterestFormScreen() {
             </KeyboardAvoidingView>
 
             {/* MODALS */}
-            <RejectInterestModal
+            <AppModal
                 visible={showRejectModal}
+                type="confirm"
+                title="Are you sure want to Reject Interest?"
+                confirmText="Reject"
+                cancelText="Cancel"
                 onCancel={() => setShowRejectModal(false)}
-                onConfirmReject={handleConfirmReject}
+                onConfirm={handleConfirmReject}
             />
-            <InterestRejectedModal
+
+
+
+            <AppModal
                 visible={showRejectedConfirmation}
+                type="success"
+                title="Interest Rejected"
                 onClose={() => {
                     setShowRejectedConfirmation(false);
                     router.back();
@@ -451,7 +469,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: Platform.OS === 'android' ? 12 : 16,
-        paddingTop: Platform.OS === 'android' ? 16 : 24,
         paddingBottom: Platform.OS === 'android' ? 12 : 16,
         position: 'relative',
     },

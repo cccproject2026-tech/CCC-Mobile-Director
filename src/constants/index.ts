@@ -7,12 +7,20 @@ export interface MenuItem {
     badge?: number;
     showChevron?: boolean;
     children?: MenuItem[];
+    roles?: ('director' | 'super admin')[];
 }
 
 export const MENU_ITEMS: MenuItem[] = [
     { id: 'new-interests', label: 'New Interests', icon: 'people-outline', route: '/(director)/(tabs)/new-interests', badge: 6 },
     { id: 'all-mentors', label: 'All Mentors', icon: 'school-outline', route: '/(director)/(tabs)/mentors' },
     { id: 'all-pastors', label: 'All Pastors', icon: 'people-outline', route: '/(director)/(tabs)/mentees' },
+    {
+        id: 'directors',
+        label: 'Directors',
+        icon: 'briefcase-outline',
+        route: '/(director)/(tabs)/directors',
+        roles: ['super admin']
+    },
     { id: 'course-completed', label: 'Course Completed', icon: 'ribbon-outline', route: '/(director)/(tabs)', badge: 6 },
     { id: 'track-progress', label: 'Track Progress', icon: 'bar-chart-outline', route: '/(director)/(tabs)/progress-tracker' },
     { id: 'schedule', label: 'Schedule', icon: 'calendar-outline', route: '/(director)/(tabs)/appointments' },
@@ -61,4 +69,8 @@ export const icons = {
     duoMeet: require('@/assets/images/app/zoom_icon.png'),
     googleMeet: require('@/assets/images/app/google_meet_icon.png'),
     search: require('@/assets/images/app/search.png'),
+    universityIcon: require('@/assets/images/app/university.png'),
+    communityImage: require('@/assets/images/app/community.png'),
+    certificateBadge: require('@/assets/images/app/certificate-badge.png'),
+    fieldMentorIcon: require('@/assets/images/app/field-mentor-icon.png'),
 }

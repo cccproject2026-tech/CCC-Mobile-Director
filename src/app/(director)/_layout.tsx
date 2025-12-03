@@ -22,7 +22,6 @@ export default function DirectorLayout() {
                     drawerItemStyle: { display: 'none' },
                 }}
             />
-
         </Drawer>
     );
 }

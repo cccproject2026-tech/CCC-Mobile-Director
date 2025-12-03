@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,7 +15,11 @@ interface CustomDrawerProps extends DrawerContentComponentProps {
 export default function CustomDrawerContent(props: CustomDrawerProps) {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
+    // Destructure user and logout from the store
     const { user, logout } = useAuthStore();
+
+    // Get the current user's role, default to empty string if user is null
+    const currentUserRole = (user?.role ?? '') as 'director' | 'super admin';
 
     // Expandable groups initialization
     const initExpanded = (items: MenuItem[], expandAll: boolean) => {
@@ -31,18 +35,49 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
         return result;
     };
 
+    // 1. Filtered Menu Items Logic
+    const filteredMenuItems = useMemo(() => {
+        const filterItems = (items: MenuItem[]): MenuItem[] => {
+            return items.reduce((acc: MenuItem[], item) => {
+
+                // Check role restriction
+                const isAllowed = !item.roles || item.roles.includes(currentUserRole);
+
+                if (isAllowed) {
+                    const newItem: MenuItem = { ...item };
+
+                    // Recursively filter children if they exist
+                    if (item.children?.length) {
+                        newItem.children = filterItems(item.children);
+                    }
+
+                    // Only add the item if it's allowed OR if it's a parent 
+                    // that still has children after filtering
+                    if (newItem.children?.length || !item.children?.length) {
+                        acc.push(newItem);
+                    }
+                }
+                return acc;
+            }, []);
+        };
+
+        return filterItems(props.menuItems);
+    }, [props.menuItems, currentUserRole]);
+
+
+    // Initialize state using the filtered list
     const [expandedItems, setExpandedItems] = useState(() =>
-        initExpanded(props.menuItems || [], !!props.expandAllByDefault)
+        initExpanded(filteredMenuItems, !!props.expandAllByDefault)
     );
 
-    const toggleExpand = (id: string) =>
-        setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
+    const toggleExpand = useCallback((id: string) =>
+        setExpandedItems(prev => ({ ...prev, [id]: !prev[id] })), []);
 
-    const handleLogoPress = () => {
-        props.navigation.closeDrawer(); // Close drawer only
-    };
+    const handleLogoPress = useCallback(() => {
+        props.navigation.closeDrawer();
+    }, [props.navigation]);
 
-    const handleLogout = () => {
+    const handleLogout = useCallback(() => {
         Alert.alert('Log Out', 'Are you sure you want to log out?', [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -55,7 +90,7 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
                 },
             },
         ]);
-    };
+    }, [props.navigation, logout, router]);
 
     const renderMenuItem = (
         item: MenuItem,
@@ -155,13 +190,13 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
                 </TouchableOpacity>
             </View>
 
-            {/* Menu */}
+            {/* Menu - Renders FILTERED items */}
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.menuContent}
             >
-                {props.menuItems.map((item, index) =>
-                    renderMenuItem(item, false, index, props.menuItems.length)
+                {filteredMenuItems.map((item, index) =>
+                    renderMenuItem(item, false, index, filteredMenuItems.length)
                 )}
             </ScrollView>
 

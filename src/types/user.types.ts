@@ -1,4 +1,4 @@
-export type UserRole = 'pastor' | 'mentor' | 'director' | 'pending';
+export type UserRole = 'director' | 'super admin' | 'mentor' | 'pastor' | 'pending'
 export type UserStatus = 'new' | 'pending' | 'accepted' | 'rejected';
 
 export interface User {

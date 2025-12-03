@@ -1,4 +1,5 @@
 import "@/services/api/interceptors";
+import { useAuthStore } from "@/stores/auth.store";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
@@ -17,8 +18,8 @@ const queryClient = new QueryClient({
 });
 
 function RootNav() {
-  // const { isAuthenticated } = useAuthStore();
-  const isAuthenticated = true
+  const { isAuthenticated } = useAuthStore();
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
 

@@ -1,19 +1,17 @@
 import AcceptedUserCard from '@/components/Cards/AcceptedUserCard';
 import InterestCard from '@/components/Cards/InterestCard';
 import { InterestCardSkeleton } from '@/components/Cards/InterestCard/InterestCardSkeleton';
-// import FilterModal from '@/components/director/FilterModal';
 import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
 import FilterModal from '@/components/Modals/FilterModal';
 import { useInterests } from '@/hooks/useInterest';
-import { InterestItem } from '@/types/interest.types';
+import { InterestStatus } from '@/types/interest.types';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
-    Dimensions,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -21,28 +19,9 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { RefreshControl } from 'react-native-gesture-handler';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const isSmallDevice = SCREEN_WIDTH < 375;
-
-type InterestTab = 'new' | 'pending' | 'accepted';
-
-const COUNTRIES = ['All', 'USA', 'Canada', 'Mexico', 'Brazil'];
-
-export type MappedInterest = {
-    id: string;
-    name: string;
-    role: string;
-    time: string;
-    state: string;
-    profileImage?: string;
-    status: 'new' | 'pending' | 'accepted';
-
-    firstName?: string;
-    lastName?: string;
-    title?: string;
-    createdAt?: string;
-};
+type InterestTab = InterestStatus;
 
 export default function InterestReceivedScreen() {
     const [activeTab, setActiveTab] = useState<InterestTab>('new');
@@ -51,118 +30,87 @@ export default function InterestReceivedScreen() {
     const [selectedFilter, setSelectedFilter] = useState('All');
 
     const router = useRouter();
-    const { data: interestsData, isLoading, error } = useInterests();
+    const { data: interestsData, isLoading, error, isRefetching, refetch } = useInterests();
 
-    /** ---------------------
-     * Mapping Function
-     ----------------------*/
-    const mapInterestItem = (item: any): MappedInterest => {
-        const fullName = `${item.firstName ?? ''} ${item.lastName ?? ''}`.trim() || 'Unknown';
-        const firstName = item.firstName ?? '';
-        const lastName = item.lastName ?? '';
+    /** ------------------------------------
+     * Country filter options
+     -------------------------------------*/
+    const countryOptions = useMemo(() => {
+        const list = Array.isArray(interestsData) ? interestsData : [];
 
-        const church = item.churchDetails?.[0];
-        const state = church?.country ?? 'Unknown';
+        const countries = list
+            .map(i => i.churchDetails?.[0]?.country)
+            .filter((c): c is string => typeof c === 'string' && !!c);
 
-        return {
-            id: item._id ?? item.id,
-            name: fullName,
-            role: item.title || 'Not Provided',
-            time: item.createdAt,
-            state,
-            profileImage: item.profilePicture,
-            status: item.status || 'new',
+        const unique = Array.from(new Set(countries));
 
-            // 👇 Add fields needed by InterestCard
-            firstName,
-            lastName,
-            title: item.title,
-            createdAt: item.createdAt,
-        } as MappedInterest & Partial<InterestItem>;
-    };
+        return ['All', ...unique];
+    }, [interestsData]);
 
 
-    const toInterestItem = (item: MappedInterest): InterestItem => {
-        return {
-            id: item.id,
-            firstName: item.firstName ?? '',
-            lastName: item.lastName ?? '',
-            title: item.role ?? '',
-            createdAt: item.time ?? '',
-            profilePicture: item.profileImage,
-
-            // Required fields but not used → give safe defaults
-            churchDetails: [],
-            interests: [],
-            phoneNumber: '',
-            email: '',
-            conference: '',
-            yearsInMinistry: '',
-            currentCommunityProjects: '',
-            comments: '',
-            updatedAt: '',
-            status: item.status
-        };
-    };
-
-
-
-    /** ---------------------
-     * Group by backend status
-     ----------------------*/
+    /** ------------------------------------
+     * Group by status
+     -------------------------------------*/
     const groupedInterests = useMemo(() => {
         const list = Array.isArray(interestsData) ? interestsData : [];
-        const mapped = list.map(mapInterestItem);
-
 
         return {
-            new: mapped.filter(i => i.status === 'new'),
-            pending: mapped.filter(i => i.status === 'pending'),
-            accepted: mapped.filter(i => i.status === 'accepted')
+            new: list.filter(i => i.status === 'new'),
+            pending: list.filter(i => i.status === 'pending'),
+            accepted: list.filter(i => i.status === 'accepted'),
+            rejected: list.filter(i => i.status === 'rejected'),
         };
     }, [interestsData]);
 
-    /** ---------------------
-     * Filtered Interests
-     ----------------------*/
+    /** ------------------------------------
+     * Apply search + filter
+     -------------------------------------*/
     const filteredInterests = useMemo(() => {
-        let list = groupedInterests[activeTab];
+        let list = groupedInterests[activeTab] ?? [];
 
-        if (search) {
+        if (search.trim()) {
             const q = search.toLowerCase();
-            list = list.filter(i =>
-                i.name.toLowerCase().includes(q) ||
-                i.role.toLowerCase().includes(q) ||
-                i.state.toLowerCase().includes(q)
-            );
+            list = list.filter(i => {
+                const fullName = `${i.firstName ?? ''} ${i.lastName ?? ''}`.toLowerCase();
+                const churchCountry = i.churchDetails?.[0]?.country?.toLowerCase() || '';
+                const title = i.title?.toLowerCase() || '';
+
+                return (
+                    fullName.includes(q) ||
+                    title.includes(q) ||
+                    churchCountry.includes(q)
+                );
+            });
         }
 
         if (selectedFilter !== 'All') {
-            list = list.filter(i => i.state === selectedFilter);
+            list = list.filter(i =>
+                i.churchDetails?.[0]?.country === selectedFilter
+            );
         }
 
         return list;
     }, [search, activeTab, selectedFilter, groupedInterests]);
 
-    /** ---------------------
+    /** ------------------------------------
      * Tabs
-     ----------------------*/
+     -------------------------------------*/
     const tabs = [
         { key: 'new' as InterestTab, label: 'New', badge: groupedInterests.new.length },
         { key: 'pending' as InterestTab, label: 'Pending', badge: groupedInterests.pending.length },
-        { key: 'accepted' as InterestTab, label: 'Accepted', badge: groupedInterests.accepted.length }
+        { key: 'accepted' as InterestTab, label: 'Accepted', badge: groupedInterests.accepted.length },
+        { key: 'rejected' as InterestTab, label: 'Rejected', badge: groupedInterests.rejected.length },
     ];
 
-    /** ---------------------
-     * RENDER
-     ----------------------*/
+    /** ------------------------------------
+     * Render
+     -------------------------------------*/
     return (
         <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
-            <View style={styles.flex1}>
+            <View style={styles.container}>
                 <TopBar notifications={3} showUserName showNotifications />
 
-                <View style={[styles.flex1, styles.pt6]}>
-
+                <View style={styles.inner}>
                     {/* BACK BUTTON */}
                     <TouchableOpacity
                         onPress={() => router.back()}
@@ -191,7 +139,7 @@ export default function InterestReceivedScreen() {
                             onPress={() => setFilterModalVisible(true)}
                             style={styles.filterButton}
                         >
-                            <Text style={styles.filterButtonText} numberOfLines={1}>
+                            <Text style={styles.filterButtonText}>
                                 {selectedFilter === 'All'
                                     ? 'All Countries'
                                     : `Country: ${selectedFilter}`}
@@ -202,31 +150,40 @@ export default function InterestReceivedScreen() {
 
                     {/* LIST */}
                     {isLoading ? (
-                        <ScrollView style={styles.listScroll} showsVerticalScrollIndicator={false}>
-                            <View style={styles.listContainer}>
-                                <InterestCardSkeleton />
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.list}>
                                 <InterestCardSkeleton />
                                 <InterestCardSkeleton />
                                 <InterestCardSkeleton />
                             </View>
                         </ScrollView>
                     ) : error ? (
-                        <View style={styles.errorWrapper}>
-                            <Text style={styles.errorText}>Error loading: {error.message}</Text>
+                        <View style={styles.error}>
+                            <Text style={styles.errorText}>
+                                Error loading: {error.message}
+                            </Text>
                         </View>
                     ) : (
-                        <ScrollView style={styles.listScroll} showsVerticalScrollIndicator={false}>
-                            <View style={styles.listContainer}>
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={isRefetching}
+                                    onRefresh={refetch}
+                                    tintColor="#fff"
+                                    colors={["#fff"]}
+                                />
+                            }
+                        >
+                            <View style={styles.list}>
                                 {filteredInterests.length > 0 ? (
                                     filteredInterests.map(item =>
-                                        activeTab === 'accepted' ? (
-                                            <AcceptedUserCard key={item.id} data={item} />
-                                        ) : (
-                                            <InterestCard key={item.id} data={toInterestItem(item)} />
-                                        )
+                                        activeTab === 'accepted'
+                                            ? <AcceptedUserCard key={item.id} data={item} />
+                                            : <InterestCard key={item.id} data={item} />
                                     )
                                 ) : (
-                                    <Text style={styles.noDataText}>
+                                    <Text style={styles.noData}>
                                         No interests found{search ? ` for "${search}"` : ''}.
                                     </Text>
                                 )}
@@ -244,7 +201,11 @@ export default function InterestReceivedScreen() {
                         setSelectedFilter(f);
                         setFilterModalVisible(false);
                     }}
-                    filterOptions={[{ label: 'Country', options: COUNTRIES, isExpandable: true }]}
+                    filterOptions={[{
+                        label: 'Country',
+                        options: countryOptions,
+                        isExpandable: true
+                    }]}
                 />
 
             </View>
@@ -252,15 +213,9 @@ export default function InterestReceivedScreen() {
     );
 }
 
-
-/* ------------------------------------------------
-   PURE STYLESHEET VERSION (NO NATIVEWIND)
-------------------------------------------------- */
 const styles = StyleSheet.create({
-    flex1: { flex: 1 },
-
-    pt6: { paddingTop: 24 },
-
+    container: { flex: 1 },
+    inner: { flex: 1, paddingTop: 24 },
     backRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -270,30 +225,22 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)'
     },
-
     backText: {
         marginLeft: 8,
         fontSize: 20,
         fontWeight: '600',
         color: '#fff'
     },
-
-    searchWrapper: {
-        paddingHorizontal: 16,
-        marginBottom: 16
-    },
-
+    searchWrapper: { paddingHorizontal: 16, marginBottom: 16 },
     filterRow: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'flex-end',
-        gap: 8,
         paddingHorizontal: 16,
-        marginBottom: 16
+        marginBottom: 16,
+        alignItems: 'center',
+        gap: 8
     },
-
     filterLabel: { fontSize: 16, color: '#fff' },
-
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -303,40 +250,19 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255,255,255,0.5)',
         borderRadius: 999
     },
-
     filterButtonText: {
         color: '#fff',
-        fontSize: 16,
         marginRight: 6,
-        fontWeight: '500',
-        maxWidth: 160
+        fontSize: 16,
+        fontWeight: '500'
     },
-
-    listScroll: { flex: 1, paddingHorizontal: 16 },
-
-    listContainer: {
-        paddingTop: 8,
-        paddingBottom: 24,
-        gap: 12
-    },
-
-    errorWrapper: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 16
-    },
-
-    errorText: {
-        color: '#fba',
-        textAlign: 'center',
-        fontSize: 16
-    },
-
-    noDataText: {
-        textAlign: 'center',
+    list: { paddingHorizontal: 16, gap: 12, paddingTop: 8, paddingBottom: 24 },
+    error: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
+    errorText: { color: '#fba', fontSize: 16, textAlign: 'center' },
+    noData: {
         color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
-        marginTop: 40
+        textAlign: 'center',
+        marginTop: 40,
+        fontSize: 14
     }
 });

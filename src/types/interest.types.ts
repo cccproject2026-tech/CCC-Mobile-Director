@@ -1,25 +1,7 @@
 export type InterestStatus = 'new' | 'pending' | 'accepted' | 'rejected';
 
-export type InterestItem = {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    phoneNumber?: string;
-    email?: string;
-    churchDetails: ChurchDetails[];
-    title?: string;
-    conference?: string;
-    yearsInMinistry?: string;
-    currentCommunityProjects?: string;
-    interests: string[];
-    comments?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    status?: InterestStatus;
-    profilePicture?: string;
-};
-
 export type ChurchDetails = {
+    _id?: string;
     churchName?: string;
     churchPhone?: string;
     churchWebsite?: string;
@@ -30,27 +12,35 @@ export type ChurchDetails = {
     country?: string;
 };
 
-
-export type InterestsApiResponse = {
-    success: boolean;
-    message: string;
-    data: InterestItem[];
+export type InterestUser = {
+    _id: string;
+    role: string;
+    isEmailVerified: boolean;
+    roleId?: string;
 };
 
-export type UpdateInterestStatusRequest = {
-    status: 'accepted' | 'rejected' | 'pending';
-};
+export type InterestItem = {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    email?: string;
+    churchDetails: ChurchDetails[];
 
-export type UpdateInterestStatusResponse = {
-    success: boolean;
-    message: string;
-    data: {
-        id: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-        role: string;
-        status: string;
-        isEmailVerified: boolean;
-    };
+    title?: string;
+    conference?: string;
+    yearsInMinistry?: string;
+    currentCommunityProjects?: string;
+
+    interests: string[];
+
+    comments?: string;
+    createdAt?: string;
+    updatedAt?: string;
+
+    status?: InterestStatus;
+
+    user?: InterestUser;
+
+    profilePicture?: string;
 };

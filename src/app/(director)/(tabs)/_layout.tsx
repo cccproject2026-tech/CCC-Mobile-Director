@@ -83,6 +83,7 @@ export default function DirectorTabLayout() {
 
             {[
                 "notification",
+                "directors",
                 "documents",
                 "mentors",
                 "mentees",

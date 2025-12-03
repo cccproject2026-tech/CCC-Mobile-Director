@@ -1,4 +1,4 @@
-import { MappedInterest } from "@/app/(director)/(tabs)/new-interests";
+import { InterestItem } from "@/types/interest.types";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useCallback } from "react";
@@ -15,13 +15,22 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const isSmallDevice = SCREEN_WIDTH < 375;
 
 interface AcceptedUserCardProps {
-    data: MappedInterest;
+    data: InterestItem;
     selectable?: boolean;
     isSelected?: boolean;
     onToggleSelect?: () => void;
     showAssignButton?: boolean;
     onAssignPress?: () => void;
 }
+
+const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+    });
+};
 
 const AcceptedUserCard = memo(
     ({
@@ -42,6 +51,11 @@ const AcceptedUserCard = memo(
         );
 
         const Wrapper = selectable ? TouchableOpacity : View;
+
+        const fullName =
+            `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim() || "Unknown";
+
+        const country = data.churchDetails?.[0]?.country || "Unknown";
 
         return (
             <Wrapper
@@ -66,8 +80,8 @@ const AcceptedUserCard = memo(
                 {/* TOP ROW */}
                 <View style={styles.topRow}>
                     <View style={styles.profileImageContainer}>
-                        {data.profileImage ? (
-                            <Image source={{ uri: data.profileImage }} style={styles.profileImage} />
+                        {data.profilePicture ? (
+                            <Image source={{ uri: data.profilePicture }} style={styles.profileImage} />
                         ) : (
                             <Ionicons
                                 name="person-outline"
@@ -79,20 +93,22 @@ const AcceptedUserCard = memo(
 
                     <View style={styles.userInfoContainer}>
                         <Text style={styles.userName} numberOfLines={1}>
-                            {data.name}
+                            {fullName}
                         </Text>
                         <Text style={styles.userRole} numberOfLines={1}>
-                            {data.role}
+                            {data.title || "Pastor"}
                         </Text>
 
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Country: </Text>
-                            <Text style={styles.infoValue}>{data.state}</Text>
+                            <Text style={styles.infoValue}>{country}</Text>
                         </View>
 
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Created:</Text>
-                            <Text style={styles.infoValue}>{data.time}</Text>
+                            <Text style={styles.infoValue}>
+                                {formatDate(data.createdAt)}
+                            </Text>
                         </View>
                     </View>
                 </View>

@@ -106,5 +106,14 @@ export const ENDPOINTS = {
     PROGRESS: {
         ASSIGN_ASSESSMENT: '/progress/assign-assessment',
         ASSIGN_ROADMAP: '/progress/assign-roadmap',
+    },
+
+    // Directors
+    SUPER_ADMIN: {
+        GET_ALL_DIRECTORS: '/super-admin/directors',
+        CREATE_DIRECTOR: '/super-admin/directors',
+        GET_DIRECTOR_BY_ID: (id: string) => `/super-admin/directors/${id}`,
+        UPDATE_DIRECTOR: (id: string) => `/super-admin/directors/${id}`,
+        DELETE_DIRECTOR: (id: string) => `/super-admin/directors/${id}`,
     }
 } as const;
