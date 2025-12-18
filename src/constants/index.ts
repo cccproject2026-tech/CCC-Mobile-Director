@@ -34,7 +34,7 @@ export const MENU_ITEMS: MenuItem[] = [
         children: [
             { id: 'micro-grant', label: 'Micro Grant', icon: 'trophy-outline', route: '/(director)/(tabs)/micro-grant' },
             { id: 'invite-mentor', label: 'Invite to be a Field Mentor', icon: 'person-add-outline', route: '/(director)/(tabs)' },
-            { id: 'interest-form', label: 'Interest Form', icon: 'document-text-outline', route: '/(director)/(tabs)/new-interests/interest-form' },
+            { id: 'interest-form', label: 'Interest Form', icon: 'document-text-outline', route: '/(director)/(tabs)/ccc/interest-form' },
             { id: 'products', label: 'Product and Services', icon: 'cart-outline', route: '/(director)/(tabs)/product-and-services', showChevron: true },
             { id: 'videos', label: 'CCC - Videos', icon: 'videocam-outline', route: '/(director)/(tabs)', showChevron: true },
             { id: 'contact-details', label: 'CCC - Contact Details', icon: 'call-outline', route: '/(director)/(tabs)', showChevron: true },
@@ -73,4 +73,7 @@ export const icons = {
     communityImage: require('@/assets/images/app/community.png'),
     certificateBadge: require('@/assets/images/app/certificate-badge.png'),
     fieldMentorIcon: require('@/assets/images/app/field-mentor-icon.png'),
+    attachmentIcon: require('@/assets/images/app/attachment.png'),
+    editIcon: require('@/assets/images/app/edit.png'),
+    certificateImage: require('@/assets/images/app/certificateImage.png'),
 }

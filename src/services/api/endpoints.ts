@@ -100,6 +100,9 @@ export const ENDPOINTS = {
         GET_ALL: '/interests',
         GET_METADATA: '/interests/metadata',
         UPDATE_STATUS: (id: string) => `/interests/request/${id}`,
+        FORM_CONFIG: '/interests/form-fields',
+        ADD_DYNAMIC_FIELD: '/interests/dynamic-fields',
+        REMOVE_DYNAMIC_FIELD: (fieldId: string) => `/interests/dynamic-fields/${fieldId}`,
     },
 
     // Progress
@@ -115,5 +118,15 @@ export const ENDPOINTS = {
         GET_DIRECTOR_BY_ID: (id: string) => `/super-admin/directors/${id}`,
         UPDATE_DIRECTOR: (id: string) => `/super-admin/directors/${id}`,
         DELETE_DIRECTOR: (id: string) => `/super-admin/directors/${id}`,
-    }
+        ADD_USER: '/users'
+    },
+    SCHOLARSHIPS: {
+        GET_ALL: (status?: string) =>
+            status ? `/scholarships?status=${status}` : "/scholarships",
+        GET_STATS: "/scholarships/statistics",
+        ADD_AWARDED_USER: (scholarshipId: string) =>
+            `/scholarships/${scholarshipId}/awarded-users`,
+        UPDATE_AWARDED_USER: (scholarshipId: string, index: number) =>
+            `/scholarships/${scholarshipId}/awarded-users/${index}`,
+    },
 } as const;

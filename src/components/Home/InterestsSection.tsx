@@ -8,13 +8,14 @@ const InterestsSection = () => {
     const { data, isLoading } = useInterests();
 
     const interests = Array.isArray(data) ? data : data || [];
-
+    console.log('InterestsSection - interests:', interests);
     const latestThree = interests
         .filter((item: any) => item.status === 'pending' || item.status === 'new')
         .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3);
     const pendingInterestsLength = interests.filter((item: any) => item.status === 'pending' || item.status === 'new').length;
 
+    console.log('InterestsSection - latestThree:', latestThree);
     return (
         <View style={styles.sectionWrapper}>
             {/* HEADER */}

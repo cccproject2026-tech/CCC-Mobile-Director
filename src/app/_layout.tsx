@@ -10,9 +10,9 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: 2,
-      refetchOnWindowFocus: false,
+      // staleTime: 5 * 60 * 1000, // 5 minutes
+      // retry: 2,
+      // refetchOnWindowFocus: false,
     },
   },
 });

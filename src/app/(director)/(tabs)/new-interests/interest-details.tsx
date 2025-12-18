@@ -91,19 +91,26 @@ export default function InterestFormScreen() {
         if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
 
         updateStatus(
-            { interestId: interest.user?._id as string, status: 'accepted' },
+            { interestId: interest.user?._id as string, status: "accepted" },
             {
                 onSuccess: () => {
                     Alert.alert("Success", "Request accepted", [
-                        { text: "OK", onPress: () => router.push("/(director)/(tabs)/new-interests/assign-scholorship") }
+                        {
+                            text: "OK",
+                            onPress: () =>
+                                router.push(
+                                    `/(director)/(tabs)/new-interests/assign-scholorship?menteeId=${interest.user?._id}`
+                                ),
+                        },
                     ]);
                 },
                 onError: (error) => {
                     Alert.alert("Error", error.message || "Failed to accept the request");
-                }
+                },
             }
         );
     };
+
 
     const handleAddToPending = () => {
         if (!interest?.id) return Alert.alert("Error", "Interest ID not found");

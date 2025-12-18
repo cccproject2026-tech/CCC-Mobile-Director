@@ -72,12 +72,19 @@ export default function DirectorTabLayout() {
             />
 
             <Tabs.Screen
-                name="profile"
+                name="profile/index"
                 options={{
                     title: "Profile",
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="settings" size={24} color={color} />
                     ),
+                }}
+            />
+
+            <Tabs.Screen
+                name="profile/documents"
+                options={{
+                    href: null,
                 }}
             />
 
@@ -93,6 +100,7 @@ export default function DirectorTabLayout() {
                 "product-and-services",
                 "revitalization-roadmaps",
                 "appointments",
+                "ccc"
             ].map((route) => (
                 <Tabs.Screen key={route} name={route} options={{ href: null }} />
             ))}

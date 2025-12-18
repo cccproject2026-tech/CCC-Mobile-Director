@@ -1,3 +1,4 @@
+import { UserRole } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -15,10 +16,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const isSmallDevice = SCREEN_WIDTH < 375;
 
 type Props = {
-    onUserAdded: (name: string, role: string, email: string) => void;
+    onUserAdded: (name: string, role: UserRole, email: string) => void;
 };
 
-const TITLES = ['Pastor', 'Mentor', 'Director', 'Administrator'];
+const TITLES = ['Pastor', 'Seminarian', 'Lay Leader', 'Mentor', 'Field Mentor'];
 
 const AddUserCard: React.FC<Props> = ({ onUserAdded }) => {
     const [name, setName] = useState('');
@@ -38,7 +39,7 @@ const AddUserCard: React.FC<Props> = ({ onUserAdded }) => {
 
     const handleAdd = useCallback(() => {
         if (!canSubmit) return;
-        onUserAdded(name.trim(), selectedTitle, email.trim());
+        onUserAdded(name.trim(), selectedTitle as UserRole, email.trim());
 
         setName('');
         setEmail('');

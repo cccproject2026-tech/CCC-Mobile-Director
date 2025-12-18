@@ -1,0 +1,521 @@
+import AcceptInterestModal from '@/components/Modals/AcceptInterestModal';
+import EditAmountBottomSheet from '@/components/Sheets/EditAmountBottomSheet';
+import { useGetUserById } from '@/hooks/useProfile';
+import { useScholarships, useAddAwardedUser, useUpdateScholarship } from '@/hooks/useScholorships';
+import { Scholarship } from '@/types/scholorship.types';
+import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+type ScholarshipTypeKey = 'full' | 'partial' | 'fullCost' | 'half' | 'adra';
+
+const SCHOLARSHIP_TYPE_MAP: Record<ScholarshipTypeKey, string> = {
+    full: 'Full scholarship',
+    partial: 'Partial scholarship',
+    fullCost: 'Full Cost',
+    half: 'Half scholarship',
+    adra: 'ADRA Discount',
+};
+
+export default function AssignScholarshipScreen() {
+    const router = useRouter();
+    const params = useLocalSearchParams<{ menteeId?: string }>();
+    const menteeId = params.menteeId || '';
+
+    const { data: mentee } = useGetUserById(menteeId);
+
+    const { top, bottom } = useSafeAreaInsets();
+    const [isRural, setIsRural] = useState(true);
+    const [editAmount, setEditAmount] = useState('');
+    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+    const [selectedScholarshipKey, setSelectedScholarshipKey] =
+        useState<ScholarshipTypeKey>('full');
+    const [isProductExpanded, setIsProductExpanded] = useState(true);
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
+
+    const { data: scholarships = [], isLoading } = useScholarships();
+    const addAwardedUser = useAddAwardedUser();
+    const updateScholarship = useUpdateScholarship();
+
+    const selectedScholarship: Scholarship | undefined = useMemo(() => {
+        const typeLabel = SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey].toLowerCase();
+        return scholarships.find((s) => s.type.toLowerCase() === typeLabel);
+    }, [scholarships, selectedScholarshipKey]);
+
+    const effectiveAmount = selectedScholarship?.amount ?? 0;
+
+    const scholarshipOptions: { id: ScholarshipTypeKey; label: string }[] = [
+        { id: 'full', label: 'Full Scholarship' },
+        { id: 'partial', label: 'Partial Scholarship' },
+        { id: 'fullCost', label: 'Full Cost' },
+        { id: 'half', label: 'Half Scholarship' },
+        { id: 'adra', label: 'ADRA Discount' },
+    ];
+
+    const handleOpenEdit = () => {
+        setEditAmount(String(effectiveAmount));
+        bottomSheetModalRef.current?.present();
+    };
+
+    const handleCloseEdit = () => {
+        bottomSheetModalRef.current?.dismiss();
+    };
+
+    const handleSaveEditAmount = () => {
+        if (!selectedScholarship || !editAmount) {
+            handleCloseEdit();
+            return;
+        }
+
+        const newAmount = parseFloat(editAmount);
+        if (!isNaN(newAmount)) {
+            updateScholarship.mutate({
+                scholarshipId: selectedScholarship.id,
+                payload: { amount: newAmount },
+            });
+        }
+
+        handleCloseEdit();
+    };
+
+    const handleAccept = () => {
+        console.log('handleAccept clicked', { menteeId, selectedScholarship });
+
+        if (!menteeId || !selectedScholarship) {
+            console.log('Blocking accept because of missing data');
+            setShowAcceptModal(true);
+            return;
+        }
+
+        const payload = {
+            userId: menteeId,
+            awardedDate: new Date().toISOString(),
+            academicYear: new Date().getFullYear().toString(),
+            awardStatus: 'active' as const,
+        };
+
+        console.log('Awarding scholarship with payload:', payload);
+
+        addAwardedUser.mutate(
+            {
+                scholarshipId: selectedScholarship.id,
+                payload,
+            },
+            {
+                onSuccess: () => {
+                    setShowAcceptModal(true);
+                },
+                onError: (error) => {
+                    console.log('Award failed', error);
+                },
+            }
+        );
+    };
+
+    const handleAcceptLater = () => {
+        setShowAcceptModal(false);
+        router.push('/(director)/(tabs)/new-interests');
+    };
+
+    const handleAssignMentor = () => {
+        setShowAcceptModal(false);
+        router.push('/(director)/(tabs)/mentees/assign-mentor');
+    };
+
+    return (
+        <LinearGradient
+            colors={['#176192', '#1D548D', '#264387']}
+            style={[styles.container, { paddingTop: top + 10 }]}
+        >
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingBottom: bottom + 20 }}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Header */}
+                <TouchableOpacity onPress={() => router.back()} style={styles.header}>
+                    <Ionicons name="chevron-back" size={28} color="#fff" />
+                    <Text style={styles.headerTitle}>Interest Received</Text>
+                </TouchableOpacity>
+
+                {/* User Card */}
+                <View style={styles.userCard}>
+                    <View style={styles.userInfo}>
+                        <View style={styles.avatar}>
+                            <Ionicons name="person-outline" size={28} color="#fff" />
+                        </View>
+                        <View>
+                            <Text style={styles.userName}>
+                                {mentee?.firstName + ' ' + mentee?.lastName || 'Unknown User'}
+                            </Text>
+                            <Text style={styles.userRole}>
+                                {mentee?.role || 'Pastor'}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Contact Icons */}
+                    <View style={styles.contactIcons}>
+                        <TouchableOpacity style={styles.iconButton}>
+                            <Ionicons name="call-outline" size={20} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.iconButton}>
+                            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.iconButton}>
+                            <Ionicons name="mail-outline" size={20} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.iconButton}>
+                            <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                {/* Rural/Urban Toggle */}
+                <View style={styles.toggleCard}>
+                    <Text style={styles.toggleLabel}>Choose Rural or Urban :</Text>
+                    <View style={styles.toggleOptions}>
+                        <Text style={styles.toggleText}>Rural</Text>
+                        <Switch
+                            value={!isRural}
+                            onValueChange={() => setIsRural((prev) => !prev)}
+                            trackColor={{
+                                false: 'rgba(255,255,255,0.3)',
+                                true: 'rgba(255,255,255,0.3)',
+                            }}
+                            thumbColor="#fff"
+                        />
+                        <Text style={styles.toggleText}>Urban</Text>
+                    </View>
+                </View>
+
+                {/* Product and Services */}
+                <View style={styles.productCard}>
+                    <Pressable
+                        style={styles.productHeader}
+                        onPress={() => setIsProductExpanded(!isProductExpanded)}
+                    >
+                        <Text style={styles.productTitle}>Product and Services</Text>
+                        <Ionicons
+                            name={isProductExpanded ? 'chevron-up' : 'chevron-down'}
+                            size={24}
+                            color="#fff"
+                        />
+                    </Pressable>
+
+                    {isProductExpanded && (
+                        <View style={styles.scholarshipList}>
+                            {scholarshipOptions.map((option) => (
+                                <TouchableOpacity
+                                    key={option.id}
+                                    style={styles.scholarshipItem}
+                                    onPress={() => setSelectedScholarshipKey(option.id)}
+                                    disabled={isLoading}
+                                >
+                                    <View style={styles.radioOuter}>
+                                        {selectedScholarshipKey === option.id && (
+                                            <View style={styles.radioInner} />
+                                        )}
+                                    </View>
+                                    <Text style={styles.scholarshipLabel}>{option.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
+                </View>
+
+                {/* Amount Section */}
+                <View style={styles.amountSection}>
+                    <View style={styles.amountCard}>
+                        <View style={styles.amountTextContainer}>
+                            <Text style={styles.amountLabel}>
+                                Amount under{'\n'}
+                                {SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey]}:
+                            </Text>
+                            <Text style={styles.amountValue}>${effectiveAmount}</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity style={styles.editButton} onPress={handleOpenEdit}>
+                        <Ionicons name="create-outline" size={18} color="#fff" />
+                        <Text style={styles.editButtonText}>Edit</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                        <Text style={styles.backButtonText}>BACK</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.acceptButton}
+                        onPress={handleAccept}
+                        disabled={addAwardedUser.isPending || !selectedScholarship}
+                    >
+                        <Text style={styles.acceptButtonText}>
+                            {addAwardedUser.isPending ? 'AWARDING...' : 'ACCEPT'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+
+            <AcceptInterestModal
+                visible={showAcceptModal}
+                onLater={handleAcceptLater}
+                onAssignMentor={handleAssignMentor}
+            />
+
+            <EditAmountBottomSheet
+                ref={bottomSheetModalRef}
+                title={SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey]}
+                amount={editAmount}
+                onChangeAmount={setEditAmount}
+                onCancel={handleCloseEdit}
+                onSave={handleSaveEditAmount}
+            />
+        </LinearGradient>
+    );
+}
+
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.3)',
+        marginBottom: 16,
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#fff',
+        marginLeft: 8,
+    },
+    userCard: {
+        marginHorizontal: 16,
+        marginBottom: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.5)',
+        borderRadius: 16,
+        backgroundColor: 'transparent',
+    },
+    userInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    avatar: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.5)',
+        backgroundColor: 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+    },
+    userName: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    userRole: {
+        fontSize: 15,
+        color: '#fff',
+    },
+    contactIcons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    iconButton: {
+        width: 36,
+        height: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toggleCard: {
+        marginHorizontal: 16,
+        marginBottom: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.5)',
+        borderRadius: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    toggleLabel: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#fff',
+    },
+    toggleOptions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    toggleText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#fff',
+    },
+    productCard: {
+        marginHorizontal: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.5)',
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    productHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.5)',
+    },
+    productTitle: {
+        fontSize: 17,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    scholarshipList: {
+        padding: 20,
+    },
+    scholarshipItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    radioOuter: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 16,
+    },
+    radioInner: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#000',
+    },
+    scholarshipLabel: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#fff',
+    },
+    amountSection: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginHorizontal: 16,
+        marginBottom: 20,
+        gap: 8,
+    },
+    amountCard: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.5)',
+        borderRadius: 12,
+    },
+    amountTextContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    amountLabel: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#fff',
+        lineHeight: 16,
+        flex: 1,
+    },
+    amountValue: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#FFC107',
+        marginLeft: 12,
+    },
+    editButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 10,
+        minWidth: 70,
+    },
+    editButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    actionButtons: {
+        flexDirection: 'row',
+        gap: 12,
+        marginHorizontal: 20,
+        marginBottom: 20,
+        paddingHorizontal: 24,
+    },
+    backButton: {
+        flex: 1,
+        paddingVertical: 12,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+        minHeight: 44,
+        justifyContent: 'center',
+    },
+    backButtonText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#1a5b77',
+    },
+    acceptButton: {
+        flex: 1,
+        paddingVertical: 12,
+        backgroundColor: 'rgba(30, 54, 111, 1)',
+        borderWidth: 2,
+        borderColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+        minHeight: 44,
+        justifyContent: 'center',
+    },
+    acceptButtonText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#fff',
+    },
+});
