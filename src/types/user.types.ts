@@ -1,10 +1,12 @@
+import { ProgressData } from "./progress.types";
+
 // Reuse earlier types
 export type UserRole =
     | "director"
     | "super admin"
     | "mentor"
-    | "pastor"
-    | "seminarian"
+    | "Pastor"
+    | "Seminarian"
     | "lay leader"
     | "field_mentor";
 
@@ -103,8 +105,12 @@ export interface GetMyProfileResponse {
 export interface CombinedProfile {
     user: UserWithInterest | null;
     interest: InterestItem | null;
+    progress: ProgressData | null;
 }
 
+export interface DirectorProfile {
+    user: User | null;
+}
 // Same UpdateProfileData as before
 export interface UpdateProfileData {
     firstName?: string;
@@ -146,7 +152,8 @@ export interface CreateUserRequest {
     firstName: string;
     lastName: string;
     email: string;
-    role: UserRole;
+    title: UserRole;
+    createdBy?: string;
 }
 
 
@@ -154,4 +161,80 @@ export interface CreateUserResponse {
     success: boolean;
     message: string;
     data: User;
+}
+
+
+
+
+
+// Add these new types to your existing user.types.ts
+
+export interface DynamicFieldDefinition {
+    fieldId: string;
+    label: string;
+    type: 'text_field' | 'phone' | 'email' | 'select' | 'checkbox' | 'text_area';
+    placeholder?: string;
+    required: boolean;
+    options: string[];
+    order: number;
+    section: string;
+}
+
+export interface StaticFieldDefinition {
+    fieldId: string;
+    label: string;
+    type: 'text_field' | 'phone' | 'email' | 'select' | 'checkbox' | 'text_area';
+    required: boolean;
+    section: string;
+    options?: string[];
+}
+
+export interface FormFieldsData {
+    staticFields: StaticFieldDefinition[];
+    dynamicFields: DynamicFieldDefinition[];
+}
+
+export interface FormFieldsResponse {
+    success: boolean;
+    message: string;
+    data: FormFieldsData;
+}
+
+// Update InterestItem to include dynamic fields
+export interface InterestItem {
+    _id: string;
+    profileInfo?: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    email: string;
+    churchDetails: ChurchInfo[];
+    title: string;
+    conference: string;
+    yearsInMinistry: string;
+    currentCommunityProjects: string;
+    interests: string[];
+    comments: string;
+    status: UserStatus;
+    createdAt: string;
+    updatedAt: string;
+    userId: string;
+    dynamicFields?: Record<string, any>; // NEW: Store dynamic field values
+}
+
+// Update UpdateProfileData to handle dynamic fields
+export interface UpdateProfileData {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    churches?: ChurchInfo[];
+    title?: string;
+    yearsInMinistry?: string;
+    conference?: string;
+    currentCommunityServiceProjects?: string;
+    interests?: string[];
+    comments?: string;
+    bio?: string;
+    avatar?: string;
+    dynamicFields?: Record<string, any>; // NEW: Dynamic field updates
 }

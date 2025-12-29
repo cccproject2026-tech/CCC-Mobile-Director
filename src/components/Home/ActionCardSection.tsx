@@ -22,7 +22,7 @@ const ActionCardSection: React.FC = () => {
 const styles = StyleSheet.create({
     listContainer: {
         gap: 8,
-        paddingHorizontal: 16,
+        // paddingHorizontal: 16,
     },
 });
 

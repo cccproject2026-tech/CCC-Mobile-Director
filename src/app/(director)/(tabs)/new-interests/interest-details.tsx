@@ -89,7 +89,7 @@ export default function InterestFormScreen() {
     -------------------------------------------------------- */
     const handleAccept = () => {
         if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
-
+        console.log("Accepting interest ID:", interest);
         updateStatus(
             { interestId: interest.user?._id as string, status: "accepted" },
             {

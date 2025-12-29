@@ -132,8 +132,17 @@ export default function AssignScholarshipScreen() {
 
     const handleAssignMentor = () => {
         setShowAcceptModal(false);
-        router.push('/(director)/(tabs)/mentees/assign-mentor');
+        router.push({
+            pathname: '/(director)/(tabs)/mentees/assign-mentors',
+            params: { id: menteeId },
+        });
     };
+
+    console.log('Current Selection:', {
+        key: selectedScholarshipKey,
+        hasData: scholarships.length > 0,
+        found: !!selectedScholarship
+    });
 
     return (
         <LinearGradient

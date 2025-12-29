@@ -63,7 +63,7 @@ export const directorService = {
     addUser: async (payload: CreateUserRequest) => {
         console.log("[directorService.addUser] payload:", payload);
         const res = await apiClient.post<CreateUserResponse>(
-            ENDPOINTS.SUPER_ADMIN.ADD_USER,
+            ENDPOINTS.INTERESTS.SUBMIT_INTEREST,
             payload
         );
         console.log("[directorService.addUser] response:", res.data);

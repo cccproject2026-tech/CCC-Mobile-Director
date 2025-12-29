@@ -22,7 +22,7 @@ export const styles = StyleSheet.create({
     iconBtn: { width: 30, height: 30, alignItems: "center", justifyContent: "center" },
 
     // selection card
-    selectionCard: { backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 14 },
+    selectionCard: { backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 14, marginBottom: 14 },
     checkboxContainer: { position: "absolute", top: 12, right: 12 },
     checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: "rgba(255,255,255,0.4)", alignItems: "center", justifyContent: "center" },
     checkboxSelected: { backgroundColor: "#fff" },

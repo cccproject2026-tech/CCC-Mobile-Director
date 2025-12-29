@@ -1,4 +1,5 @@
 import { InterestItem } from "@/types/interest.types";
+import { Mentee } from "@/types/user.types";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useCallback } from "react";
@@ -15,7 +16,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const isSmallDevice = SCREEN_WIDTH < 375;
 
 interface AcceptedUserCardProps {
-    data: InterestItem;
+    data: InterestItem | Mentee;
     selectable?: boolean;
     isSelected?: boolean;
     onToggleSelect?: () => void;
@@ -55,7 +56,7 @@ const AcceptedUserCard = memo(
         const fullName =
             `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim() || "Unknown";
 
-        const country = data.churchDetails?.[0]?.country || "Unknown";
+        const country = ('churchDetails' in data) ? (data.churchDetails?.[0]?.country || "Unknown") : "Unknown";
 
         return (
             <Wrapper
@@ -96,13 +97,15 @@ const AcceptedUserCard = memo(
                             {fullName}
                         </Text>
                         <Text style={styles.userRole} numberOfLines={1}>
-                            {data.title || "Pastor"}
+                            {('title' in data ? data.title : ('role' in data ? data.role : "")) || "Not Specified"}
                         </Text>
 
-                        <View style={styles.infoRow}>
-                            <Text style={styles.infoLabel}>Country: </Text>
-                            <Text style={styles.infoValue}>{country}</Text>
-                        </View>
+                        {country !== "Unknown" && (
+                            <View style={styles.infoRow}>
+                                <Text style={styles.infoLabel}>Country: </Text>
+                                <Text style={styles.infoValue}>{country}</Text>
+                            </View>
+                        )}
 
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Created:</Text>

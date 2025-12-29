@@ -2,6 +2,7 @@ import { profileService } from "@/services/profile.service";
 import { useAuthStore } from "@/stores/auth.store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CombinedProfile, UpdateProfileData } from "@/types/user.types";
+import { useProgress } from "./useProgress";
 
 // --------------------------------------------
 // Query Keys
@@ -13,37 +14,36 @@ export const profileKeys = {
         [...profileKeys.all, "interest", email] as const,
     combined: (userId: string) =>
         [...profileKeys.all, "combined", userId] as const,
+    formFields: () => [...profileKeys.all, "formFields"] as const,
 };
 
 // --------------------------------------------
 // Individual profile queries
 // --------------------------------------------
-export const useUserProfile = () => {
-    const { user } = useAuthStore();
+export const useUserProfile = (userId: string) => {
 
     return useQuery({
-        queryKey: profileKeys.user(user?.id || ""),
+        queryKey: profileKeys.user(userId),
         queryFn: async () => {
-            if (!user?.id) throw new Error("User ID is missing");
-            return profileService.getMyProfile(user.id); // UserWithInterest
+            if (!userId) throw new Error("User ID is missing");
+            return profileService.getMyProfile(userId); // UserWithInterest
         },
-        enabled: !!user?.id,
+        enabled: !!userId,
         staleTime: 10 * 60 * 1000,
         gcTime: 30 * 60 * 1000,
         retry: 1,
     });
 };
 
-export const useInterests = () => {
-    const { user } = useAuthStore();
+export const useInterestsByEmail = (email: string) => {
 
     return useQuery({
-        queryKey: profileKeys.interest(user?.email || ""),
+        queryKey: profileKeys.interest(email || ""),
         queryFn: async () => {
-            if (!user?.email) throw new Error("User email is missing");
-            return profileService.getInterestDetails(user.email);
+            if (!email) throw new Error("User email is missing");
+            return profileService.getInterestDetails(email);
         },
-        enabled: !!user?.email,
+        enabled: !!email,
         staleTime: 5 * 60 * 1000,
         gcTime: 20 * 60 * 1000,
         retry: 1,
@@ -51,20 +51,18 @@ export const useInterests = () => {
 };
 
 // --------------------------------------------
-// Combined profile hook
+// Director Profile
 // --------------------------------------------
-export const useProfile = () => {
-    const { user } = useAuthStore();
-    const userQuery = useUserProfile();
+export const useProfile = (userId: string) => {
+    const userQuery = useUserProfile(userId);
 
     const isLoading = userQuery.isLoading;
     const isError = userQuery.isError;
     const error = userQuery.error;
 
-    const data: CombinedProfile | undefined = user?.id
+    const data = userId
         ? {
             user: userQuery.data || null,
-            interest: userQuery.data?.interest || null,
         }
         : undefined;
 
@@ -81,15 +79,82 @@ export const useProfile = () => {
 };
 
 // --------------------------------------------
+// Mentor/Mentee Profile with interests and progress
+// --------------------------------------------
+export const useMentorMenteeProfile = (userId: string) => {
+    // 1. Fetch the base user profile first
+    const userQuery = useUserProfile(userId);
+
+    // 2. Extract email and determine if we are ready to fetch interests
+    const userEmail = userQuery.data?.email;
+
+    // 3. Dependent Query: useInterestsByEmail already has internal 'enabled' logic 
+    // but we ensure it receives the email only when available
+    const interestQuery = useInterestsByEmail(userEmail || "");
+
+    // 4. Progress can be fetched in parallel with the user profile
+    const progressQuery = useProgress(userId);
+
+    // Derive combined loading state:
+    // We are "loading" if the user profile is pending OR if the user profile 
+    // succeeded but the interest fetch is still in progress
+    const isLoading = userQuery.isLoading ||
+        (!!userEmail && interestQuery.isLoading) ||
+        progressQuery.isLoading;
+
+    // Derive combined error state
+    const isError = userQuery.isError || interestQuery.isError || progressQuery.isError;
+    const error = userQuery.error || interestQuery.error || progressQuery.error;
+
+    // Compute combined profile data
+    const data: CombinedProfile | undefined = userId ? {
+        user: userQuery.data || null,
+        interest: (interestQuery.data as any) || null,
+        progress: progressQuery.data || {
+            overallProgress: 0,
+            roadmaps: { total: 0, completed: 0, percentage: 0, items: [] },
+            assessments: { total: 0, completed: 0, percentage: 0, items: [] }
+        }
+    } : undefined;
+
+    // Check if queries are successful (interest is only required if email exists)
+    const isSuccess = userQuery.isSuccess &&
+        (!userEmail || interestQuery.isSuccess) &&
+        progressQuery.isSuccess;
+
+    return {
+        data,
+        isLoading,
+        isError,
+        error,
+        isSuccess,
+        userQuery,
+        interestQuery,
+        progressQuery,
+    };
+}
+
+
+export const useFormFields = () => {
+    return useQuery({
+        queryKey: profileKeys.formFields(),
+        queryFn: () => profileService.getFormFields(),
+        staleTime: 60 * 60 * 1000, // 1 hour - form fields don't change often
+        gcTime: 2 * 60 * 60 * 1000, // 2 hours
+        retry: 2,
+    });
+};
+
+
+// --------------------------------------------
 // Profile update mutation
 // --------------------------------------------
-export const useUpdateProfile = () => {
+export const useUpdateProfile = (email: string, userId: string) => {
     const queryClient = useQueryClient();
-    const { user } = useAuthStore();
 
     return useMutation({
         mutationFn: async (updates: UpdateProfileData) => {
-            if (!user?.id || !user?.email) {
+            if (!userId || !email) {
                 throw new Error("User ID and email are required");
             }
 
@@ -125,10 +190,10 @@ export const useUpdateProfile = () => {
 
             const [userRes, interestRes] = await Promise.allSettled([
                 Object.keys(userUpdates).length > 0
-                    ? profileService.updateUserProfile(user.id, userUpdates)
+                    ? profileService.updateUserProfile(userId, userUpdates)
                     : Promise.resolve(null),
                 Object.keys(interestUpdates).length > 0
-                    ? profileService.updateInterestDetails(user.email, interestUpdates)
+                    ? profileService.updateInterestDetails(email, interestUpdates)
                     : Promise.resolve(null),
             ]);
 

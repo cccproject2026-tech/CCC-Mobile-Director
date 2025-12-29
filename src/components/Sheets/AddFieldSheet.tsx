@@ -60,6 +60,14 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "textarea":
                     const fields: any[] = [];
 
+                    // 1. ADD THE NAME/LABEL FIELD
+                    fields.push({
+                        key: "label", // Using 'name' to keep it consistent with other types
+                        label: "Field Name",
+                        placeholder: "Enter the label for this field",
+                        type: "input",
+                    });
+
                     // Add heading field if enabled
                     if (showHeading) {
                         fields.push({
@@ -90,12 +98,13 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
 
                     return {
                         title: fieldType === "text" ? "Add Text Field" : "Add Text Area",
+                        // Adjusted snapPoints to accommodate the extra "Name" field
                         snapPoint:
                             showHeading && showButton
-                                ? "60%"
+                                ? "75%"
                                 : showHeading || showButton
-                                    ? "52%"
-                                    : "45%",
+                                    ? "65%"
+                                    : "55%",
                         fields,
                     };
 

@@ -36,11 +36,15 @@ export const ENDPOINTS = {
 
     MENTORS: {
         GET_ASSIGNED_MENTORS: (menteeId: string) => `/users/${menteeId}/assigned`,
-        GET_ALL_MENTORS: '/users?role=mentor',
+        GET_ALL_MENTORS: '/users?role=mentor&roleMatch=mixed',
+        ASSIGN_MENTEES: (mentorId: string) => `/users/${mentorId}/assign`,
+        REMOVE_MENTEES: (mentorId: string) => `/users/${mentorId}/remove`,
     },
     MENTEES: {
         GET_ASSIGNED_MENTEES: (mentorId: string) => `/users/${mentorId}/assigned`,
-        GET_ALL_MENTEES: '/users?role=pastor',
+        GET_ALL_MENTEES: '/users?role=pastor&roleMatch=mixed',
+        ASSIGN_MENTORS: (menteeId: string) => `/users/${menteeId}/assign`,
+        REMOVE_MENTORS: (menteeId: string) => `/users/${menteeId}/remove`,
     },
     // Home
     HOME: {
@@ -90,10 +94,16 @@ export const ENDPOINTS = {
     ROADMAPS: {
         GET_ALL: '/roadmaps',
         CREATE: '/roadmaps',
+        GET_ROADMAP: (roadmapId: string) => `/roadmaps/${roadmapId}`,
         UPDATE: (roadmapId: string) => `/roadmaps/${roadmapId}`,
         ADD_COMMENT: (roadmapId: string) => `/roadmaps/${roadmapId}/comments`,
+        GET_COMMENTS: (roadmapId: string, userId: string) => `/roadmaps/${roadmapId}/comments?userId=${userId}`,
         SUBMIT_QUERY: (roadmapId: string) => `/roadmaps/${roadmapId}/queries`,
+        GET_QUERIES: (roadmapId: string, userId: string) => `/roadmaps/${roadmapId}/queries?userId=${userId}`,
+        REPLY_QUERY: (roadmapId: string, queryId: string) => `/roadmaps/${roadmapId}/queries/${queryId}/reply`,
         CREATE_NESTED: (roadmapId: string) => `/roadmaps/${roadmapId}/nested`,
+        UPDATE_NESTED: (roadmapId: string, nestedId: string) => `/roadmaps/${roadmapId}/nested/${nestedId}`,
+        DELETE_ROADMAP: (roadmapId: string) => `/roadmaps/${roadmapId}`,
     },
 
     INTERESTS: {
@@ -103,12 +113,16 @@ export const ENDPOINTS = {
         FORM_CONFIG: '/interests/form-fields',
         ADD_DYNAMIC_FIELD: '/interests/dynamic-fields',
         REMOVE_DYNAMIC_FIELD: (fieldId: string) => `/interests/dynamic-fields/${fieldId}`,
+        SUBMIT_INTEREST: '/interests',
     },
 
     // Progress
     PROGRESS: {
         ASSIGN_ASSESSMENT: '/progress/assign-assessment',
         ASSIGN_ROADMAP: '/progress/assign-roadmap',
+        FINAL_COMMENTS: '/progress/final-comments',
+        GET_FINAL_COMMENTS: (userId: string) => `/progress/${userId}/final-comments`,
+        DIRECTOR_OVERVIEW: '/progress/overview/director',
     },
 
     // Directors

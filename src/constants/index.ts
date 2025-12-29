@@ -24,7 +24,7 @@ export const MENU_ITEMS: MenuItem[] = [
     { id: 'course-completed', label: 'Course Completed', icon: 'ribbon-outline', route: '/(director)/(tabs)', badge: 6 },
     { id: 'track-progress', label: 'Track Progress', icon: 'bar-chart-outline', route: '/(director)/(tabs)/progress-tracker' },
     { id: 'schedule', label: 'Schedule', icon: 'calendar-outline', route: '/(director)/(tabs)/appointments' },
-    { id: 'roadmaps', label: 'Revitalization Roadmaps', icon: 'clipboard-outline', route: '/(director)/(tabs)/revitalization-roadmaps' },
+    { id: 'roadmaps', label: 'Revitalization Roadmaps', icon: 'clipboard-outline', route: '/(director)/(tabs)/roadmaps' },
     { id: 'assessments', label: 'Assessments', icon: 'checkmark-done-outline', route: '/(director)/(tabs)/assessments' },
     { id: 'courses', label: 'Courses', icon: 'book-outline', route: '/(director)/(tabs)' },
     {
@@ -47,8 +47,8 @@ export const MENU_ITEMS: MenuItem[] = [
         icon: 'person-outline',
         children: [
             { id: 'my-profile', label: 'My Profile', icon: 'profile-outline', iconType: 'image', route: '/(director)/(tabs)/profile' },
-            { id: 'documents', label: 'Documents', icon: 'folder-outline', route: '/(director)/(tabs)/documents' },
-            { id: 'notes', label: 'Notes', icon: 'document-text-outline', route: '/(director)/(tabs)/documents' },
+            { id: 'documents', label: 'Documents', icon: 'folder-outline', route: '/(director)/(tabs)/profile/documents' },
+            { id: 'notes', label: 'Notes', icon: 'document-text-outline', route: '/(director)/(tabs)/profile/documents' },
         ],
     },
     {
@@ -76,4 +76,11 @@ export const icons = {
     attachmentIcon: require('@/assets/images/app/attachment.png'),
     editIcon: require('@/assets/images/app/edit.png'),
     certificateImage: require('@/assets/images/app/certificateImage.png'),
+    progress: require('@/assets/images/app/progress.png'),
+    schedule: require('@/assets/images/app/schedule.png'),
+    microGrant: require('@/assets/images/app/microGrant.png'),
+    Revitalization: require('@/assets/images/app/revitalization.png'),
+    Assessments: require('@/assets/images/app/assessments.png'),
+    assignmentIcon: require('@/assets/images/app/assignment.png'),
+    profileTabIcon: require('@/assets/images/app/profile-tab.png'),
 }

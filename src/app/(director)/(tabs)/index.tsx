@@ -3,7 +3,10 @@ import HeaderHero from "@/components/Header/HeroHeader";
 import ActionCardSection from "@/components/Home/ActionCardSection";
 import AddUserSection from "@/components/Home/AddUserSection";
 import AppointmentsSection from "@/components/Home/AppointmentsSection";
+import ExploreCCCSection from "@/components/Home/ExploreCCCSection";
 import InterestsSection from "@/components/Home/InterestsSection";
+import MentorMenteeSection from "@/components/Home/MentorMenteeSection";
+import OverviewSection from "@/components/Home/OverviewSection";
 import { Colors } from "@/constants/Colors";
 import { useAuthStore } from "@/stores/auth.store";
 import { LinearGradient } from "expo-linear-gradient";
@@ -67,6 +70,9 @@ export default function Index() {
             <AppointmentsSection />
             <InterestsSection />
             <AddUserSection />
+            <MentorMenteeSection />
+            <ExploreCCCSection />
+            <OverviewSection />
             <ActionCardSection />
           </View>
         </LinearGradient>

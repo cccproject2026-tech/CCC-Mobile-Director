@@ -4,7 +4,6 @@ import { Mentee } from "@/types/user.types";
 
 export default function MenteeProgress({ data }: { data: Mentee }) {
     if (!data.progress) return null;
-
     return (
         <View style={styles.progressRow}>
             <Text style={styles.progressLabel}>Progress</Text>

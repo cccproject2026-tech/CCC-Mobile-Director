@@ -16,13 +16,15 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const isSmallDevice = SCREEN_WIDTH < 375;
 
 type Props = {
-    onUserAdded: (name: string, role: UserRole, email: string) => void;
+    // Updated to pass first and last name separately
+    onUserAdded: (firstName: string, lastName: string, role: UserRole, email: string) => void;
 };
 
 const TITLES = ['Pastor', 'Seminarian', 'Lay Leader', 'Mentor', 'Field Mentor'];
 
 const AddUserCard: React.FC<Props> = ({ onUserAdded }) => {
-    const [name, setName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [selectedTitle, setSelectedTitle] = useState('');
     const [showTitlePicker, setShowTitlePicker] = useState(false);
@@ -33,19 +35,20 @@ const AddUserCard: React.FC<Props> = ({ onUserAdded }) => {
     );
 
     const canSubmit = useMemo(
-        () => name.trim() && isValidEmail && selectedTitle,
-        [name, isValidEmail, selectedTitle]
+        () => firstName.trim() && lastName.trim() && isValidEmail && selectedTitle,
+        [firstName, lastName, isValidEmail, selectedTitle]
     );
 
     const handleAdd = useCallback(() => {
         if (!canSubmit) return;
-        onUserAdded(name.trim(), selectedTitle as UserRole, email.trim());
+        onUserAdded(firstName.trim(), lastName.trim(), selectedTitle as UserRole, email.trim());
 
-        setName('');
+        setFirstName('');
+        setLastName('');
         setEmail('');
         setSelectedTitle('');
         setShowTitlePicker(false);
-    }, [canSubmit, email, name, selectedTitle]);
+    }, [canSubmit, firstName, lastName, email, selectedTitle, onUserAdded]);
 
     const togglePicker = useCallback(() => {
         setShowTitlePicker(v => !v);
@@ -79,14 +82,23 @@ const AddUserCard: React.FC<Props> = ({ onUserAdded }) => {
                 Add new pastors and mentors to the platform
             </Text>
 
-            {/* Name Input */}
-            <TextInput
-                style={styles.input}
-                placeholder="Enter Name"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                value={name}
-                onChangeText={setName}
-            />
+            {/* Name Row */}
+            <View style={styles.row}>
+                <TextInput
+                    style={[styles.input, styles.flexInput]}
+                    placeholder="First Name"
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    value={firstName}
+                    onChangeText={setFirstName}
+                />
+                <TextInput
+                    style={[styles.input, styles.flexInput]}
+                    placeholder="Last Name"
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    value={lastName}
+                    onChangeText={setLastName}
+                />
+            </View>
 
             {/* Email Input */}
             <TextInput
@@ -133,14 +145,20 @@ const AddUserCard: React.FC<Props> = ({ onUserAdded }) => {
 
             {/* Add Button */}
             <Pressable
-                style={[
+                style={({ pressed }) => [
                     styles.addButton,
-                    !canSubmit && { opacity: 0.5 },
+                    !canSubmit && styles.disabledButton, // Applied disabled style
+                    canSubmit && pressed && { opacity: 0.8 } // Visual feedback when active
                 ]}
-                disabled={!canSubmit}
+                disabled={!canSubmit} // Button is physically non-clickable
                 onPress={handleAdd}
             >
-                <Text style={styles.addButtonText}>Add</Text>
+                <Text style={[
+                    styles.addButtonText,
+                    !canSubmit && styles.disabledButtonText // Dim the text when disabled
+                ]}>
+                    Add User
+                </Text>
             </Pressable>
         </LinearGradient>
     );
@@ -179,6 +197,14 @@ const styles = StyleSheet.create({
         fontSize: isSmallDevice ? 13 : 14,
         color: 'rgba(255,255,255,0.8)',
         marginBottom: isSmallDevice ? 14 : 18,
+    },
+    row: {
+        flexDirection: 'row',
+        gap: 10,
+        width: '100%',
+    },
+    flexInput: {
+        flex: 1,
     },
     input: {
         backgroundColor: 'transparent',
@@ -232,6 +258,20 @@ const styles = StyleSheet.create({
         paddingVertical: isSmallDevice ? 10 : 12,
         alignItems: 'center',
         marginTop: isSmallDevice ? 4 : 6,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    // New disabled state styles
+    disabledButton: {
+        backgroundColor: 'rgba(255,255,255,0.2)', // Semi-transparent or greyed out
+        elevation: 0,
+        shadowOpacity: 0,
+    },
+    disabledButtonText: {
+        color: 'rgba(255,255,255,0.4)', // Dimmed text color
     },
     addButtonText: {
         fontSize: isSmallDevice ? 15 : 16,

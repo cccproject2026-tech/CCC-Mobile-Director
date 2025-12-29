@@ -1,4 +1,4 @@
-import { Document, GetMyProfileResponse, User, UserWithInterest } from "@/types/user.types";
+import { Document, FormFieldsResponse, GetMyProfileResponse, User, UserWithInterest } from "@/types/user.types";
 import { apiClient } from "./api/client";
 import { ENDPOINTS } from "./api/endpoints";
 import { InterestItem } from "@/types/interest.types";
@@ -7,9 +7,17 @@ export const profileService = {
     // Get current user's details
     getMyProfile: async (userId: string): Promise<UserWithInterest> => {
         const response = await apiClient.get<GetMyProfileResponse>(
-            ENDPOINTS.USERS.GET_USER(userId)
+            ENDPOINTS.USERS.GET_USER(userId), {
+            params: { t: Date.now() },
+        }
         );
         return response.data.data;
+    },
+    async getFormFields(): Promise<FormFieldsResponse> {
+        const response = await apiClient.get<FormFieldsResponse>('/interests/form-fields', {
+            params: { t: Date.now() },
+        })
+        return response.data;
     },
     // Get current user's interest details
     getInterestDetails: async (email: string): Promise<InterestItem> => {
@@ -17,7 +25,9 @@ export const profileService = {
             success: boolean;
             message?: string;
             data: InterestItem;
-        }>(ENDPOINTS.USERS.GET_INTERESTS(email));
+        }>(ENDPOINTS.USERS.GET_INTERESTS(email), {
+            params: { t: Date.now() },
+        });
         return response.data.data;
     },
 
@@ -28,7 +38,7 @@ export const profileService = {
     ): Promise<User> => {
         const response = await apiClient.patch<{ success: boolean; data: User }>(
             ENDPOINTS.USERS.UPDATE_USER(userId),
-            updates
+            updates,
         );
         return response.data.data;
     },
@@ -38,6 +48,7 @@ export const profileService = {
         email: string,
         updates: Partial<InterestItem>
     ): Promise<InterestItem> => {
+        console.log('Updating interest details for', email, 'with', updates);
         const response = await apiClient.patch<{
             success: boolean;
             data: InterestItem;
@@ -48,7 +59,9 @@ export const profileService = {
     // Get user by ID
     getUserById: async (userId: string): Promise<User> => {
         const response = await apiClient.get<{ success: boolean; data: User }>(
-            ENDPOINTS.USERS.GET_USER(userId)
+            ENDPOINTS.USERS.GET_USER(userId), {
+            params: { t: Date.now() },
+        }
         );
         return response.data.data;
     },
@@ -56,7 +69,9 @@ export const profileService = {
     // Get all users (optional role filter)
     getAllUsers: async (role?: string): Promise<User[]> => {
         const response = await apiClient.get<{ success: boolean; data: User[] }>(
-            ENDPOINTS.USERS.GET_ALL_USERS(role as any)
+            ENDPOINTS.USERS.GET_ALL_USERS(role as any), {
+            params: { t: Date.now() },
+        }
         );
         return response.data.data;
     },
@@ -86,7 +101,9 @@ export const profileService = {
     // Get documents
     getDocuments: async (userId: string): Promise<Document[]> => {
         const response = await apiClient.get<{ success: boolean; data: Document[] }>(
-            ENDPOINTS.USERS.GET_DOCUMENTS(userId)
+            ENDPOINTS.USERS.GET_DOCUMENTS(userId), {
+            params: { t: Date.now() },
+        }
         );
         return response.data.data;
     },

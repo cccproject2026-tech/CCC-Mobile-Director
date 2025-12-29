@@ -1,6 +1,8 @@
+import { icons } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname } from "expo-router";
 import { useMemo } from "react";
+import { Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function DirectorTabLayout() {
@@ -75,9 +77,8 @@ export default function DirectorTabLayout() {
                 name="profile/index"
                 options={{
                     title: "Profile",
-                    tabBarIcon: ({ color }) => (
-                        <Ionicons name="settings" size={24} color={color} />
-                    ),
+                    tabBarIcon: ({ color }) => <Image source={icons.profileTabIcon} style={{ width: 28, height: 28, tintColor: color }} />,
+
                 }}
             />
 
@@ -98,9 +99,11 @@ export default function DirectorTabLayout() {
                 "progress-tracker",
                 "micro-grant",
                 "product-and-services",
-                "revitalization-roadmaps",
+                "roadmaps",
                 "appointments",
-                "ccc"
+                "ccc",
+                "assessments",
+                "notifications"
             ].map((route) => (
                 <Tabs.Screen key={route} name={route} options={{ href: null }} />
             ))}

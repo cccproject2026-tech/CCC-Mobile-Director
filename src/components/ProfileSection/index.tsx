@@ -14,7 +14,7 @@ import { ChurchInfo, UpdateProfileData } from '@/types/user.types';
 export const TITLE_OPTIONS = [
     'Pastor',
     'Lay Leader',
-    'Seminarian',
+    'Seminarian'
 ];
 
 
@@ -23,14 +23,14 @@ interface ProfileSectionsProps {
     isEditing: boolean;
     profileData: any;
     formData: UpdateProfileData;
-    showTitleDropdown: boolean;
+    showTitleDropdown?: boolean;
     onUpdateField: (field: keyof UpdateProfileData, value: any) => void;
     onUpdateChurch: (index: number, field: keyof ChurchInfo, value: string) => void;
-    onAddChurch: () => void;
-    onRemoveChurch: (index: number) => void;
+    onAddChurch?: () => void;
+    onRemoveChurch?: (index: number) => void;
     onPickImage: () => void;
-    onTitleSelect: (option: string) => void;
-    onToggleTitleDropdown: (show: boolean) => void;
+    onTitleSelect?: (option: string) => void;
+    onToggleTitleDropdown?: (show: boolean) => void;
     profileImage: string | null;
 }
 
@@ -205,7 +205,7 @@ export const ChurchInfoSection = ({
                                 ) : (
                                     <TouchableOpacity
                                         style={styles.removeChurchButton}
-                                        onPress={() => onRemoveChurch(index)}
+                                        onPress={() => onRemoveChurch?.(index)}
                                     >
                                         <Text style={styles.removeChurchText}>- Remove</Text>
                                     </TouchableOpacity>
@@ -391,7 +391,7 @@ export const OtherInfoSection = ({
                     <Text style={styles.fieldLabel}>Title :</Text>
                     <TouchableOpacity
                         style={[styles.editInput, styles.dropdownInput]}
-                        onPress={() => onToggleTitleDropdown(!showTitleDropdown)}
+                        onPress={() => onToggleTitleDropdown?.(!showTitleDropdown)}
                     >
                         <Text style={styles.dropdownText}>
                             {formData.title || 'Select Title'}
@@ -408,7 +408,7 @@ export const OtherInfoSection = ({
                                 <TouchableOpacity
                                     key={idx}
                                     style={styles.dropdownOption}
-                                    onPress={() => onTitleSelect(option)}
+                                    onPress={() => onTitleSelect?.(option)}
                                 >
                                     <Text style={styles.dropdownOptionText}>{option}</Text>
                                 </TouchableOpacity>

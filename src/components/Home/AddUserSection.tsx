@@ -13,17 +13,17 @@ const AddUserSection = (props: Props) => {
 
     const addUserMutation = useAddUser();
 
-    const handleUserAdded = (name: string, role: UserRole, email: string) => {
-        console.log("[AddUserSection.handleUserAdded] input:", { name, role, email });
+    // Updated arguments to receive firstName and lastName separately
+    const handleUserAdded = (firstName: string, lastName: string, role: UserRole, email: string) => {
+        console.log("[AddUserSection.handleUserAdded] input:", { firstName, lastName, role, email });
 
-        const [firstName, ...rest] = name.trim().split(" ");
-        const lastName = rest.join(" ");
-
+        // Build the payload directly using the separate name strings
         const payload = {
-            firstName,
-            lastName,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
             email: email.trim(),
-            role: role.toLowerCase() as UserRole,
+            title: role,
+            createdBy: 'admin'
         };
 
         console.log("[AddUserSection.handleUserAdded] payload to mutate:", payload);
@@ -35,7 +35,7 @@ const AddUserSection = (props: Props) => {
                 const createdName = `${created.firstName} ${created.lastName}`.trim();
 
                 setAddedUser({
-                    name: createdName || name,
+                    name: createdName || `${firstName} ${lastName}`.trim(),
                     role: created.role || role,
                 });
                 setShowConfirmation(true);

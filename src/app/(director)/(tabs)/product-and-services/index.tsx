@@ -9,6 +9,8 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useMentees } from '@/hooks/useMentees';
+import { useScholarships } from '@/hooks/useScholorships';
 import {
     Dimensions,
     Pressable,
@@ -31,111 +33,12 @@ type Mentee = {
     dateOfApproval: string;
     status: string;
     profileImage: string;
-}
-// KEEPING MOCK DATA FOR NOW
-const mockMentees: Mentee[] = [
-    {
-        id: '1',
-        name: 'John Doe',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 500,
-        dateOfApproval: '10/06/25',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/men/32.jpg',
-    },
-    {
-        id: '2',
-        name: 'Jane Smith',
-        role: 'Seminarian',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 500,
-        dateOfApproval: '10/06/25',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/women/44.jpg',
-    },
-    {
-        id: '3',
-        name: 'John Ross',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 500,
-        dateOfApproval: '10/06/25',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/men/33.jpg',
-    },
-    {
-        id: '4',
-        name: 'Sarah Johnson',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 350,
-        dateOfApproval: '20/10/24',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/women/45.jpg',
-    },
-    {
-        id: '5',
-        name: 'Michael Brown',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 300,
-        dateOfApproval: '15/10/24',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/men/34.jpg',
-    },
-    {
-        id: '6',
-        name: 'David Wilson',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 250,
-        dateOfApproval: '10/10/24',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/men/35.jpg',
-    },
-    {
-        id: '7',
-        name: 'Emily Davis',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 250,
-        dateOfApproval: '12/10/24',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/women/46.jpg',
-    },
-    {
-        id: '8',
-        name: 'Robert Taylor',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 150,
-        dateOfApproval: '05/10/24',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/men/36.jpg',
-    },
-    {
-        id: '9',
-        name: 'Lisa Anderson',
-        role: 'Pastor',
-        description:
-            'Sub text area write something here. That you can read more about him',
-        scholarshipAmount: 150,
-        dateOfApproval: '08/10/24',
-        status: 'approved',
-        profileImage: 'https://randomuser.me/api/portraits/women/47.jpg',
-    },
-];
+};
 
 export default function ProductAndServices() {
+    // Fetch mentees and scholarships
+    const { data: menteesData, isLoading: menteesLoading } = useMentees();
+    const { data: scholarshipsData, isLoading: scholarshipsLoading } = useScholarships();
     const router = useRouter();
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<string>('full-scholarship');
@@ -189,7 +92,7 @@ export default function ProductAndServices() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/assign-mentor');
+                    router.push('/(director)/(tabs)/mentees/assign-mentors');
                 }, 300);
             },
         },
@@ -199,7 +102,7 @@ export default function ProductAndServices() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/remove-mentor');
+                    router.push('/(director)/(tabs)/mentees/remove-mentors');
                 }, 300);
             },
         },
@@ -274,39 +177,33 @@ export default function ProductAndServices() {
 
     const filterOptions = useMemo(() => getFilterOptions(), []);
 
-    const filteredMentees = useMemo(() => {
-        let filtered = mockMentees;
+    // Map scholarship type to tab key
+    const tabKeyToType: Record<string, string> = {
+        'full-scholarship': 'Full scholarship',
+        'partial-scholarship': 'Partial scholarship',
+        'adra-discount': 'ADRA Discount',
+        'half-scholarship': 'Half Scholarship',
+    };
 
+    // Prepare mentee list for the selected scholarship tab
+    const filteredMentees = useMemo(() => {
+        if (!scholarshipsData || !menteesData) return [];
+        const menteeList = Array.isArray(menteesData) ? menteesData : menteesData.mentees || [];
+        const currentType = tabKeyToType[activeTab];
+        const scholarship = scholarshipsData.find((s: any) => s.type === currentType);
+        if (!scholarship) return [];
+        // awardedList may be array of AwardedUser or string ids
+        const awardedIds = (scholarship.awardedList || []).map((a: any) => typeof a === 'string' ? a : a.userId);
+        let filtered = menteeList.filter((mentee: any) => awardedIds.includes(mentee.id));
         if (search) {
             const q = search.toLowerCase();
-            filtered = filtered.filter((mentee) =>
-                mentee.name.toLowerCase().includes(q)
+            filtered = filtered.filter((mentee: any) =>
+                (mentee.name || mentee.firstName || '').toLowerCase().includes(q)
             );
         }
-
-        if (activeTab === 'full-scholarship') {
-            filtered = filtered.filter(
-                (mentee) => mentee.scholarshipAmount === 500
-            );
-        } else if (activeTab === 'partial-scholarship') {
-            filtered = filtered.filter(
-                (mentee) =>
-                    typeof mentee.scholarshipAmount === 'number' &&
-                    mentee.scholarshipAmount > 250 &&
-                    mentee.scholarshipAmount < 500
-            );
-        } else if (activeTab === 'half-scholarship') {
-            filtered = filtered.filter(
-                (mentee) => mentee.scholarshipAmount === 250
-            );
-        } else if (activeTab === 'adra-discount') {
-            filtered = filtered.filter(
-                (mentee) => mentee.scholarshipAmount === 150
-            );
-        }
-
+        // Optionally, you can map mentee fields to match the MenteeCard props if needed
         return filtered;
-    }, [search, activeTab]);
+    }, [scholarshipsData, menteesData, activeTab, search]);
 
     return (
         <LinearGradient
@@ -392,21 +289,27 @@ export default function ProductAndServices() {
                         contentContainerStyle={styles.listContent}
                         showsVerticalScrollIndicator={false}
                     >
-                        {filteredMentees.map((mentee) => (
-                            <MenteeCard
-                                key={mentee.id}
-                                data={mentee}
-                                layout={viewMode}
-                                onPress={() =>
-                                    router.push(`/(director)/(tabs)/mentees/${mentee.id}`)
-                                }
-                                onCall={() => console.log('Call', mentee.name)}
-                                onChat={() => console.log('Chat', mentee.name)}
-                                onMail={() => console.log('Mail', mentee.name)}
-                                onWhatsApp={() => console.log('WhatsApp', mentee.name)}
-                                onMenuPress={() => handleMenuPress(mentee)}
-                            />
-                        ))}
+                        {menteesLoading || scholarshipsLoading ? (
+                            <Text style={{ color: '#fff', textAlign: 'center', marginTop: 32 }}>Loading...</Text>
+                        ) : filteredMentees.length === 0 ? (
+                            <Text style={{ color: '#fff', textAlign: 'center', marginTop: 32 }}>No mentees found for this scholarship.</Text>
+                        ) : (
+                            filteredMentees.map((mentee: any) => (
+                                <MenteeCard
+                                    key={mentee.id}
+                                    data={mentee}
+                                    layout={viewMode}
+                                    onPress={() =>
+                                        router.push(`/(director)/(tabs)/mentees/${mentee.id}`)
+                                    }
+                                    onCall={() => console.log('Call', mentee.name)}
+                                    onChat={() => console.log('Chat', mentee.name)}
+                                    onMail={() => console.log('Mail', mentee.name)}
+                                    onWhatsApp={() => console.log('WhatsApp', mentee.name)}
+                                    onMenuPress={() => handleMenuPress(mentee)}
+                                />
+                            ))
+                        )}
                     </ScrollView>
                 </View>
 

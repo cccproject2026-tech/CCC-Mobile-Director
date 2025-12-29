@@ -45,7 +45,7 @@ const TopBar: React.FC<Props> = ({
     const { user } = useAuthStore();
     const onMenuPress = () => navigation.dispatch(DrawerActions.openDrawer());
     const handleNotificationsPress = () => {
-        router.push('/(director)/(tabs)/notification');
+        router.push('/(director)/(tabs)/notifications');
     }
 
     const handleBackPress = () => {
