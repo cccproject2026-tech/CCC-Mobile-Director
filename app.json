@@ -15,17 +15,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library so you can select a profile picture.",
         "NSPhotoLibraryAddUsageDescription": "This app needs permission to save photos to your library.",
-        "UISupportsDocumentBrowser": true,
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true,
-          "NSExceptionDomains": {
-            "13.203.24.38": {
-              "NSExceptionAllowsInsecureHTTPLoads": true,
-              "NSExceptionRequiresForwardSecrecy": false,
-              "NSIncludesSubdomains": true
-            }
-          }
-        }
+        "UISupportsDocumentBrowser": true
       }
     },
     "android": {
@@ -58,7 +48,7 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": false
           }
         }
       ],

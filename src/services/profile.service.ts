@@ -95,6 +95,8 @@ export const profileService = {
                 headers: { "Content-Type": "multipart/form-data" },
             }
         );
+
+        console.log("Profile picture upload response:", response.data);
         return response.data.data;
     },
 

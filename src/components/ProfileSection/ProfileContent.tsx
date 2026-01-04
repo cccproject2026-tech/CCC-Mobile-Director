@@ -12,7 +12,7 @@ import SuccessModal from '@/components/Modals/SuccessModal';
 import { ChurchInfoSection, OtherInfoSection, PersonalInfoSection, ProfileInfoSection } from '@/components/ProfileSection';
 import { icons } from '@/constants';
 import { useMentorMenteeProfile, useUpdateProfile, useUploadProfilePicture } from '@/hooks/useProfile';
-import { ChurchInfo, UpdateProfileData, UserRole } from '@/types/user.types';
+import { ChurchInfo, UpdateProfileData, UserRole, UserWithInterest } from '@/types/user.types';
 import { Colors } from '@/constants/Colors';
 
 const PROGRESS_ENABLED_ROLES: UserRole[] = ["Pastor", "Seminarian", "lay leader"];
@@ -21,11 +21,15 @@ interface ProfileContentProps {
     userId: string;
     isOwnProfile: boolean;
     bottomInsets: number;
+    profileData?: any;
+    isLoading: boolean;
+    isError: boolean;
 }
 
-export default function ProfileContent({ userId, isOwnProfile, bottomInsets }: ProfileContentProps) {
+export default function ProfileContent({ userId, isOwnProfile, bottomInsets, profileData,
+    isLoading,
+    isError }: ProfileContentProps) {
     const router = useRouter();
-    const { data: profileData, isLoading, isError } = useMentorMenteeProfile(userId);
 
     const updateProfile = useUpdateProfile(
         profileData?.user?.email || "",
@@ -153,109 +157,109 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets }: P
         </View>
     );
 
-    if (isLoading) return <View style={styles.center}><ActivityIndicator size="large" color="#fff" /><Text style={styles.loadingText}>Loading...</Text></View>;
     if (isError) return <View style={styles.center}><Text style={styles.errorText}>Error loading profile.</Text></View>;
 
     return (
         <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
-            <View style={{ flex: 1 }} pointerEvents={isSaving ? 'none' : 'auto'}>
-                <TopBar showUserName={isOwnProfile} />
+            {isLoading ? <View style={styles.center}><ActivityIndicator size="large" color="#fff" /><Text style={styles.loadingText}>Loading...</Text></View> : (
+                <View style={{ flex: 1 }} pointerEvents={isSaving ? 'none' : 'auto'}>
+                    <TopBar showUserName={isOwnProfile} />
 
-                <TouchableOpacity
-                    onPress={() => (isEditing ? handleCancel() : router.back())}
-                    style={styles.headerContainer}
-                    disabled={isSaving}
-                >
-                    <Ionicons name="chevron-back" size={28} color={isSaving ? 'rgba(255,255,255,0.5)' : '#fff'} />
-                    <Text style={[styles.headerTitle, isSaving && { color: 'rgba(255,255,255,0.5)' }]}>
-                        {isEditing ? 'Edit Profile' : 'My Profile'}
-                    </Text>
-                </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => (isEditing ? handleCancel() : router.back())}
+                        style={styles.headerContainer}
+                        disabled={isSaving}
+                    >
+                        <Ionicons name="chevron-back" size={28} color={isSaving ? 'rgba(255,255,255,0.5)' : '#fff'} />
+                        <Text style={[styles.headerTitle, isSaving && { color: 'rgba(255,255,255,0.5)' }]}>
+                            {isEditing ? 'Edit Profile' : 'My Profile'}
+                        </Text>
+                    </TouchableOpacity>
 
-                <KeyboardAwareScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInsets + 24 }]}
-                    showsVerticalScrollIndicator={false}
-                >
-                    <View style={styles.profileHeader}>
-                        {renderAvatar()}
-                        {!isEditing && (
-                            <>
-                                <Text style={styles.greeting}>{greeting} {profileData?.user?.firstName}</Text>
-                                <Text style={styles.roleText}>{profileData?.interest?.title || role?.toUpperCase()}</Text>
-                            </>
-                        )}
-                    </View>
+                    <KeyboardAwareScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInsets + 24 }]}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <View style={styles.profileHeader}>
+                            {renderAvatar()}
+                            {!isEditing && (
+                                <>
+                                    <Text style={styles.greeting}>{greeting} {profileData?.user?.firstName}</Text>
+                                    <Text style={styles.roleText}>{profileData?.interest?.title || role?.toUpperCase()}</Text>
+                                </>
+                            )}
+                        </View>
 
-                    {!isEditing && shouldShowProgress && (
-                        <View style={styles.progressContainer}>
-                            <Text style={styles.progressLabel}>Progress</Text>
-                            <View style={styles.progressBarContainer}>
-                                <View style={[styles.progressBar, { width: `${progressPercentage}%` }]} />
+                        {!isEditing && shouldShowProgress && (
+                            <View style={styles.progressContainer}>
+                                <Text style={styles.progressLabel}>Progress</Text>
+                                <View style={styles.progressBarContainer}>
+                                    <View style={[styles.progressBar, { width: `${progressPercentage}%` }]} />
+                                </View>
+                                <Text style={styles.progressText}>{progressPercentage}%</Text>
                             </View>
-                            <Text style={styles.progressText}>{progressPercentage}%</Text>
-                        </View>
-                    )}
-
-                    {!isEditing && !isDirector && (
-                        <View style={styles.actionButtons}>
-                            <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/profile/documents' as any)}>
-                                <Text style={styles.actionButtonText}>Documents</Text>
-                                <Image source={icons.attachmentIcon} style={styles.smallIcon} />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.actionButton} onPress={handleEditPress}>
-                                <Text style={styles.actionButtonText}>Edit Profile</Text>
-                                <Image source={icons.editIcon} style={styles.smallIcon} />
-                            </TouchableOpacity>
-                        </View>
-                    )}
-
-                    <View style={styles.mainContentBox}>
-                        <PersonalInfoSection
-                            isEditing={isEditing} profileData={profileData} formData={formData}
-                            onUpdateField={updateField} onPickImage={pickImage} profileImage={profileImage}
-                            onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
-                            showTitleDropdown={false} onTitleSelect={() => { }} onToggleTitleDropdown={() => { }}
-                        />
-
-                        {!isDirector && (
-                            <>
-                                <ProfileInfoSection
-                                    isEditing={isEditing} profileData={profileData} formData={formData}
-                                    onUpdateField={updateField} onPickImage={pickImage} profileImage={profileImage as string}
-                                    showTitleDropdown={showTitleDropdown} onTitleSelect={(v) => { updateField('title', v); setShowTitleDropdown(false); }}
-                                    onToggleTitleDropdown={setShowTitleDropdown} onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
-                                />
-                                <ChurchInfoSection
-                                    isEditing={isEditing} profileData={profileData} formData={formData}
-                                    onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
-                                    showTitleDropdown={false} onTitleSelect={() => { }} onToggleTitleDropdown={() => { }}
-                                    onPickImage={pickImage} profileImage={profileImage} onUpdateField={updateField}
-                                />
-                                <OtherInfoSection
-                                    isEditing={isEditing} profileData={profileData} formData={formData}
-                                    showTitleDropdown={showTitleDropdown} onUpdateField={updateField}
-                                    onTitleSelect={(v) => { updateField('title', v); setShowTitleDropdown(false); }}
-                                    onToggleTitleDropdown={setShowTitleDropdown} onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
-                                    onPickImage={pickImage} profileImage={profileImage}
-                                />
-                            </>
                         )}
-                    </View>
 
-                    {isEditing && (
-                        <View style={styles.editActions}>
-                            <TouchableOpacity style={[styles.actionButtonSecondary, styles.cancelButton]} onPress={handleCancel} disabled={isSaving}>
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.actionButtonSecondary, styles.saveButton]} onPress={() => setShowConfirmModal(true)} disabled={isSaving}>
-                                <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
-                            </TouchableOpacity>
+                        {!isEditing && !isDirector && (
+                            <View style={styles.actionButtons}>
+                                <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/profile/documents' as any)}>
+                                    <Text style={styles.actionButtonText}>Documents</Text>
+                                    <Image source={icons.attachmentIcon} style={styles.smallIcon} />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.actionButton} onPress={handleEditPress}>
+                                    <Text style={styles.actionButtonText}>Edit Profile</Text>
+                                    <Image source={icons.editIcon} style={styles.smallIcon} />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        <View style={styles.mainContentBox}>
+                            <PersonalInfoSection
+                                isEditing={isEditing} profileData={profileData} formData={formData}
+                                onUpdateField={updateField} onPickImage={pickImage} profileImage={profileImage}
+                                onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
+                                showTitleDropdown={false} onTitleSelect={() => { }} onToggleTitleDropdown={() => { }}
+                            />
+
+                            {!isDirector && (
+                                <>
+                                    <ProfileInfoSection
+                                        isEditing={isEditing} profileData={profileData} formData={formData}
+                                        onUpdateField={updateField} onPickImage={pickImage} profileImage={profileImage as string}
+                                        showTitleDropdown={showTitleDropdown} onTitleSelect={(v) => { updateField('title', v); setShowTitleDropdown(false); }}
+                                        onToggleTitleDropdown={setShowTitleDropdown} onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
+                                    />
+                                    <ChurchInfoSection
+                                        isEditing={isEditing} profileData={profileData} formData={formData}
+                                        onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
+                                        showTitleDropdown={false} onTitleSelect={() => { }} onToggleTitleDropdown={() => { }}
+                                        onPickImage={pickImage} profileImage={profileImage} onUpdateField={updateField}
+                                    />
+                                    <OtherInfoSection
+                                        isEditing={isEditing} profileData={profileData} formData={formData}
+                                        showTitleDropdown={showTitleDropdown} onUpdateField={updateField}
+                                        onTitleSelect={(v) => { updateField('title', v); setShowTitleDropdown(false); }}
+                                        onToggleTitleDropdown={setShowTitleDropdown} onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
+                                        onPickImage={pickImage} profileImage={profileImage}
+                                    />
+                                </>
+                            )}
                         </View>
-                    )}
-                </KeyboardAwareScrollView>
-            </View>
 
+                        {isEditing && (
+                            <View style={styles.editActions}>
+                                <TouchableOpacity style={[styles.actionButtonSecondary, styles.cancelButton]} onPress={handleCancel} disabled={isSaving}>
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.actionButtonSecondary, styles.saveButton]} onPress={() => setShowConfirmModal(true)} disabled={isSaving}>
+                                    <Text style={styles.saveButtonText}>{isSaving ? 'Saving...' : 'Save'}</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </KeyboardAwareScrollView>
+                </View>
+            )}
             {isSaving && (
                 <View style={styles.centeredOverlay}>
                     <ActivityIndicator size="large" color="#fff" />

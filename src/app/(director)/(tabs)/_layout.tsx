@@ -1,3 +1,4 @@
+// app/(director)/(tabs)/_layout.tsx
 import { icons } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname } from "expo-router";
@@ -9,7 +10,6 @@ export default function DirectorTabLayout() {
     const pathname = usePathname();
     const { bottom } = useSafeAreaInsets();
 
-    /** HIDE TAB BAR ON SPECIFIC ROUTES - Computed during render to avoid lag */
     const isTabBarVisible = useMemo(() => {
         const hideWhenMatches = [
             /revitalization-roadmaps\/\([^\/]+\)/,
@@ -53,6 +53,7 @@ export default function DirectorTabLayout() {
                 },
             }}
         >
+            {/* VISIBLE TABS */}
             <Tabs.Screen
                 name="index"
                 options={{
@@ -77,33 +78,55 @@ export default function DirectorTabLayout() {
                 name="profile/index"
                 options={{
                     title: "Profile",
-                    tabBarIcon: ({ color }) => <Image source={icons.profileTabIcon} style={{ width: 28, height: 28, tintColor: color }} />,
-
+                    tabBarIcon: ({ color }) => (
+                        <Image
+                            source={icons.profileTabIcon}
+                            style={{ width: 28, height: 28, tintColor: color }}
+                        />
+                    ),
                 }}
             />
 
+            {/* HIDDEN SCREENS - Use href: null */}
+            <Tabs.Screen name="profile/documents" options={{ href: null }} />
+
+            {/* Hide all route groups and standalone routes from tab bar */}
             <Tabs.Screen
-                name="profile/documents"
-                options={{
-                    href: null,
-                }}
+                name="(index)"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="(mentors)"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="(mentees)"
+                options={{ href: null }}
+            />
+            <Tabs.Screen
+                name="(progress-tracker)"
+                options={{ href: null }}
             />
 
+            {/* OR if using combined route group */}
+            {/* <Tabs.Screen
+                name="(index,mentors,mentees,progress-tracker)"
+                options={{ href: null }}
+            /> */}
+
+            {/* Hide other routes */}
             {[
                 "notification",
                 "directors",
                 "documents",
-                "mentors",
-                "mentees",
                 "new-interests",
-                "progress-tracker",
                 "micro-grant",
                 "product-and-services",
                 "roadmaps",
                 "appointments",
                 "ccc",
                 "assessments",
-                "notifications"
+                "notifications",
             ].map((route) => (
                 <Tabs.Screen key={route} name={route} options={{ href: null }} />
             ))}

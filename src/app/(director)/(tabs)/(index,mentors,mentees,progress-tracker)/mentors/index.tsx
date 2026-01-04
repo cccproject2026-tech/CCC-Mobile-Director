@@ -98,10 +98,7 @@ export default function Mentors() {
                     bottomSheetRef.current?.dismiss();
 
                     // Navigate and pass the mentorId param
-                    router.push({
-                        pathname: "/(director)/(tabs)/progress-tracker",
-                        params: { mentorId: selectedMentor.id },
-                    });
+                    router.push(`/(director)/(tabs)/progress-tracker/mentors/${selectedMentor.id}`);
                 }
             },
         },
@@ -185,6 +182,7 @@ export default function Mentors() {
         setSelectedMentor(mentor);
         setTimeout(() => bottomSheetRef.current?.present(), 10);
     }, []);
+
 
     const renderItem = ({ item }: { item: Mentor }) => (
         <MentorCard

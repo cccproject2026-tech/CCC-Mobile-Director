@@ -318,7 +318,7 @@ export default function Mentees() {
                                     data={mentee}
                                     layout={viewMode}
                                     onPress={() =>
-                                        router.push(`/(director)/(tabs)/mentees/${mentee.id}/profile`)
+                                        router.push(`/(director)/(tabs)/(mentees)/${mentee.id}`)
                                     }
                                     onCall={() => console.log('Call', mentee.name)}
                                     onChat={() => console.log('Chat', mentee.name)}

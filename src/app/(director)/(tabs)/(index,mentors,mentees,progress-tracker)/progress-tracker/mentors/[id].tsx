@@ -1,13 +1,12 @@
+// app/(director)/(tabs)/progress-tracker/mentors/[id].tsx
 import MenteeCard from '@/components/Cards/MenteeCard';
-import MentorCard from '@/components/Cards/MentorCard';
 import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
-import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
 import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
 import { useMentees } from '@/hooks/useMentees';
-import { useMentors } from '@/hooks/useMentors';
-import { Mentee, Mentor } from '@/types/user.types';
+import { useUserProfile } from '@/hooks/useProfile';
+import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,53 +21,46 @@ import {
     View,
 } from 'react-native';
 
-type TabKey = 'all' | 'mentor-wise' | 'in-progress' | 'completed';
+type TabKey = 'all' | 'in-progress' | 'completed';
 
-export default function ProgressTracker() {
-    const params = useLocalSearchParams<{ mentorId?: string }>();
+export default function MentorProgressTracker() {
     const router = useRouter();
+    const { id: mentorId } = useLocalSearchParams<{ id: string }>();
+
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<TabKey>('all');
-    const [filterModalVisible, setFilterModalVisible] = useState(false);
-    const [selectedFilter, setSelectedFilter] =
-        useState('Course Completion : Oldest');
     const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
     const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
-    const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
 
+    // Fetch only the specific mentor's profile
+    const { data: mentorProfile, isLoading: mentorLoading, isError: mentorError } = useUserProfile(mentorId);
 
-
-
+    // Fetch all mentees
     const { data: menteesData, isLoading: menteesLoading } = useMentees();
-    const mentees: Mentee[] = menteesData?.mentees ?? [];
+    const allMentees: Mentee[] = menteesData?.mentees ?? [];
 
-    const { mentors, isLoading: mentorsLoading } = useMentors();
+    // Extract mentor data and assigned IDs
+    const mentorData = mentorProfile;
+    const assignedMenteeIds: string[] = Array.isArray(mentorData?.assignedId)
+        ? mentorData.assignedId
+        : [];
+
+    // Debug logging
+    useEffect(() => {
+        if (mentorData) {
+            console.log('🔍 Mentor Data:', {
+                id: mentorData.id,
+                name: `${mentorData.firstName} ${mentorData.lastName}`,
+                assignedIds: assignedMenteeIds,
+                assignedCount: assignedMenteeIds.length
+            });
+        }
+    }, [mentorData, assignedMenteeIds]);
 
     useEffect(() => {
-        if (params.mentorId && mentors.length > 0) {
-            const targetMentor = mentors.find(m => m.id === params.mentorId);
-            if (targetMentor) {
-                setSelectedMentor(targetMentor);
-                setActiveTab('all'); // Default to 'All' or 'In-progress'
-            }
-        }
-    }, [params.mentorId, mentors]);
-
-    const getFilterOptions = (): FilterOption[] => {
-        return [
-            {
-                label: 'Course Completion',
-                options: ['Latest', 'Oldest'],
-                isExpandable: true,
-            },
-            {
-                label: 'Conference',
-                isExpandable: true,
-            },
-        ];
-    };
-
-    const filterOptions = useMemo(() => getFilterOptions(), []);
+        console.log('👥 Total Mentees:', allMentees.length);
+        console.log('🎯 Assigned Mentee IDs:', assignedMenteeIds);
+    }, [allMentees, assignedMenteeIds]);
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -159,61 +151,86 @@ export default function ProgressTracker() {
         },
     ];
 
-    // Tabs depend on whether a mentor is selected
-    const baseTabs = [
-        { key: 'all', label: 'All Mentees' },
-        { key: 'mentor-wise', label: 'Mentor Wise' },
-        { key: 'in-progress', label: 'In-progress' },
-    ];
-
-    const mentorTabs = [
+    const tabs = [
         { key: 'all', label: 'All Mentees' },
         { key: 'in-progress', label: 'In-progress' },
         { key: 'completed', label: 'Completed' },
     ];
 
-    const tabs = selectedMentor ? mentorTabs : baseTabs;
+    const isLoading = menteesLoading || mentorLoading;
 
-    const isLoading = menteesLoading || mentorsLoading;
-
-    const handleBack = () => {
-        if (selectedMentor) {
-            setSelectedMentor(null);
-            setActiveTab('mentor-wise');
-        } else {
-            router.back();
-        }
-    };
-
-    const handleMentorPress = (mentor: Mentor) => {
-        // When selecting a mentor, go into "mentor detail" state and default to In-progress,
-        // exactly like the design.
-        setSelectedMentor(mentor);
-        setActiveTab('all');
-    };
-
+    // Filter mentees by mentor's assigned IDs
     const filteredMentees: Mentee[] = useMemo(() => {
-        let list = mentees;
+        console.log('🔄 Starting filtering...');
 
-        if (selectedMentor && selectedMentor.assignedId?.length) {
-            list = list.filter(m => selectedMentor.assignedId!.includes(m.id));
+        // IMPORTANT: First filter by assigned IDs
+        let list = allMentees;
+
+        // If mentor has no assigned mentees, return empty array
+        if (!assignedMenteeIds || assignedMenteeIds.length === 0) {
+            console.log('⚠️ No assigned mentees for this mentor');
+            return [];
         }
 
+        // Filter by mentor's assigned mentees
+        list = list.filter(mentee => {
+            const isAssigned = assignedMenteeIds.includes(mentee.id);
+            if (!isAssigned) {
+                console.log(`❌ Mentee ${mentee.firstName} ${mentee.lastName} (${mentee.id}) - NOT assigned`);
+            } else {
+                console.log(`✅ Mentee ${mentee.firstName} ${mentee.lastName} (${mentee.id}) - ASSIGNED`);
+            }
+            return isAssigned;
+        });
+
+        console.log(`📊 After assignedId filter: ${list.length} mentees`);
+
+        // Filter by search
         if (search) {
             const q = search.toLowerCase();
             list = list.filter(m =>
                 `${m.firstName} ${m.lastName ?? ''}`.toLowerCase().includes(q),
             );
+            console.log(`🔍 After search filter: ${list.length} mentees`);
         }
 
+        // Filter by tab
         if (activeTab === 'completed') {
             list = list.filter(m => m.hasCompleted || m.progress === 100);
+            console.log(`✔️ After completed filter: ${list.length} mentees`);
         } else if (activeTab === 'in-progress') {
             list = list.filter(m => !m.hasCompleted && (m.progress ?? 0) < 100);
+            console.log(`⏳ After in-progress filter: ${list.length} mentees`);
         }
 
+        console.log(`🎯 Final filtered list: ${list.length} mentees`);
         return list;
-    }, [mentees, search, activeTab, selectedMentor]);
+    }, [allMentees, search, activeTab, assignedMenteeIds]);
+
+    // Error state
+    if (mentorError || (!mentorLoading && !mentorData)) {
+        return (
+            <LinearGradient
+                colors={['#176192', '#1D548D', '#264387']}
+                style={styles.screen}
+            >
+                <View style={styles.pageRoot}>
+                    <TopBar showUserName showNotifications />
+                    <View style={styles.content}>
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorText}>Mentor not found</Text>
+                            <TouchableOpacity
+                                onPress={() => router.back()}
+                                style={styles.backButton}
+                            >
+                                <Text style={styles.backButtonText}>Go Back</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </LinearGradient>
+        );
+    }
 
     return (
         <LinearGradient
@@ -226,14 +243,17 @@ export default function ProgressTracker() {
                 <View style={styles.content}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <TouchableOpacity onPress={handleBack} style={styles.headerLeft}>
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={styles.headerLeft}
+                        >
                             <Ionicons name="chevron-back" size={28} color="#fff" />
                             <View>
                                 <Text style={styles.headerTitle}>Progress Tracker</Text>
-                                {selectedMentor && (
+                                {mentorData && (
                                     <Text style={styles.headerSubtitle}>
-                                        Mentor &gt; {selectedMentor.firstName}{' '}
-                                        {selectedMentor.lastName ?? ''}
+                                        Mentor &gt; {mentorData.firstName}{' '}
+                                        {mentorData.lastName ?? ''} ({assignedMenteeIds.length} assigned)
                                     </Text>
                                 )}
                             </View>
@@ -272,77 +292,65 @@ export default function ProgressTracker() {
                         <View style={styles.loadingContainer}>
                             <ActivityIndicator size="large" color="#fff" />
                         </View>
+                    ) : filteredMentees.length === 0 ? (
+                        <View style={styles.emptyContainer}>
+                            <Ionicons name="people-outline" size={64} color="rgba(255,255,255,0.3)" />
+                            <Text style={styles.emptyText}>
+                                {assignedMenteeIds.length === 0
+                                    ? 'No mentees assigned to this mentor'
+                                    : activeTab === 'completed'
+                                        ? 'No completed mentees'
+                                        : activeTab === 'in-progress'
+                                            ? 'No mentees in progress'
+                                            : 'No mentees found'}
+                            </Text>
+                        </View>
                     ) : (
                         <ScrollView
                             style={styles.scroll}
                             contentContainerStyle={styles.scrollContent}
                             showsVerticalScrollIndicator={false}
                         >
-                            {!selectedMentor && activeTab === 'mentor-wise'
-                                ? mentors.map(item => (
-                                    <MentorCard
-                                        key={item.id}
-                                        mentor={{
-                                            id: item.id,
-                                            name: `${item.firstName} ${item.lastName ?? ''}`,
-                                            role:
-                                                item.role === 'Field Mentor'
-                                                    ? 'Field Mentor'
-                                                    : 'Mentor',
-                                            menteesCount: item.assignedId?.length ?? 0,
-                                            description: item.profileInfo ?? 'No profile info',
-                                            profilePicture: item.profilePicture,
-                                        }}
-                                        layout={viewMode}
-                                        onCall={() => console.log('CALL', item.phoneNumber)}
-                                        onWhatsApp={() =>
-                                            console.log('WHATSAPP', item.phoneNumber)
-                                        }
-                                        onMail={() => console.log('MAIL', item.email)}
-                                        onChat={() => console.log('CHAT')}
-                                        onPress={() => handleMentorPress(item)}
-                                    />
-                                ))
-                                : filteredMentees.map(mentee => (
-                                    <MenteeCard
-                                        key={mentee.id}
-                                        data={mentee as Mentee}
-                                        layout={viewMode}
-                                        onPress={() =>
-                                            router.push(
-                                                `/(director)/(tabs)/mentees/${mentee.id}/progress`,
-                                            )
-                                        }
-                                        onCall={() =>
-                                            console.log(
-                                                'Call',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
-                                        onChat={() =>
-                                            console.log(
-                                                'Chat',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
-                                        onMail={() =>
-                                            console.log(
-                                                'Mail',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
-                                        onWhatsApp={() =>
-                                            console.log(
-                                                'WhatsApp',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
-                                        onMenuPress={() => handleMenuPress(mentee)}
-                                        onMarkComplete={() =>
-                                            console.log('Mark complete', mentee.firstName)
-                                        }
-                                    />
-                                ))}
+                            {filteredMentees.map(mentee => (
+                                <MenteeCard
+                                    key={mentee.id}
+                                    data={mentee as Mentee}
+                                    layout={viewMode}
+                                    onPress={() =>
+                                        router.push(
+                                            `/(director)/(tabs)/mentees/${mentee.id}/progress`,
+                                        )
+                                    }
+                                    onCall={() =>
+                                        console.log(
+                                            'Call',
+                                            `${mentee.firstName} ${mentee.lastName ?? ''}`,
+                                        )
+                                    }
+                                    onChat={() =>
+                                        console.log(
+                                            'Chat',
+                                            `${mentee.firstName} ${mentee.lastName ?? ''}`,
+                                        )
+                                    }
+                                    onMail={() =>
+                                        console.log(
+                                            'Mail',
+                                            `${mentee.firstName} ${mentee.lastName ?? ''}`,
+                                        )
+                                    }
+                                    onWhatsApp={() =>
+                                        console.log(
+                                            'WhatsApp',
+                                            `${mentee.firstName} ${mentee.lastName ?? ''}`,
+                                        )
+                                    }
+                                    onMenuPress={() => handleMenuPress(mentee)}
+                                    onMarkComplete={() =>
+                                        console.log('Mark complete', mentee.firstName)
+                                    }
+                                />
+                            ))}
                         </ScrollView>
                     )}
                 </View>
@@ -357,17 +365,6 @@ export default function ProgressTracker() {
                     image={selectedMentee?.profilePicture}
                     actions={menuItems}
                     onClose={handleCloseModal}
-                />
-
-                <FilterModal
-                    visible={filterModalVisible}
-                    onClose={() => setFilterModalVisible(false)}
-                    selectedFilter={selectedFilter}
-                    onFilterSelect={filter => {
-                        setSelectedFilter(filter);
-                        setFilterModalVisible(false);
-                    }}
-                    filterOptions={filterOptions}
                 />
             </View>
         </LinearGradient>
@@ -391,6 +388,7 @@ const styles = StyleSheet.create({
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
     },
     headerTitle: {
         fontSize: 16,
@@ -402,6 +400,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: 'rgba(255,255,255,0.8)',
         marginLeft: 8,
+        marginTop: 2,
     },
     headerActions: {
         flexDirection: 'row',
@@ -424,5 +423,41 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    errorText: {
+        color: '#fff',
+        fontSize: 16,
+        marginBottom: 20,
+    },
+    backButton: {
+        backgroundColor: '#fff',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 8,
+    },
+    backButtonText: {
+        color: '#176192',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyText: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 14,
+        marginTop: 16,
+        textAlign: 'center',
     },
 });
