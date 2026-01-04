@@ -72,7 +72,7 @@ export default function Mentees() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentors/mentor-mentees');
+                    router.push('/mentors/mentor-mentees');
                 }, 300);
             },
         },
@@ -82,7 +82,7 @@ export default function Mentees() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/assign-mentors');
+                    router.push('/mentees/assign-mentors');
                 }, 300);
             },
         },
@@ -92,7 +92,7 @@ export default function Mentees() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/remove-mentors');
+                    router.push('/mentees/remove-mentors');
                 }, 300);
             },
         },
@@ -105,7 +105,7 @@ export default function Mentees() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push(`/(director)/(tabs)/mentees/notes`);
+                    router.push(`/mentees/notes`);
                 }, 300);
             },
         },
@@ -269,7 +269,7 @@ export default function Mentees() {
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={styles.actionButton}
-                                onPress={() => router.push('/(director)/(tabs)/mentees/mentees-location')}
+                                onPress={() => router.push('/mentees/mentees-location')}
                             >
                                 <Ionicons name="location-outline" size={24} color="#fff" />
                             </TouchableOpacity>
@@ -318,7 +318,7 @@ export default function Mentees() {
                                     data={mentee}
                                     layout={viewMode}
                                     onPress={() =>
-                                        router.push(`/(director)/(tabs)/(mentees)/${mentee.id}`)
+                                        router.push(`/mentees/${mentee.id}`)
                                     }
                                     onCall={() => console.log('Call', mentee.name)}
                                     onChat={() => console.log('Chat', mentee.name)}

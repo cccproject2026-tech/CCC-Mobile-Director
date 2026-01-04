@@ -1,5 +1,3 @@
-// app/(director)/(tabs)/revitalization-roadmaps/index.tsx
-
 import MenteeCard from '@/components/Cards/MenteeCard';
 import MentorCard from '@/components/Cards/MentorCard';
 import RoadmapCard from '@/components/Cards/RoadmapCard';
@@ -13,7 +11,7 @@ import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
 import CreateRoadmapSheet, { RoadmapFormData } from '@/components/Sheets/CreateRoadmapSheet';
 import { useMentees } from '@/hooks/useMentees';
 import { useMentors } from '@/hooks/useMentors';
-import { useAllRoadmaps } from '@/hooks/roadmap/useRoadmaps';
+import { useAllRoadmaps, useDeleteRoadmap } from '@/hooks/roadmap/useRoadmaps';
 import { Mentee, Mentor } from '@/types/user.types';
 import { getRoadmapCard } from '@/utils/roadmapMapper';
 import { Ionicons } from '@expo/vector-icons';
@@ -57,6 +55,8 @@ export default function RevitalizationRoadmap() {
         error: roadmapsError,
         refetch: refetchRoadmaps,
     } = useAllRoadmaps();
+
+    const deleteRoadmapMutation = useDeleteRoadmap();
 
     const { mentors, isLoading: mentorsLoading } = useMentors();
     const { data: menteesData, isLoading: menteesLoading } = useMentees();
@@ -104,7 +104,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentors/mentor-mentees');
+                    router.push('/mentors/mentor-mentees');
                 }, 300);
             },
         },
@@ -114,7 +114,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/assign-mentors');
+                    router.push('/mentees/assign-mentors');
                 }, 300);
             },
         },
@@ -124,7 +124,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/remove-mentors');
+                    router.push('/mentees/remove-mentors');
                 }, 300);
             },
         },
@@ -154,7 +154,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push(`/(director)/(tabs)/mentees/notes`);
+                    router.push(`/mentees/notes`);
                 }, 300);
             },
         },
@@ -180,17 +180,17 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'people-outline',
             label: 'List of Mentees',
-            onPress: () => router.push('/(director)/(tabs)/mentors/mentor-mentees'),
+            onPress: () => router.push('/mentors/mentor-mentees'),
         },
         {
             icon: 'person-add-outline',
             label: 'Assign New Mentee',
-            onPress: () => router.push('/(director)/(tabs)/mentors/assign-mentees'),
+            onPress: () => router.push('/mentors/assign-mentees'),
         },
         {
             icon: 'person-remove-outline',
             label: 'Remove a Mentee',
-            onPress: () => router.push('/(director)/(tabs)/mentors/remove-mentee'),
+            onPress: () => router.push('/mentors/remove-mentee'),
         },
         {
             icon: 'clipboard-outline',
@@ -233,17 +233,17 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'people-outline',
             label: 'List of Mentees',
-            onPress: () => router.push('/(director)/(tabs)/mentors/mentor-mentees'),
+            onPress: () => router.push('/mentors/mentor-mentees'),
         },
         {
             icon: 'person-add-outline',
             label: 'Assign New Mentee',
-            onPress: () => router.push('/(director)/(tabs)/mentors/assign-mentees'),
+            onPress: () => router.push('/mentors/assign-mentees'),
         },
         {
             icon: 'person-remove-outline',
             label: 'Remove a Mentee',
-            onPress: () => router.push('/(director)/(tabs)/mentors/remove-mentee'),
+            onPress: () => router.push('/mentors/remove-mentee'),
         },
         {
             icon: 'calendar-outline',
@@ -275,7 +275,7 @@ export default function RevitalizationRoadmap() {
                 handleCloseModal();
                 setTimeout(() => {
                     router.push({
-                        pathname: '/(director)/(tabs)/mentors/assign-mentees',
+                        pathname: '/mentors/assign-mentees',
                         params: { roadmapId: roadmap._id },
                     });
                 }, 300);
@@ -294,7 +294,10 @@ export default function RevitalizationRoadmap() {
                 // ✅ For phase roadmaps: Navigate to phase details page
                 if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
                     setTimeout(() => {
-                        router.push(`/(director)/(tabs)/roadmaps/${roadmap._id}`);
+                        router.push({
+                            pathname: `/(director)/(tabs)/roadmaps/phase-list`,
+                            params: { roadmapId: roadmap._id },
+                        });
                     }, 300);
                 } else {
                     // ✅ For single roadmaps: Open roadmap form in edit mode
@@ -335,8 +338,20 @@ export default function RevitalizationRoadmap() {
                             style: 'destructive',
                             onPress: () => {
                                 // TODO: Implement delete mutation
-                                console.log('Delete Roadmap:', roadmap._id);
-                            },
+                                deleteRoadmapMutation.mutate(roadmap._id, {
+                                    onSuccess: () => {
+                                        console.log('✅ Roadmap deleted successfully');
+                                        refetchRoadmaps();
+                                    },
+                                    onError: (error) => {
+                                        console.error('❌ Error deleting roadmap:', error);
+                                        Alert.alert(
+                                            'Error',
+                                            'Failed to delete roadmap. Please try again later.'
+                                        );
+                                    },
+                                });
+                            }
                         },
                     ]
                 );
@@ -552,7 +567,7 @@ export default function RevitalizationRoadmap() {
                         <ProfileSwiper
                             profiles={mentorProfiles}
                             onProfilePress={profile =>
-                                router.push(`/(director)/(tabs)/mentors/${profile.id}`)
+                                router.push(`/mentors/${profile.id}`)
                             }
                         />
                     </View>
@@ -642,7 +657,7 @@ export default function RevitalizationRoadmap() {
                             filteredMentors.map(mentor => (
                                 <TouchableOpacity
                                     key={mentor.id}
-                                    onPress={() => router.push(`/(director)/(tabs)/mentors/${mentor.id}`)}
+                                    onPress={() => router.push(`/mentors/${mentor.id}`)}
                                     activeOpacity={0.8}
                                 >
                                     <MentorCard
@@ -676,7 +691,7 @@ export default function RevitalizationRoadmap() {
                                     data={mentee}
                                     layout={viewMode}
                                     onPress={() =>
-                                        router.push(`/(director)/(tabs)/mentees/${mentee.id}/progress`)
+                                        router.push(`/mentees/${mentee.id}/progress`)
                                     }
                                     onCall={() => console.log('Call', mentee.phoneNumber)}
                                     onChat={() => console.log('Chat', mentee.id)}

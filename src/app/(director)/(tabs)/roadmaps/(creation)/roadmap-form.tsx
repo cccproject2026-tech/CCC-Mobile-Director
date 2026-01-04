@@ -43,9 +43,12 @@ export default function RoadmapFormScreen() {
     const nestedRoadmapId = params.nestedRoadmapId as string;
     const roadmapType = (params.type as 'single' | 'phase') || 'single';
 
+    console.log('RoadmapFormScreen params:', params);
+    console.log('Roadmap Type:', roadmapType);
     // ✅ Fetch parent roadmap (only if editing)
-    const { data: parentRoadmap, isLoading } = useRoadmap(isEditMode ? roadmapId : undefined);
+    const { data: parentRoadmap, isLoading } = useRoadmap(roadmapId);
 
+    console.log('Parent Roadmap:', parentRoadmap);
     // ✅ Mutations
     const createNestedMutation = useCreateNestedRoadmap();
     const updateRoadmapMutation = useUpdateRoadmap();
@@ -485,7 +488,7 @@ export default function RoadmapFormScreen() {
                         name: roadmapData.name,
                         roadMapDetails: roadmapData.subheading,
                         description: formData.descriptionVerbiage,
-                        duration: roadmapData.completionTime,
+                        duration: roadmapData.completionTime || parentRoadmap?.duration || '',
                         ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
                         ...(roadmapData.selectedDivision && {
                             phase: roadmapData.selectedDivision,
@@ -594,6 +597,7 @@ export default function RoadmapFormScreen() {
 
     // ✅ Render fields with all renderers
     const renderField = (field: any) => {
+        console.log('Rendering field:', field);
         switch (field.type) {
             case 'text':
                 return (

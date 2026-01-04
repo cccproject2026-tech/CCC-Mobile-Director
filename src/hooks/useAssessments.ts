@@ -1,6 +1,6 @@
 import { assessmentService } from '@/services/assessments.service';
-import { ApiAssessment, Assessment } from '@/types/assessment.types';
-import { useQuery } from '@tanstack/react-query';
+import { ApiAssessment, Assessment, CreateAssessmentRequest } from '@/types/assessment.types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useAssessmentProgress } from './useProgress';
 import { mapApiToFrontend } from '@/utils/assessmentMapper';
@@ -94,3 +94,15 @@ export const useAssignedAssessments = (userId: string) => {
         assignedCount: assignedAssessmentIds.length,
     };
 };
+
+export const useCreateAssessmentMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (newAssessment: CreateAssessmentRequest) =>
+            assessmentService.createAssessment(newAssessment),
+        onSuccess: () => {
+            // Invalidate and refetch assessments query
+            queryClient.invalidateQueries({ queryKey: ['assessments'] });
+        },
+    });
+}

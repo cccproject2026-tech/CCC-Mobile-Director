@@ -8,7 +8,7 @@ interface UploadButtonRendererProps {
     field: {
         id: string;
         type: 'upload';
-        buttonLabel?: string; // ✅ Made optional
+        buttonName?: string; // ✅ Made optional
     };
     onEdit: (fieldId: string) => void;
     onDelete: (fieldId: string) => void;
@@ -45,7 +45,7 @@ export const UploadButtonRenderer: React.FC<UploadButtonRendererProps> = ({
                 <Ionicons name="attach-outline" size={20} color="#1A4882" />
                 {/* ✅ Show button label or default text */}
                 <Text style={styles.uploadButtonText}>
-                    {field.buttonLabel || 'Upload'}
+                    {field.buttonName || 'Upload'}
                 </Text>
             </TouchableOpacity>
         </View>

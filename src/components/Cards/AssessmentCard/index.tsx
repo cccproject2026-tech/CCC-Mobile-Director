@@ -1,45 +1,92 @@
-import { AssessmentProgress } from '@/types/progress.types';
+// components/Cards/AssessmentCard.tsx
+import { ApiAssessment } from '@/types/assessment.types';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Props {
-    data: AssessmentProgress;
+    data: ApiAssessment;
+    onPress?: () => void;
     onDevelopmentPlanPress?: () => void;
 }
 
-export const AssessmentCard: React.FC<Props> = ({ data, onDevelopmentPlanPress }) => {
-    const isCompleted = data.status.toLowerCase() === 'completed';
+export const AssessmentCard: React.FC<Props> = ({ data, onPress, onDevelopmentPlanPress }) => {
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    };
 
-    const renderCustomizedBadge = () => (
-        <TouchableOpacity
-            onPress={() => {
-                console.log('Development Plan button pressed', { data: data.title, onDevelopmentPlanPress });
-                onDevelopmentPlanPress?.();
-            }}
-            style={styles.customBadge}>
-            <Text style={styles.customBadgeText}>Customized Development Plans</Text>
-        </TouchableOpacity>
+    const renderTypeBadge = () => (
+        <View style={[
+            styles.typeBadge,
+            data.type === 'CMA' ? styles.typeCMA : styles.typePMP
+        ]}>
+            <Text style={styles.typeBadgeText}>{data.type || 'PMP'}</Text>
+        </View>
+    );
+
+    const renderStats = () => (
+        <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+                <Text style={styles.statText}>
+                    {data.sections.length} {data.sections.length === 1 ? 'Section' : 'Sections'}
+                </Text>
+            </View>
+            {data.preSurvey && data.preSurvey.length > 0 && (
+                <View style={styles.statDot}>
+                    <Text style={styles.statText}>•</Text>
+                </View>
+            )}
+            {data.preSurvey && data.preSurvey.length > 0 && (
+                <View style={styles.statItem}>
+                    <Text style={styles.statText}>
+                        {data.preSurvey.length} Pre-Survey
+                    </Text>
+                </View>
+            )}
+            <View style={styles.statDot}>
+                <Text style={styles.statText}>•</Text>
+            </View>
+            <View style={styles.statItem}>
+                <Text style={styles.statText}>
+                    {data.assignments.length} Assigned
+                </Text>
+            </View>
+        </View>
     );
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity
+            style={styles.card}
+            onPress={onPress}
+            activeOpacity={0.7}
+        >
             <View style={styles.content}>
                 <View style={styles.imageContainer}>
-                    <Image source={data.image} style={styles.image} />
+                    <Image
+                        source={require('@/assets/images/app/jumpstart.png')}
+                        style={styles.image}
+                    />
+                    {renderTypeBadge()}
                 </View>
 
                 <View style={styles.textContent}>
-                    <Text style={styles.title} numberOfLines={2}>{data.title}</Text>
-                    {data.description && <Text style={styles.description} numberOfLines={2}>{data.description}</Text>}
-                    {isCompleted && renderCustomizedBadge()}
-                    {data.submittedDate ? (
-                        <Text style={styles.dateText}>Submitted on : {data.submittedDate}</Text>
-                    ) : data.dueDate ? (
-                        <Text style={styles.dateText}>Due : {data.dueDate}</Text>
-                    ) : null}
+                    <Text style={styles.title} numberOfLines={2}>{data.name}</Text>
+                    {data.description && (
+                        <Text style={styles.description} numberOfLines={2}>
+                            {data.description}
+                        </Text>
+                    )}
+                    {renderStats()}
+                    <Text style={styles.dateText}>
+                        Created on: {formatDate(data.createdAt)}
+                    </Text>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 };
 
@@ -65,11 +112,31 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         marginRight: 14,
         flexShrink: 0,
+        position: 'relative',
     },
     image: {
         width: '100%',
         height: '100%',
         resizeMode: 'cover',
+    },
+    typeBadge: {
+        position: 'absolute',
+        top: 6,
+        left: 6,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    typeCMA: {
+        backgroundColor: 'rgba(94, 179, 209, 0.9)',
+    },
+    typePMP: {
+        backgroundColor: 'rgba(255, 179, 71, 0.9)',
+    },
+    typeBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#FFFFFF',
     },
     textContent: {
         flex: 1,
@@ -90,19 +157,22 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         lineHeight: 18,
     },
-    customBadge: {
-        alignSelf: 'flex-start',
-        borderWidth: 1.5,
-        borderColor: 'rgba(0, 255, 255, 0.8)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 18,
+    statsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
         marginBottom: 8,
     },
-    customBadgeText: {
+    statItem: {
+        marginRight: 4,
+    },
+    statDot: {
+        marginHorizontal: 4,
+    },
+    statText: {
         fontSize: 12,
-        fontWeight: '600',
-        color: '#FFD700',
+        fontWeight: '500',
+        color: 'rgba(255, 255, 255, 0.68)',
     },
     dateText: {
         fontSize: 12.5,
