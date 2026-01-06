@@ -132,3 +132,32 @@ export const useMenteeMentors = (menteeId: string | undefined) => {
         error: query.error,
     };
 };
+
+
+export const useAssignAssignmentsToMentee = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ menteeIds, assessmentIds }: { menteeIds: string[]; assessmentIds: string[] }) => {
+            await menteesService.assignAssessmentsToMentee(menteeIds, assessmentIds);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['mentees'] });
+            queryClient.invalidateQueries({ queryKey: ['progress'] });
+        },
+    });
+}
+
+export const useAssignRoadmapsToMentee = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ menteeIds, roadmapIds }: { menteeIds: string[]; roadmapIds: string[] }) => {
+            await menteesService.assignRoadmapsToMentee(menteeIds, roadmapIds);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['mentees'] });
+            queryClient.invalidateQueries({ queryKey: ['progress'] });
+        },
+    });
+}

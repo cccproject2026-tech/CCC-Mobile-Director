@@ -39,6 +39,7 @@ export interface Roadmap {
     divisions?: string[];
     phase?: string;
     status: RoadmapStatus;
+    completedOn?: string;
     totalSteps?: number;
     haveNextedRoadMaps: boolean;
     roadmaps: NestedRoadmap[];
@@ -140,6 +141,7 @@ export interface UpdateNestedRoadmapResponse {
 export type RoadmapCardStatus = 'initial' | 'in-progress' | 'completed' | 'due';
 
 export interface RoadmapCardData {
+    _id: string;
     image?: string | number;
     title: string;
     description?: string;

@@ -1,7 +1,7 @@
 import TopBar from '@/components/Header/TopBar';
 import SuccessModal from '@/components/Modals/SuccessModal';
 import { icons } from '@/constants';
-import { useCreateAssessmentMutation } from '@/hooks/useAssessments';
+import { useCreateAssessmentMutation, useUploadBannerImageMutation } from '@/hooks/useAssessments';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -63,8 +63,8 @@ export default function CreateAssessmentPage() {
     const { bottom } = useSafeAreaInsets();
     const router = useRouter();
 
-    // Assessment Type
-    const [assessmentType, setAssessmentType] = useState<AssessmentType>('PMP');
+    // Pre-Survey Toggle (determines PMP vs CMA)
+    const [hasPreSurvey, setHasPreSurvey] = useState(false);
 
     // Assessment Details
     const [assessmentName, setAssessmentName] = useState('');
@@ -75,7 +75,7 @@ export default function CreateAssessmentPage() {
         { id: '1', text: '' },
     ]);
 
-    // Pre-Survey Questions (for CMA only)
+    // Pre-Survey Questions (shown only if hasPreSurvey is true)
     const [preSurveyQuestions, setPreSurveyQuestions] = useState<PreSurveyQuestion[]>([
         { id: '1', text: '', type: 'number', placeholder: 'Enter number' },
     ]);
@@ -110,7 +110,10 @@ export default function CreateAssessmentPage() {
 
     // Loading and success states
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [createdAssessmentId, setCreatedAssessmentId] = useState<string | null>(null);
+
     const createAssessmentMutation = useCreateAssessmentMutation();
+    const uploadBannerMutation = useUploadBannerImageMutation();
 
     // Image Upload
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -365,9 +368,9 @@ export default function CreateAssessmentPage() {
             return;
         }
 
-        // Validate pre-survey questions for CMA
+        // Validate pre-survey questions if hasPreSurvey is true
         let validPreSurvey: { text: string; type: string; placeholder: string; required: boolean }[] = [];
-        if (assessmentType === 'CMA') {
+        if (hasPreSurvey) {
             validPreSurvey = preSurveyQuestions
                 .filter((q) => q.text.trim().length > 0)
                 .map((q) => ({
@@ -378,7 +381,7 @@ export default function CreateAssessmentPage() {
                 }));
 
             if (validPreSurvey.length === 0) {
-                Alert.alert('Error', 'Please add at least one pre-survey question for CMA.');
+                Alert.alert('Error', 'Please add at least one pre-survey question.');
                 return;
             }
         }
@@ -396,20 +399,23 @@ export default function CreateAssessmentPage() {
                             return null;
                         }
 
-                        // TODO: Add recommendations support in future
-                        // const validRecs = (section.layerRecommendations[layer.id] || [])
-                        //     .map((rec) => rec.text.trim())
-                        //     .filter((text) => text.length > 0);
+                        // Get recommendations for this layer
+                        const validRecs = (section.layerRecommendations[layer.id] || [])
+                            .map((rec) => rec.text.trim())
+                            .filter((text) => text.length > 0);
 
                         return {
                             title: layer.title.trim(),
                             choices: validChoices.map((text) => ({ text })),
-                            // recommendations: validRecs.map((text) => ({ text })),
+                            recommendations: validRecs, // Include recommendations as array of strings
                         };
                     })
                     .filter(
-                        (layer): layer is { title: string; choices: { text: string }[] } =>
-                            layer !== null
+                        (layer): layer is {
+                            title: string;
+                            choices: { text: string }[];
+                            recommendations: string[];
+                        } => layer !== null
                     );
 
                 if (validLayers.length === 0 || !section.name.trim()) {
@@ -426,7 +432,11 @@ export default function CreateAssessmentPage() {
                 (section): section is {
                     title: string;
                     description: string;
-                    layers: { title: string; choices: { text: string }[] }[];
+                    layers: {
+                        title: string;
+                        choices: { text: string }[];
+                        recommendations: string[];
+                    }[];
                 } => section !== null
             );
 
@@ -438,6 +448,9 @@ export default function CreateAssessmentPage() {
             return;
         }
 
+        // Determine assessment type based on hasPreSurvey
+        const assessmentType: AssessmentType = hasPreSurvey ? 'CMA' : 'PMP';
+
         const requestData: any = {
             name: assessmentName.trim(),
             description: briefDescription.trim(),
@@ -446,19 +459,46 @@ export default function CreateAssessmentPage() {
             sections: validSections,
         };
 
-        // Add preSurvey only for CMA
-        if (assessmentType === 'CMA') {
+        // Add preSurvey only if hasPreSurvey is true
+        if (hasPreSurvey) {
             requestData.preSurvey = validPreSurvey;
         }
 
         console.log('📤 Sending Assessment Data:', JSON.stringify(requestData, null, 2));
 
         createAssessmentMutation.mutate(requestData, {
-            onSuccess: () => {
-                setShowSuccessModal(true);
+            onSuccess: (data) => {
+                // Store the created assessment ID
+                const assessmentId = data._id
+                setCreatedAssessmentId(assessmentId);
+
+                console.log('✅ Assessment created successfully with ID:', assessmentId);
+
+                // If there's an uploaded image, upload it separately
+                if (uploadedImage && assessmentId) {
+                    console.log('📤 Uploading banner image for assessment:', assessmentId);
+                    uploadBannerMutation.mutate({ id: assessmentId, imageUri: uploadedImage }, {
+                        onSuccess: () => {
+                            console.log('✅ Banner image uploaded successfully');
+                            setShowSuccessModal(true);
+                        },
+                        onError: (err) => {
+                            console.error('❌ Failed to upload banner image:', err);
+                            // Still show success modal since assessment was created
+                            Alert.alert(
+                                'Partial Success',
+                                'Assessment created but failed to upload banner image.'
+                            );
+                            setShowSuccessModal(true);
+                        },
+                    });
+                } else {
+                    // No image to upload, show success immediately
+                    setShowSuccessModal(true);
+                }
             },
             onError: (err) => {
-                console.error('Failed to create assessment:', err);
+                console.error('❌ Failed to create assessment:', err);
                 Alert.alert('Error', 'Failed to create assessment. Please try again.');
             },
         });
@@ -510,32 +550,32 @@ export default function CreateAssessmentPage() {
                 {/* Divider */}
                 <View style={styles.divider} />
 
-                {/* Assessment Type Selection */}
+                {/* Pre-Survey Toggle */}
                 <View style={styles.typeSelectionContainer}>
-                    <Text style={styles.typeLabel}>Assessment Type</Text>
+                    <Text style={styles.typeLabel}>Include Pre-Survey Questions?</Text>
                     <View style={styles.radioGroup}>
                         <TouchableOpacity
                             style={styles.radioOption}
-                            onPress={() => setAssessmentType('PMP')}
+                            onPress={() => setHasPreSurvey(false)}
                         >
                             <View style={styles.radioCircle}>
-                                {assessmentType === 'PMP' && (
+                                {!hasPreSurvey && (
                                     <View style={styles.radioSelected} />
                                 )}
                             </View>
-                            <Text style={styles.radioText}>PMP</Text>
+                            <Text style={styles.radioText}>No</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.radioOption}
-                            onPress={() => setAssessmentType('CMA')}
+                            onPress={() => setHasPreSurvey(true)}
                         >
                             <View style={styles.radioCircle}>
-                                {assessmentType === 'CMA' && (
+                                {hasPreSurvey && (
                                     <View style={styles.radioSelected} />
                                 )}
                             </View>
-                            <Text style={styles.radioText}>CMA</Text>
+                            <Text style={styles.radioText}>Yes</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -561,8 +601,8 @@ export default function CreateAssessmentPage() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Pre-Survey Questions (CMA only) */}
-                {assessmentType === 'CMA' && (
+                {/* Pre-Survey Questions (shown only if hasPreSurvey is true) */}
+                {hasPreSurvey && (
                     <View style={styles.boxContainer}>
                         <Text style={styles.boxTitle}>Pre-Survey Questions</Text>
                         <Text style={styles.boxSubtitle}>
@@ -745,7 +785,7 @@ export default function CreateAssessmentPage() {
                                             <TextInput
                                                 key={rec.id}
                                                 style={styles.inputBox}
-                                                placeholder={`Suggestion ${recIndex + 1}`}
+                                                placeholder={`Recommendation ${recIndex + 1}`}
                                                 placeholderTextColor="rgba(255,255,255,0.5)"
                                                 value={rec.text}
                                                 onChangeText={(text) =>
@@ -767,7 +807,7 @@ export default function CreateAssessmentPage() {
                                         }
                                     >
                                         <Ionicons name="add" size={16} color="#FFF" />
-                                        <Text style={styles.addBtnText}>Suggestion</Text>
+                                        <Text style={styles.addBtnText}>Recommendation</Text>
                                     </TouchableOpacity>
                                 </View>
                             ))}
@@ -781,7 +821,7 @@ export default function CreateAssessmentPage() {
                     onPress={handleImagePicker}
                 >
                     <Image source={icons.attachmentIcon} style={styles.uploadIcon} />
-                    <Text style={styles.uploadText}>Upload Image</Text>
+                    <Text style={styles.uploadText}>Upload Banner Image</Text>
                 </TouchableOpacity>
 
                 {uploadedImage && (
@@ -799,9 +839,9 @@ export default function CreateAssessmentPage() {
                     <TouchableOpacity
                         style={styles.createBtn}
                         onPress={handleCreate}
-                        disabled={createAssessmentMutation.isPending}
+                        disabled={createAssessmentMutation.isPending || uploadBannerMutation.isPending}
                     >
-                        {createAssessmentMutation.isPending ? (
+                        {(createAssessmentMutation.isPending || uploadBannerMutation.isPending) ? (
                             <ActivityIndicator size="small" color="#FFFFFF" />
                         ) : (
                             <Text style={styles.createBtnText}>Create Assessment</Text>
@@ -819,6 +859,7 @@ export default function CreateAssessmentPage() {
         </LinearGradient>
     );
 }
+
 
 
 const styles = StyleSheet.create({

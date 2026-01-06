@@ -192,7 +192,7 @@ export default function AssignNewPastorsScreen() {
                 }
             />
 
-            <View style={[styles.bottomContainer, { paddingBottom: bottom + 16 }]}>
+            <View style={[styles.bottomContainer, {}]}>
                 <View style={styles.selectedNamesContainer}>
                     <Text style={styles.selectedNamesText} numberOfLines={1}>
                         {getSelectedNamesText()}

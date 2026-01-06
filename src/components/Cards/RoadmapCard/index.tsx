@@ -1,3 +1,4 @@
+// components/Cards/RoadmapCard.tsx
 import { RoadmapCardData } from '@/types/roadmap.types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
@@ -8,6 +9,10 @@ interface Props {
     onPress?: () => void;
     showMenu?: boolean;
     onMenuPress?: () => void;
+    // ✅ Optional selection mode props
+    selectionMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelection?: () => void;
 }
 
 export const RoadmapCard: React.FC<Props> = ({
@@ -15,6 +20,10 @@ export const RoadmapCard: React.FC<Props> = ({
     onPress,
     showMenu,
     onMenuPress,
+    // ✅ Default values for selection mode
+    selectionMode = false,
+    isSelected = false,
+    onToggleSelection,
 }) => {
     const isCompleted = data.status === 'completed';
     const hasProgress = data.taskProgress && !isCompleted;
@@ -39,7 +48,10 @@ export const RoadmapCard: React.FC<Props> = ({
     }, [data.status]);
 
     const showCompletionTimeOnLeft = data.completionTime && data.status;
-    const CardWrapper = onPress ? TouchableOpacity : View;
+
+    // ✅ Choose wrapper and handler based on selection mode
+    const CardWrapper = selectionMode ? TouchableOpacity : (onPress ? TouchableOpacity : View);
+    const cardPressHandler = selectionMode ? onToggleSelection : onPress;
 
     const renderImage = () => (
         <View style={styles.imageContainer}>
@@ -120,7 +132,24 @@ export const RoadmapCard: React.FC<Props> = ({
     };
 
     return (
-        <CardWrapper style={styles.card} onPress={onPress} activeOpacity={0.7}>
+        <CardWrapper
+            style={[
+                styles.card,
+                // ✅ Highlight card when selected
+                selectionMode && isSelected && styles.cardSelected
+            ]}
+            onPress={cardPressHandler}
+            activeOpacity={0.7}
+        >
+            {/* ✅ Selection Checkbox - only show in selection mode */}
+            {selectionMode && (
+                <View style={styles.selectionCheckbox}>
+                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                        {isSelected && <Ionicons name="checkmark" size={18} color="#fff" />}
+                    </View>
+                </View>
+            )}
+
             <View style={[styles.inner, !hasActions && styles.innerNoActions]}>
                 <View style={[styles.left, !hasActions && styles.leftNoActions]}>
                     {renderImage()}
@@ -210,6 +239,34 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         marginBottom: 18,
         padding: 12,
+    },
+    // ✅ Selected card style
+    cardSelected: {
+        borderColor: '#7B3FF2',
+        borderWidth: 2,
+        backgroundColor: 'rgba(123, 63, 242, 0.1)',
+    },
+    // ✅ Selection checkbox container
+    selectionCheckbox: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        zIndex: 10,
+    },
+    // ✅ Checkbox styles
+    checkbox: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.5)',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    checkboxSelected: {
+        backgroundColor: '#7B3FF2',
+        borderColor: '#7B3FF2',
     },
     inner: {
         flexDirection: 'row',

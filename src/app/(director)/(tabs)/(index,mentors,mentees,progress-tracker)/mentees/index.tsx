@@ -82,7 +82,10 @@ export default function Mentees() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/mentees/assign-mentors');
+                    router.push({
+                        pathname: '/mentees/assign-mentors',
+                        params: { id: selectedMentee?.id || '' },
+                    });
                 }, 300);
             },
         },

@@ -52,6 +52,7 @@ export interface ApiAssessmentChoice {
 export interface ApiAssessmentLayer {
     title: string;
     choices: ApiAssessmentChoice[];
+    recommendations?: string[];
     _id: string;
 }
 
@@ -60,6 +61,7 @@ export interface ApiAssessmentSection {
     description: string;
     layers: ApiAssessmentLayer[];
     _id: string;
+
 }
 
 export interface ApiAssessmentAssignment {
@@ -78,6 +80,7 @@ export interface ApiAssessment {
     sections: ApiAssessmentSection[];
     preSurvey?: PreSurveyQuestion[];
     assignments: ApiAssessmentAssignment[];
+    bannerImage?: string;
     createdAt: string;
     updatedAt: string;
     __v: number;

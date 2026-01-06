@@ -1,5 +1,5 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
 import TopBar from '@/components/Header/TopBar';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import SearchBar from '@/components/Header/SearchBar';
 import { useAssessments } from '@/hooks/useAssessments';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AssessmentCard from '@/components/Cards/AssessmentCard';
+import { RefreshControl } from 'react-native-gesture-handler';
 
 type Props = {}
 
@@ -18,7 +19,7 @@ const Assessments = (props: Props) => {
     const [search, setSearch] = React.useState('');
 
     // Fetch assessments
-    const { data: assessments, isLoading, error } = useAssessments();
+    const { data: assessments, isLoading, error, refetch, isFetching } = useAssessments();
 
     // Filter assessments based on search
     const filteredAssessments = useMemo(() => {
@@ -41,6 +42,9 @@ const Assessments = (props: Props) => {
             params: { id: assessment._id }
         });
     };
+    const onRefresh = useCallback(() => {
+        refetch();
+    }, [refetch]);
 
     return (
         <LinearGradient
@@ -53,14 +57,24 @@ const Assessments = (props: Props) => {
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="chevron-back" size={28} color="#fff" />
+                    <Text style={styles.headerTitle}>Assessments</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Assessments</Text>
-                <TouchableOpacity
-                    style={styles.createButton}
-                    onPress={() => router.push('/(director)/(tabs)/assessments/create-assessment')}
-                >
-                    <Ionicons name="add-outline" size={24} color="#fff" />
-                </TouchableOpacity>
+
+                {/* Add both buttons */}
+                <View style={styles.headerButtons}>
+                    <TouchableOpacity
+                        style={styles.selectButton}
+                        onPress={() => router.push('/(director)/(tabs)/assessments/select-assessment')}
+                    >
+                        <Ionicons name="checkmark-outline" size={24} color="#fff" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.createButton}
+                        onPress={() => router.push('/(director)/(tabs)/assessments/create-assessment')}
+                    >
+                        <Ionicons name="add-outline" size={24} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* Search Bar */}
@@ -106,6 +120,14 @@ const Assessments = (props: Props) => {
                             { paddingBottom: bottom + 20 },
                         ]}
                         showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isFetching} // Indicator shows while fetching
+                                onRefresh={onRefresh}
+                                tintColor="#fff" // iOS color
+                                colors={['#1D548D']} // Android colors
+                            />
+                        }
                     >
                         {/* Assessment Count */}
                         <View style={styles.countContainer}>
@@ -136,26 +158,44 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingVertical: 12,
+        marginBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        borderBottomColor: "rgba(255, 255, 255, 0.3)",
     },
+
     backButton: {
-        marginRight: 12,
+        flexDirection: "row",
+        alignItems: "center",
     },
+
     headerTitle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#fff',
-        flex: 1,
+        marginLeft: 8,
+        fontSize: 20,
+        fontWeight: "600",
+        color: "#fff",
+    },
+    headerButtons: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    selectButton: {
+        width: 30,
+        height: 30,
+        borderRadius: 5,
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
     },
     createButton: {
-        width: 40,
-        height: 40,
+        width: 30,
+        height: 30,
         borderRadius: 5,
         borderWidth: 2,
         borderColor: 'rgba(255, 255, 255, 0.4)',

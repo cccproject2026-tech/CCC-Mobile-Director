@@ -1,5 +1,5 @@
 import { assessmentService } from '@/services/assessments.service';
-import { ApiAssessment, Assessment, CreateAssessmentRequest } from '@/types/assessment.types';
+import { ApiAssessment, ApiAssessmentSection, Assessment, CreateAssessmentRequest } from '@/types/assessment.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useAssessmentProgress } from './useProgress';
@@ -103,6 +103,50 @@ export const useCreateAssessmentMutation = () => {
         onSuccess: () => {
             // Invalidate and refetch assessments query
             queryClient.invalidateQueries({ queryKey: ['assessments'] });
+        },
+    });
+}
+
+export const useAssessment = (assessmentId: string | undefined) => {
+    return useQuery<ApiAssessment>({
+        queryKey: ['assessment', assessmentId],
+        queryFn: () => assessmentService.getAssessmentById(assessmentId!),
+        enabled: !!assessmentId,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        retry: 2,
+    });
+};
+
+export const useUpdateAssessmentMutation = (assessmentId: string) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (updates: { name?: string; description?: string; instructions?: string[] }) =>
+            assessmentService.updateAssessmentDetails(assessmentId, updates),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['assessment', assessmentId] });
+        },
+    });
+}
+
+
+export const useUpdateSectionsMutation = (assessmentId: string) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (sections: ApiAssessmentSection[]) =>
+            assessmentService.updateSections(assessmentId, sections),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['assessment', assessmentId] });
+        },
+    });
+}
+
+export const useUploadBannerImageMutation = () => { // Removed ID from here
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, imageUri }: { id: string, imageUri: string }) =>
+            assessmentService.uploadBannerImage(id, imageUri),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['assessment', variables.id] });
         },
     });
 }

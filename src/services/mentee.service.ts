@@ -44,4 +44,30 @@ export const menteesService = {
         );
     },
 
+    assignAssessmentsToMentee: async (
+        menteeIds: string[],
+        assessmentIds: string[],
+    ): Promise<void> => {
+        await apiClient.post(
+            ENDPOINTS.PROGRESS.ASSIGN_ASSESSMENT,
+            {
+                userIds: menteeIds,
+                assessmentIds: assessmentIds
+            },
+        );
+    },
+
+    assignRoadmapsToMentee: async (
+        menteeIds: string[],
+        roadmapIds: string[],
+    ): Promise<void> => {
+        console.log('Assigning roadmaps', roadmapIds, 'to mentees', menteeIds);
+        await apiClient.post(
+            ENDPOINTS.PROGRESS.ASSIGN_ROADMAP,
+            {
+                userIds: menteeIds,
+                roadMapIds: roadmapIds
+            },
+        );
+    },
 };

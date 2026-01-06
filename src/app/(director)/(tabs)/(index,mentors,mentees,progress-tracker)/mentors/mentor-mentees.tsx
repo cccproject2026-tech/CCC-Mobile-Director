@@ -78,30 +78,30 @@ export default function MentorMentees() {
             label: 'Revitalization Roadmaps',
             onPress: router.push.bind(
                 router,
-                '/(director)/(tabs)/mentors/mentor-mentees',
+                '/mentors/mentor-mentees',
             ),
         },
         {
             icon: 'person-add-outline',
             label: 'Assessments',
-            onPress: router.push.bind(
-                router,
-                '/(director)/(tabs)/mentors/assign-mentees',
-            ),
+            onPress: router.push({
+                pathname: '/mentees/assign-mentors',
+                params: { id: selectedMentee?.id || '' },
+            }),
         },
-        {
-            icon: 'person-remove-outline',
-            label: 'Assignments',
-            onPress: router.push.bind(
-                router,
-                '/(director)/(tabs)/mentors/remove-mentee',
-            ),
-        },
-        {
-            icon: 'clipboard-outline',
-            label: 'Roadmaps of Mentees',
-            onPress: () => console.log('Roadmaps of Mentees'),
-        },
+        // {
+        //     icon: 'person-remove-outline',
+        //     label: 'Assignments',
+        //     onPress: router.push.bind(
+        //         router,
+        //         '/mentors/remove-mentee',
+        //     ),
+        // },
+        // {
+        //     icon: 'clipboard-outline',
+        //     label: 'Roadmaps of Mentees',
+        //     onPress: () => console.log('Roadmaps of Mentees'),
+        // },
         {
             icon: 'checkmark-done-outline',
             label: 'Mentor Notes',
@@ -224,7 +224,7 @@ export default function MentorMentees() {
                             <TouchableOpacity
                                 onPress={() =>
                                     router.push({
-                                        pathname: '/(director)/(tabs)/mentors/assign-mentees',
+                                        pathname: '/mentors/assign-mentees',
                                         params: { id },
                                     })
                                 }
@@ -341,7 +341,7 @@ export default function MentorMentees() {
                                 data={mentee}
                                 layout={viewMode}
                                 onPress={() =>
-                                    router.push(`/(director)/(tabs)/mentees/${mentee.id}`)
+                                    router.push(`/mentees/${mentee.id}`)
                                 }
                                 onMenuPress={() => handleMenuPress(mentee)}
                                 onMarkComplete={() =>
@@ -369,7 +369,10 @@ export default function MentorMentees() {
                                 <TouchableOpacity
                                     style={styles.emptyButton}
                                     onPress={() =>
-                                        router.push('/(director)/(tabs)/mentors/assign-mentees')
+                                        router.push({
+                                            pathname: '/mentors/assign-mentees',
+                                            params: { id },
+                                        })
                                     }
                                 >
                                     <Ionicons name="person-add-outline" size={18} color="#fff" />

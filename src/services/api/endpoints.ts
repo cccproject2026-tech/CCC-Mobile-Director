@@ -72,13 +72,17 @@ export const ENDPOINTS = {
             `/assessment/${assessmentId}/answers/${userId}`,
         DELETE_ASSESSMENT: (assessmentId: string) => `/assessment/${assessmentId}`,
         UPDATE_INSTRUCTIONS: (assessmentId: string) => `/assessment/${assessmentId}/instructions`,
+        UPDATE_SECTIONS: (assessmentId: string) => `/assessment/${assessmentId}/sections`,
+        UPLOAD_BANNER_IMAGE: (assessmentId: string) => `/assessment/${assessmentId}/banner-image`,
     },
 
     GRANT: {
+        CHECK_APPLICATION: (userId: string) => `/microgrant/application/check/${userId}`,
         GET_FORM: '/microgrant/form',
         APPLY_GRANT: '/microgrant/apply',
         GET_APPLICATIONS: (status?: string) => status ? `/microgrant/applications?status=${status}` : '/microgrant/applications',
         GET_APPLICATION: (applicationId: string) => `/microgrant/application/${applicationId}`,
+        UPDATE_APPLICATION_STATUS: (applicationId: string) => `/microgrant/application/${applicationId}/status`,
     },
 
     APPOINTMENTS: {

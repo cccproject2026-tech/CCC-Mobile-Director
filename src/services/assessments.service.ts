@@ -1,5 +1,6 @@
 import {
     ApiAssessment,
+    ApiAssessmentSection,
     CreateAssessmentRequest,
     SubmitAnswersPayload,
     SubmitPreSurveyPayload,
@@ -13,7 +14,11 @@ export const assessmentService = {
     getAssessments: async (): Promise<ApiAssessment[]> => {
         console.log('📤 Fetching assessments');
         const response = await apiClient.get<ApiAssessment[]>(
-            ENDPOINTS.ASSESSMENTS.GET_ASSESSMENTS
+            ENDPOINTS.ASSESSMENTS.GET_ASSESSMENTS, {
+            params: {
+                t: Date.now(), // Prevent caching
+            }
+        }
         );
         console.log('📥 Assessments fetched:', response.data);
         return response.data;
@@ -53,16 +58,27 @@ export const assessmentService = {
     },
 
     // Update assessment instructions
-    updateInstructions: async (
+    updateAssessmentDetails: async (
         assessmentId: string,
-        instructions: string[]
+        updates: { name?: string; description?: string; instructions?: string[] }
     ): Promise<ApiAssessment> => {
-        console.log('📤 Updating assessment instructions:', assessmentId);
         const response = await apiClient.patch<ApiAssessment>(
-            ENDPOINTS.ASSESSMENTS.UPDATE_INSTRUCTIONS(assessmentId),
-            { instructions }
+            ENDPOINTS.ASSESSMENTS.UPDATE_INSTRUCTIONS(assessmentId), // Ensure this endpoint exists
+            updates
         );
-        console.log('📥 Assessment instructions updated:', response.data);
+        return response.data;
+    },
+
+    updateSections: async (
+        assessmentId: string,
+        sections: ApiAssessmentSection[]
+    ): Promise<ApiAssessment> => {
+        console.log('📤 Updating assessment sections:', assessmentId);
+        const response = await apiClient.patch<ApiAssessment>(
+            ENDPOINTS.ASSESSMENTS.UPDATE_SECTIONS(assessmentId),
+            { sections }
+        );
+        console.log('📥 Assessment sections updated:', response.data);
         return response.data;
     },
 
@@ -115,4 +131,30 @@ export const assessmentService = {
         // Return the data object from the response
         return response.data.data;
     },
-};
+    // upload banner image form data 
+    uploadBannerImage: async (
+        assessmentId: string,
+        imageUri: string
+    ): Promise<{ imageUrl: string }> => {
+        console.log('📤 Uploading banner image for assessment:', assessmentId);
+        const formData = new FormData();
+        formData.append('file', {
+            uri: imageUri,
+            type: 'image/jpeg', // or the appropriate image MIME type
+            name: 'banner.jpg', // or the appropriate file name
+        } as any);
+
+        const response = await apiClient.patch<{ imageUrl: string }>(
+            ENDPOINTS.ASSESSMENTS.UPLOAD_BANNER_IMAGE(assessmentId),
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+
+        console.log('📥 Banner image uploaded:', response.data);
+        return response.data;
+    }
+}

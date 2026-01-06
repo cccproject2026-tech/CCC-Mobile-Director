@@ -2,14 +2,26 @@
 import { ApiAssessment } from '@/types/assessment.types';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
     data: ApiAssessment;
     onPress?: () => void;
     onDevelopmentPlanPress?: () => void;
+    // Selection mode props
+    selectionMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelection?: () => void;
 }
 
-export const AssessmentCard: React.FC<Props> = ({ data, onPress, onDevelopmentPlanPress }) => {
+export const AssessmentCard: React.FC<Props> = ({
+    data,
+    onPress,
+    onDevelopmentPlanPress,
+    selectionMode = false,
+    isSelected = false,
+    onToggleSelection,
+}) => {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
@@ -17,6 +29,14 @@ export const AssessmentCard: React.FC<Props> = ({ data, onPress, onDevelopmentPl
             day: 'numeric',
             year: 'numeric',
         });
+    };
+
+    const handlePress = () => {
+        if (selectionMode && onToggleSelection) {
+            onToggleSelection();
+        } else if (onPress) {
+            onPress();
+        }
     };
 
     const renderTypeBadge = () => (
@@ -61,13 +81,22 @@ export const AssessmentCard: React.FC<Props> = ({ data, onPress, onDevelopmentPl
     return (
         <TouchableOpacity
             style={styles.card}
-            onPress={onPress}
+            onPress={handlePress}
             activeOpacity={0.7}
         >
             <View style={styles.content}>
+                {/* Checkbox - only in selection mode */}
+                {selectionMode && (
+                    <View style={styles.checkboxContainer}>
+                        <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                            {isSelected && <Ionicons name="checkmark" size={18} color="#fff" />}
+                        </View>
+                    </View>
+                )}
+
                 <View style={styles.imageContainer}>
                     <Image
-                        source={require('@/assets/images/app/jumpstart.png')}
+                        source={data.bannerImage ? { uri: data.bannerImage } : require('@/assets/images/app/jumpstart.png')}
                         style={styles.image}
                     />
                     {renderTypeBadge()}
@@ -104,6 +133,23 @@ const styles = StyleSheet.create({
         padding: 14,
         flexWrap: 'wrap',
         alignItems: 'flex-start',
+    },
+    checkboxContainer: {
+        marginRight: 12,
+        paddingTop: 4,
+    },
+    checkbox: {
+        width: 24,
+        height: 24,
+        borderRadius: 6,
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.5)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    checkboxSelected: {
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
     },
     imageContainer: {
         width: '28%',

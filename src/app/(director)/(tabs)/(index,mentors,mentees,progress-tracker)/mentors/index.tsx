@@ -44,7 +44,7 @@ export default function Mentors() {
             onPress: () => {
                 if (selectedMentor?.id) {
                     router.push({
-                        pathname: "/(director)/(tabs)/mentors/mentor-mentees",
+                        pathname: "/mentors/mentor-mentees",
                         params: { id: selectedMentor.id },
                     });
                 }
@@ -56,7 +56,7 @@ export default function Mentors() {
             onPress: () => {
                 if (selectedMentor?.id) {
                     router.push({
-                        pathname: "/(director)/(tabs)/mentors/assign-mentees",
+                        pathname: "/mentors/assign-mentees",
                         params: { id: selectedMentor.id },
                     });
                 }
@@ -68,7 +68,7 @@ export default function Mentors() {
             onPress: () => {
                 if (selectedMentor?.id) {
                     router.push({
-                        pathname: "/(director)/(tabs)/mentors/remove-mentee",
+                        pathname: "/mentors/remove-mentee",
                         params: { id: selectedMentor.id },
                     });
                 }
@@ -98,7 +98,7 @@ export default function Mentors() {
                     bottomSheetRef.current?.dismiss();
 
                     // Navigate and pass the mentorId param
-                    router.push(`/(director)/(tabs)/progress-tracker/mentors/${selectedMentor.id}`);
+                    router.push(`/progress-tracker/mentors/${selectedMentor.id}`);
                 }
             },
         },
@@ -119,7 +119,7 @@ export default function Mentors() {
             icon: "people-outline",
             label: "List of Mentees",
             onPress: () =>
-                router.push("/(director)/(tabs)/mentors/mentor-mentees"),
+                router.push("/mentors/mentor-mentees"),
         },
         {
             icon: "person-add-outline",
@@ -127,7 +127,7 @@ export default function Mentors() {
             onPress: () => {
                 if (selectedMentor?.id) {
                     router.push({
-                        pathname: "/(director)/(tabs)/mentors/assign-mentees",
+                        pathname: "/mentors/assign-mentees",
                         params: { id: selectedMentor.id },
                     });
                 }
@@ -137,7 +137,7 @@ export default function Mentors() {
             icon: "person-remove-outline",
             label: "Remove a Mentee",
             onPress: () =>
-                router.push("/(director)/(tabs)/mentors/remove-mentee"),
+                router.push("/mentors/remove-mentee"),
         },
         {
             icon: "calendar-outline",
@@ -187,7 +187,7 @@ export default function Mentors() {
     const renderItem = ({ item }: { item: Mentor }) => (
         <MentorCard
             onPress={() =>
-                router.push(`/(director)/(tabs)/mentors/${item.id}`)
+                router.push(`/mentors/${item.id}`)
             }
             mentor={{
                 id: item.id,

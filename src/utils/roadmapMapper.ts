@@ -124,6 +124,7 @@ export function getRoadmapCard(roadmap: Roadmap): RoadmapCardData {
     if (!roadmap) {
         // Return a default card if roadmap is undefined
         return {
+            _id: 'unknown',
             image: undefined,
             title: 'Unknown Roadmap',
             description: undefined,
@@ -142,6 +143,7 @@ export function getRoadmapCard(roadmap: Roadmap): RoadmapCardData {
     const hasProgress = (status === 'in-progress' || status === 'due') && total > 0;
 
     return {
+        _id: roadmap._id,
         image: roadmap.imageUrl,
         title: roadmap.name || 'Untitled Roadmap',
         description: roadmap.roadMapDetails,
