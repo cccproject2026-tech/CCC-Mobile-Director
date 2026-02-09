@@ -5,23 +5,31 @@ import { menteesService } from "@/services/mentee.service";
 import apiClient from "@/services/api/client";
 import { ENDPOINTS } from "@/services/api/endpoints";
 import { useMemo } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { AssignPayload, MentorMenteesResult } from "@/types/mentor.types";
 
-export const useMentors = () => {
-    const query = useQuery({
+export const useMentors = (limit: number = 10) => {
+    return useInfiniteQuery({
         queryKey: ["mentors"],
-        queryFn: async () => {
-            const res = await mentorsService.getMentors();
-            return res.data.users as Mentor[];
-        }
+        queryFn: async ({ pageParam = 1 }) => {
+            const res = await mentorsService.getMentors(pageParam, limit);
+            return {
+                mentors: res.data.users as Mentor[],
+                page: res.data.page,
+                totalPages: res.data.totalPages,
+                total: res.data.total
+            };
+        },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.page < lastPage.totalPages) {
+                return lastPage.page + 1;
+            }
+            return undefined;
+        },
+        initialPageParam: 1,
+        staleTime: 1000 * 60 * 5,
+        retry: 1,
     });
-
-    return {
-        mentors: query.data ?? [],
-        isLoading: query.isLoading,
-        error: query.error,
-        refetch: query.refetch
-    };
 };
 
 

@@ -31,7 +31,16 @@ export default function DirectorProfileScreen() {
       </LinearGradient>
     );
   }
-  const { data: profileData, isLoading, isError } = useUserProfile(authUser?.id || "");
+  const { data: userData, isLoading, isError } = useUserProfile(authUser?.id || "");
+
+  const profileData = React.useMemo(() => {
+    if (!userData) return null;
+    return {
+      user: userData,
+      interest: userData.interest || null,
+      progress: null, // Directors don't have progress tracking
+    };
+  }, [userData]);
 
   return (
     <ProfileContent

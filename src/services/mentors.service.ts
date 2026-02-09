@@ -3,10 +3,12 @@ import { ENDPOINTS } from './api/endpoints';
 import { MentorsResponse } from '@/types/mentor.types';
 
 export const mentorsService = {
-    getMentors: async (): Promise<MentorsResponse> => {
+    getMentors: async (page?: number, limit?: number): Promise<MentorsResponse> => {
         const response = await apiClient.get<MentorsResponse>(ENDPOINTS.MENTORS.GET_ALL_MENTORS,
             {
                 params: {
+                    ...(page && { page }),
+                    ...(limit && { limit }),
                     t: Date.now(),          // 🔹 cache-buster
                 },
             }

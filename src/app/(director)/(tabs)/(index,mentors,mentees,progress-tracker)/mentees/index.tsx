@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
+    ActivityIndicator,
     FlatList,
     Pressable,
     StyleSheet,
@@ -31,17 +32,27 @@ export default function Mentees() {
     const [selectedStateFilter, setSelectedStateFilter] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
     const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
-    const { data: mentees, isLoading, isError, error } = useMentees();
+    const {
+        data: mentees,
+        isLoading,
+        isError,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useMentees();
 
     if (isError) {
         console.log('Error : ', error);
     }
 
-    const menteeList = Array.isArray(mentees) ? mentees : mentees?.mentees || [];
+    const menteeList = useMemo(() => {
+        return mentees?.pages.flatMap(page => page.mentees) || [];
+    }, [mentees]);
 
     const dynamicStates = useMemo(() => {
         const states = menteeList
-            .map(m => m.state || m.profileInfo?.state)
+            .map((m: Mentee) => (m as any).state || (m as any).profileInfo?.state)
             .filter(Boolean) as string[];
         return Array.from(new Set(states));
     }, [menteeList]);
@@ -147,29 +158,31 @@ export default function Mentees() {
         if (search) {
             const q = search.toLowerCase();
             filtered = filtered.filter(
-                mentee =>
-                    mentee.name.toLowerCase().includes(q) ||
+                (mentee: Mentee) =>
+                    mentee.firstName.toLowerCase().includes(q) ||
+                    (mentee.lastName ?? "").toLowerCase().includes(q) ||
+                    (mentee.username ?? "").toLowerCase().includes(q) ||
                     mentee.role?.toLowerCase().includes(q) ||
-                    mentee.description?.toLowerCase().includes(q),
+                    (mentee as any).profileInfo?.toLowerCase().includes(q),
             );
         }
 
         if (activeTab === 'not-started') {
-            filtered = filtered.filter(mentee => (mentee.progress ?? 0) === 0);
+            filtered = filtered.filter((mentee: Mentee) => (mentee.progress ?? 0) === 0);
         } else if (activeTab === 'in-progress') {
             filtered = filtered.filter(
-                mentee => (mentee.progress ?? 0) > 0 && (mentee.progress ?? 0) < 100,
+                (mentee: Mentee) => (mentee.progress ?? 0) > 0 && (mentee.progress ?? 0) < 100,
             );
         } else if (activeTab === 'completed') {
             filtered = filtered.filter(
-                mentee => mentee.progress === 100 || mentee.hasCompleted === true,
+                (mentee: Mentee) => mentee.progress === 100 || mentee.hasCompleted === true,
             );
         }
 
         if (selectedStateFilter) {
             filtered = filtered.filter(
-                m =>
-                    (m.state || m.profileInfo?.state || '').toLowerCase() ===
+                (m: Mentee) =>
+                    ((m as any).state || (m as any).profileInfo?.state || '').toLowerCase() ===
                     selectedStateFilter.toLowerCase(),
             );
         }
@@ -187,14 +200,14 @@ export default function Mentees() {
     }, [menteeList, search, activeTab, selectedFilter, selectedStateFilter]);
 
     const notStartedCount = useMemo(
-        () => menteeList.filter(m => (m.progress ?? 0) === 0).length,
+        () => menteeList.filter((m: Mentee) => (m.progress ?? 0) === 0).length,
         [menteeList],
     );
 
     const inProgressCount = useMemo(
         () =>
             menteeList.filter(
-                m => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100,
+                (m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100,
             ).length,
         [menteeList],
     );
@@ -202,7 +215,7 @@ export default function Mentees() {
     const completedCount = useMemo(
         () =>
             menteeList.filter(
-                m => m.progress === 100 || m.hasCompleted === true,
+                (m: Mentee) => m.progress === 100 || m.hasCompleted === true,
             ).length,
         [menteeList],
     );
@@ -323,17 +336,17 @@ export default function Mentees() {
                                     onPress={() =>
                                         router.push(`/mentees/${mentee.id}`)
                                     }
-                                    onCall={() => console.log('Call', mentee.name)}
-                                    onChat={() => console.log('Chat', mentee.name)}
-                                    onMail={() => console.log('Mail', mentee.name)}
-                                    onWhatsApp={() => console.log('WhatsApp', mentee.name)}
+                                    onCall={() => console.log('Call', (mentee as any).name)}
+                                    onChat={() => console.log('Chat', (mentee as any).name)}
+                                    onMail={() => console.log('Mail', (mentee as any).name)}
+                                    onWhatsApp={() => console.log('WhatsApp', (mentee as any).name)}
                                     onMenuPress={() => handleMenuPress(mentee)}
-                                    onMarkComplete={() => console.log('Mark complete', mentee.name)}
+                                    onMarkComplete={() => console.log('Mark complete', (mentee as any).name)}
                                     onIssueCertificate={() =>
-                                        console.log('Issue certificate', mentee.name)
+                                        console.log('Issue certificate', (mentee as any).name)
                                     }
                                     onInviteAsFieldMentor={() =>
-                                        console.log('Invite as field mentor', mentee.name)
+                                        console.log('Invite as field mentor', (mentee as any).name)
                                     }
                                 />
                             )}
@@ -349,6 +362,19 @@ export default function Mentees() {
                                 offset: (viewMode === 'list' ? 68 : 280) * index,
                                 index,
                             })}
+                            onEndReached={() => {
+                                if (hasNextPage && !isFetchingNextPage) {
+                                    fetchNextPage();
+                                }
+                            }}
+                            onEndReachedThreshold={0.5}
+                            ListFooterComponent={() => (
+                                isFetchingNextPage ? (
+                                    <View style={{ paddingVertical: 20 }}>
+                                        <ActivityIndicator color="#fff" />
+                                    </View>
+                                ) : null
+                            )}
                         />
                     )}
                 </View>

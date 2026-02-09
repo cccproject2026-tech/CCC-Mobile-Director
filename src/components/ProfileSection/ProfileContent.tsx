@@ -69,19 +69,20 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
     }, []);
 
     const handleEditPress = useCallback(() => {
-        if (profileData?.user && profileData?.interest) {
+        if (profileData?.user) {
+            const interest = profileData.interest;
             setFormData({
                 firstName: profileData.user.firstName || '',
                 lastName: profileData.user.lastName || '',
-                phoneNumber: profileData.interest.phoneNumber || '',
-                churches: profileData.interest.churchDetails || [],
-                title: profileData.interest.title || '',
-                yearsInMinistry: profileData.interest.yearsInMinistry || '',
-                conference: profileData.interest.conference || '',
-                currentCommunityServiceProjects: profileData.interest.currentCommunityProjects || '',
-                interests: profileData.interest.interests || [],
-                comments: profileData.interest.comments || '',
-                bio: profileData.interest.profileInfo || '',
+                phoneNumber: interest?.phoneNumber || '',
+                churches: interest?.churchDetails || [],
+                title: interest?.title || '',
+                yearsInMinistry: interest?.yearsInMinistry || '',
+                conference: interest?.conference || '',
+                currentCommunityServiceProjects: interest?.currentCommunityProjects || '',
+                interests: interest?.interests || [],
+                comments: interest?.comments || '',
+                bio: interest?.profileInfo || '',
             });
             setProfileImage(profileData.user.profilePicture || null);
             setIsEditing(true);
@@ -201,7 +202,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
                             </View>
                         )}
 
-                        {!isEditing && !isDirector && (
+                        {!isEditing && (
                             <View style={styles.actionButtons}>
                                 <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/profile/documents' as any)}>
                                     <Text style={styles.actionButtonText}>Documents</Text>
@@ -222,14 +223,15 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
                                 showTitleDropdown={false} onTitleSelect={() => { }} onToggleTitleDropdown={() => { }}
                             />
 
+                            <ProfileInfoSection
+                                isEditing={isEditing} profileData={profileData} formData={formData}
+                                onUpdateField={updateField} onPickImage={pickImage} profileImage={profileImage as string}
+                                showTitleDropdown={showTitleDropdown} onTitleSelect={(v) => { updateField('title', v); setShowTitleDropdown(false); }}
+                                onToggleTitleDropdown={setShowTitleDropdown} onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
+                            />
+
                             {!isDirector && (
                                 <>
-                                    <ProfileInfoSection
-                                        isEditing={isEditing} profileData={profileData} formData={formData}
-                                        onUpdateField={updateField} onPickImage={pickImage} profileImage={profileImage as string}
-                                        showTitleDropdown={showTitleDropdown} onTitleSelect={(v) => { updateField('title', v); setShowTitleDropdown(false); }}
-                                        onToggleTitleDropdown={setShowTitleDropdown} onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}
-                                    />
                                     <ChurchInfoSection
                                         isEditing={isEditing} profileData={profileData} formData={formData}
                                         onUpdateChurch={updateChurch} onAddChurch={() => { }} onRemoveChurch={() => { }}

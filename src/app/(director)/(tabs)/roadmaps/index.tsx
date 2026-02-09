@@ -58,9 +58,9 @@ export default function RevitalizationRoadmap() {
 
     const deleteRoadmapMutation = useDeleteRoadmap();
 
-    const { mentors, isLoading: mentorsLoading } = useMentors();
+    const { data:mentors, isLoading: mentorsLoading } = useMentors();
     const { data: menteesData, isLoading: menteesLoading } = useMentees();
-    const mentees: Mentee[] = menteesData?.mentees ?? [];
+    const mentees: Mentee[] = menteesData?.pages.flatMap(page => page.mentees) ?? [];
 
     // ✅ Transform roadmaps to RoadmapCardData
     const roadmapLibrary: RoadmapCardData[] = useMemo(() => {
@@ -487,7 +487,7 @@ export default function RevitalizationRoadmap() {
     const filterOptions = useMemo(() => getFilterOptions(), []);
 
     const filteredMentors = useMemo(() => {
-        let filtered = mentors;
+        let filtered = mentors?.pages.flatMap(page => page.mentors) ?? [];
 
         if (search) {
             const q = search.toLowerCase();

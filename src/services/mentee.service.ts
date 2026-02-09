@@ -3,10 +3,12 @@ import { ENDPOINTS } from './api/endpoints';
 import { MenteeResponse } from '@/types/mentee.types';
 
 export const menteesService = {
-    getMentees: async (): Promise<MenteeResponse> => {
+    getMentees: async (page?: number, limit?: number): Promise<MenteeResponse> => {
         const response = await apiClient.get<MenteeResponse>(ENDPOINTS.MENTEES.GET_ALL_MENTEES,
             {
                 params: {
+                    ...(page && { page }),
+                    ...(limit && { limit }),
                     t: Date.now(),          // 🔹 cache-buster
                 },
             }

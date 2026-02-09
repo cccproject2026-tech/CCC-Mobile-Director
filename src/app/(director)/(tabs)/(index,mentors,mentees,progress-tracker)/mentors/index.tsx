@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Pressable,
     StyleSheet,
@@ -35,7 +36,18 @@ export default function Mentors() {
     const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
 
     const bottomSheetRef = useRef<BottomSheetModal>(null);
-    const { mentors, isLoading, refetch } = useMentors();
+    const {
+        data: mentorsData,
+        isLoading,
+        refetch,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useMentors();
+
+    const mentorList = useMemo(() => {
+        return mentorsData?.pages.flatMap(page => page.mentors) || [];
+    }, [mentorsData]);
 
     const menuItemsMentor = [
         {
@@ -162,12 +174,16 @@ export default function Mentors() {
 
     /* ------------------- APPLY SEARCH & FILTERS ------------------- */
     const filteredMentors = useMemo(() => {
-        let list = mentors;
+        let list = mentorList;
 
         if (search.trim()) {
             const q = search.toLowerCase();
             list = list.filter(m =>
-                `${m.firstName} ${m.lastName ?? ""}`.toLowerCase().includes(q),
+                m.firstName.toLowerCase().includes(q) ||
+                (m.lastName ?? "").toLowerCase().includes(q) ||
+                (m.username ?? "").toLowerCase().includes(q) ||
+                m.role?.toLowerCase().includes(q) ||
+                (m as any).profileInfo?.toLowerCase().includes(q)
             );
         }
         if (activeTab === "mentor") list = list.filter(m => m.role === "mentor");
@@ -175,7 +191,7 @@ export default function Mentors() {
             list = list.filter(m => m.role === "field_mentor");
 
         return list;
-    }, [mentors, search, activeTab, selectedFilter]);
+    }, [mentorList, search, activeTab, selectedFilter]);
 
     /* ------------------- OPEN ACTION SHEET ------------------- */
     const openMenu = useCallback((mentor: Mentor) => {
@@ -293,6 +309,19 @@ export default function Mentors() {
                             }
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={styles.flatListContent}
+                            onEndReached={() => {
+                                if (hasNextPage && !isFetchingNextPage) {
+                                    fetchNextPage();
+                                }
+                            }}
+                            onEndReachedThreshold={0.5}
+                            ListFooterComponent={() => (
+                                isFetchingNextPage ? (
+                                    <View style={{ paddingVertical: 20 }}>
+                                        <ActivityIndicator color="#fff" />
+                                    </View>
+                                ) : null
+                            )}
                         />
                     )}
                 </View>

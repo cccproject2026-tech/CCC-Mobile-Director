@@ -2,14 +2,14 @@ import apiClient from "@/services/api/client";
 import { ENDPOINTS } from "@/services/api/endpoints";
 import { menteesService } from "@/services/mentee.service";
 import { Mentee, Mentor } from "@/types/user.types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const useMentees = () => {
-    return useQuery({
+export const useMentees = (limit: number = 10) => {
+    return useInfiniteQuery({
         queryKey: ['mentees'],
-        queryFn: async () => {
+        queryFn: async ({ pageParam = 1 }) => {
             // fetch backend
-            const res = await menteesService.getMentees();
+            const res = await menteesService.getMentees(pageParam, limit);
 
             // FIX: backend uses `users`, not `mentees`
             const backendMentees: Mentee[] = res.data.users ?? [];
@@ -45,9 +45,18 @@ export const useMentees = () => {
 
             return {
                 mentees,
-                total: res.data.total ?? mentees.length
+                total: res.data.total ?? mentees.length,
+                page: res.data.page,
+                totalPages: res.data.totalPages
             };
         },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.page < lastPage.totalPages) {
+                return lastPage.page + 1;
+            }
+            return undefined;
+        },
+        initialPageParam: 1,
         staleTime: 1000 * 60 * 5,
         retry: 1,
     });
