@@ -26,7 +26,7 @@ const PHASES = ['All Phases', 'Phase 1', 'Phase 2', 'Phase 3'];
 
 export default function MentorMentees() {
     const router = useRouter();
-    const { id } = useLocalSearchParams(); // mentor id from route
+    const { id } = useLocalSearchParams<{ id: string }>(); // mentor id from route
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] =
         useState<'all' | 'in-progress' | 'completed'>('in-progress');
@@ -40,6 +40,9 @@ export default function MentorMentees() {
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const { mentor, mentees, isLoading, isError } = useMentorMentees(id);
+   console.log('Mentees: ', mentees);
+    console.log('Mentor: ', mentor);
+    console.log('Mentor ID: ', id);
     const mentorName = mentor
         ? `${mentor.firstName} ${mentor.lastName ?? ''}`
         : 'Mentor';
@@ -76,15 +79,14 @@ export default function MentorMentees() {
         {
             icon: 'people-outline',
             label: 'Revitalization Roadmaps',
-            onPress: router.push.bind(
-                router,
+            onPress: () => router.push(
                 '/mentors/mentor-mentees',
             ),
         },
         {
             icon: 'person-add-outline',
             label: 'Assessments',
-            onPress: router.push({
+            onPress: () => router.push({
                 pathname: '/mentees/assign-mentors',
                 params: { id: selectedMentee?.id || '' },
             }),
@@ -134,8 +136,9 @@ export default function MentorMentees() {
     const filterOptions = useMemo(() => getFilterOptions(), []);
 
     const filteredMentees = useMemo(() => {
+        if (!mentees) return [];
         let list = mentees;
-
+        console.log('Mentees: ', mentees);
         if (search) {
             const q = search.toLowerCase();
             list = list.filter(
@@ -156,7 +159,7 @@ export default function MentorMentees() {
 
     const inProgressCount = useMemo(
         () =>
-            mentees.filter(m => !m.hasCompleted && (m.progress ?? 0) < 100).length,
+            mentees?.filter(m => !m.hasCompleted && (m.progress ?? 0) < 100).length ?? 0,
         [mentees],
     );
 
@@ -249,7 +252,7 @@ export default function MentorMentees() {
                                 style={styles.iconButton}
                                 onPress={() =>
                                     router.push(
-                                        '/(director)/(tabs)/mentors/mentor-mentee-locations',
+                                        '/(director)/(tabs)/mentors/mentor-mentee-locations' as any,
                                     )
                                 }
                             >
@@ -368,11 +371,12 @@ export default function MentorMentees() {
                                 </Text>
                                 <TouchableOpacity
                                     style={styles.emptyButton}
-                                    onPress={() =>
+                                    onPress={() =>{
+                                        
                                         router.push({
                                             pathname: '/mentors/assign-mentees',
-                                            params: { id },
-                                        })
+                                            params: { id: mentor?.id },
+                                        })}
                                     }
                                 >
                                     <Ionicons name="person-add-outline" size={18} color="#fff" />
@@ -392,7 +396,7 @@ export default function MentorMentees() {
                             : ''
                     }
                     image={selectedMentee?.profilePicture || undefined}
-                    actions={menuItems}
+                    actions={menuItems as any}
                     onClose={handleCloseModal}
                 />
 

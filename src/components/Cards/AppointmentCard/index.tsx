@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import * as DropdownMenu from 'zeego/dropdown-menu';
+// import * as DropdownMenu from 'zeego/dropdown-menu';
 
 export interface MenuItem {
     key: string;
@@ -62,7 +62,7 @@ const AppointmentCard: React.FC<Props> = ({
                     </View>
 
                     {/* Absolutely positioned right icons */}
-                    <View style={styles.rightIconsContainer}>
+                    {/* <View style={styles.rightIconsContainer}>
                         {(onPressMenu || menuItems) && (
                             menuItems ? (
                                 // Use Zeego menu if menuItems provided
@@ -109,7 +109,7 @@ const AppointmentCard: React.FC<Props> = ({
                                 <Ionicons name="chevron-forward" size={20} color="#EAF7FF" />
                             </Pressable>
                         )}
-                    </View>
+                    </View> */}
 
                     <View style={styles.personRow}>
                         {avatar ? (

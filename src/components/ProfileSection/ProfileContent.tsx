@@ -11,7 +11,7 @@ import ConfirmModal from '@/components/Modals/ConfirmModal';
 import SuccessModal from '@/components/Modals/SuccessModal';
 import { ChurchInfoSection, OtherInfoSection, PersonalInfoSection, ProfileInfoSection } from '@/components/ProfileSection';
 import { icons } from '@/constants';
-import { useMentorMenteeProfile, useUpdateProfile, useUploadProfilePicture } from '@/hooks/useProfile';
+import { useDeleteUser, useMentorMenteeProfile, useUpdateProfile, useUploadProfilePicture } from '@/hooks/useProfile';
 import { ChurchInfo, UpdateProfileData, UserRole, UserWithInterest } from '@/types/user.types';
 import { Colors } from '@/constants/Colors';
 
@@ -36,6 +36,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
         profileData?.user?.id || ""
     );
     const uploadProfilePicture = useUploadProfilePicture();
+    const deleteProfile = useDeleteUser();
 
     const [isEditing, setIsEditing] = useState(false);
     const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -43,6 +44,8 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
     const [showTitleDropdown, setShowTitleDropdown] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
 
     const [formData, setFormData] = useState<UpdateProfileData>({
         firstName: '', lastName: '', phoneNumber: '', churches: [],
@@ -53,7 +56,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
 
     const role = profileData?.user?.role as UserRole;
     const isDirector = role === 'director';
-    const isSaving = uploadProfilePicture.isPending || updateProfile.isPending;
+    const isSaving = uploadProfilePicture.isPending || updateProfile.isPending || deleteProfile.isPending;
 
     const shouldShowProgress = useMemo(() => {
         return PROGRESS_ENABLED_ROLES.includes(role);
@@ -143,6 +146,18 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
             Alert.alert('Update Failed', error?.message || 'Failed to update profile.');
         }
     }, [formData, selectedImageFile, updateProfile, uploadProfilePicture]);
+
+    const handleDeleteProfile = useCallback(async () => {
+        try {
+            await deleteProfile.mutateAsync(userId);
+            router.back();
+            // setShowDeleteSuccessModal(true);
+        } catch (error: any) {
+            Alert.alert('Delete Failed', error?.message || 'Failed to delete profile.');
+        } finally {
+            setShowDeleteConfirmModal(false);
+        }
+    }, [userId, deleteProfile]);
 
     const renderAvatar = () => (
         <View style={styles.avatarContainer}>
@@ -247,6 +262,18 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
                                     />
                                 </>
                             )}
+
+                            {!isEditing && !isOwnProfile && (
+                                <View style={styles.deleteButtonContainer}>
+                                    <TouchableOpacity
+                                        style={styles.deleteProfileButton}
+                                        onPress={() => setShowDeleteConfirmModal(true)}
+                                    >
+                                        <Ionicons name="trash-outline" size={20} color="#E53935" />
+                                        <Text style={styles.deleteProfileText}>Delete Profile</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                         </View>
 
                         {isEditing && (
@@ -271,6 +298,24 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
 
             <ConfirmModal visible={showConfirmModal} title="Save changes?" onConfirm={handleConfirmSave} onCancel={() => setShowConfirmModal(false)} />
             <SuccessModal visible={showSuccessModal} message="Profile Updated!" onClose={() => setShowSuccessModal(false)} />
+
+            <ConfirmModal
+                visible={showDeleteConfirmModal}
+                title="Are you sure want to delete Profile ?"
+                onConfirm={handleDeleteProfile}
+                onCancel={() => setShowDeleteConfirmModal(false)}
+                confirmText="Delete"
+                confirmButtonStyle={{ backgroundColor: '#E53935' }}
+                confirmTextStyle={{ color: '#fff' }}
+            />
+            <SuccessModal
+                visible={showDeleteSuccessModal}
+                message="Profile Deleted"
+                onClose={() => {
+                    setShowDeleteSuccessModal(false);
+                    router.back();
+                }}
+            />
         </LinearGradient>
     );
 }
@@ -480,5 +525,25 @@ const styles = StyleSheet.create({
     goBackText: {
         color: '#fff',
         fontSize: 14,
+    },
+    deleteButtonContainer: {
+        marginTop: 24,
+        alignItems: 'flex-end',
+    },
+    deleteProfileButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#E53935',
+    },
+    deleteProfileText: {
+        color: '#E53935',
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 8,
     },
 });

@@ -105,12 +105,13 @@ export default function Mentors() {
             icon: "stats-chart-outline",
             label: "Progress of Mentees",
             onPress: () => {
+                console.log(selectedMentor,"progreess");
                 if (selectedMentor?.id) {
                     // Close the bottom sheet before navigating
                     bottomSheetRef.current?.dismiss();
 
                     // Navigate and pass the mentorId param
-                    router.push(`/progress-tracker/mentors/${selectedMentor.id}`);
+                    router.push({ pathname: "/progress-tracker/mentors" as any, params: { id: selectedMentor.id } });
                 }
             },
         },
@@ -122,7 +123,7 @@ export default function Mentors() {
         {
             icon: "create-outline",
             label: "Edit Profile",
-            onPress: () => console.log("Edit Profile"),
+            onPress: () => router.push({ pathname: "/mentors/" as any, params: { id: selectedMentor?.id } }),
         },
     ];
 

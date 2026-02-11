@@ -25,8 +25,9 @@ const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 export default function AssignNewPastorsScreen() {
     const router = useRouter();
     const { top, bottom } = useSafeAreaInsets();
-    const { id: mentorIdParam } = useLocalSearchParams();
+    const { id: mentorIdParam } = useLocalSearchParams<{ id: string }>();
     const mentorId = Array.isArray(mentorIdParam) ? mentorIdParam[0] : mentorIdParam;
+    console.log('Mentor id: ', mentorId);
 
     const [search, setSearch] = useState('');
     const [selectedPastors, setSelectedPastors] = useState<string[]>([]);
@@ -34,7 +35,7 @@ export default function AssignNewPastorsScreen() {
     const [selectedFilter, setSelectedFilter] = useState('Latest Join');
 
     const { data, isLoading } = useMentees();
-    const mentees: Mentee[] = data?.mentees ?? [];
+    const mentees: Mentee[] = data?.pages.flatMap((page: any) => page.mentees) ?? [];
 
     const assignMutation = useAssignMenteesToMentor();
 

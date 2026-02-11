@@ -25,6 +25,7 @@ import { getRoadmapCard } from "@/utils/roadmapMapper";
 import RoadmapCard from "@/components/Cards/RoadmapCard";
 import AssessmentCard from "@/components/Cards/AssessmentCard";
 import { useAssignedRoadmaps } from "@/hooks/roadmap/useRoadmaps";
+import { Mentee } from "@/types/user.types";
 
 type TabKey = "All" | "Completed" | "Remaining";
 
@@ -39,7 +40,7 @@ export default function MenteeProgressScreen() {
 
     // mentee info for header
     const { data: menteesData } = useMentees();
-    const mentee = menteesData?.mentees.find(m => m.id === menteeId) ?? null;
+    const mentee = menteesData?.pages.flatMap(page => page.mentees).find((m: Mentee) => m.id === menteeId) ?? null;
 
     // progress hooks (userId‑aware)
     const {

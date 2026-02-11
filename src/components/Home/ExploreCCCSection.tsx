@@ -12,8 +12,8 @@ export const exploreItems = [
     { id: '2', icon: icons.schedule, title: 'Schedule', route: '/(director)/(tabs)/appointments' },
     { id: '3', icon: icons.microGrant, title: 'Microgrant', route: '/(director)/(tabs)/micro-grant' },
     { id: '4', icon: icons.Revitalization, title: 'Revitalization Roadmap', route: '/(director)/(tabs)/roadmaps' },
-    { id: '5', icon: icons.Assessments, title: 'Assessment', },
-    { id: '6', icon: icons.assignmentIcon, title: 'Assignment' },
+    { id: '5', icon: icons.Assessments, title: 'Assessment', route: '/(director)/(tabs)/assessments' },
+    { id: '6', icon: icons.assignmentIcon, title: 'Assignment', route: '/(director)/(tabs)/assignments' },
 ];
 
 const ExploreCCCSection = (props: Props) => {

@@ -114,7 +114,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/mentees/assign-mentors');
+                    router.push({pathname: '/mentees/assign-mentors' as any, params: { id: selectedMentee?.id }});
                 }, 300);
             },
         },
@@ -124,7 +124,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/mentees/remove-mentors');
+                    router.push({pathname: '/mentees/remove-mentors' as any, params: { id: selectedMentee?.id }});
                 }, 300);
             },
         },
@@ -134,7 +134,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/assessments');
+                    router.push({pathname: '/(director)/(tabs)/assessments' as any, params: { id: selectedMentee?.id }});
                 }, 300);
             },
         },
@@ -154,14 +154,14 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push(`/mentees/notes`);
+                    router.push({pathname: `/mentees/notes` as any, params: { id: selectedMentee?.id }});
                 }, 300);
             },
         },
         {
             icon: 'book-outline',
             label: 'View Progress Report',
-            onPress: () => console.log('Assignments of Mentees'),
+            onPress: () => router.push({pathname: `/mentees/${selectedMentee?.id}/progress` as any, params: { id: selectedMentee?.id }}),
         },
         {
             icon: 'stats-chart-outline',
@@ -180,23 +180,27 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'people-outline',
             label: 'List of Mentees',
-            onPress: () => router.push('/mentors/mentor-mentees'),
+            onPress: () => {
+                console.log('List of Mentees: ', selectedMentor?.id);
+                router.push({pathname: '/mentors/mentor-mentees' as any, params: { id: selectedMentor?.id }})},
         },
         {
             icon: 'person-add-outline',
             label: 'Assign New Mentee',
-            onPress: () => router.push('/mentors/assign-mentees'),
+            onPress: () => {
+               console.log('Assign New Mentee: ', selectedMentor?.id);
+                router.push({pathname: '/mentors/assign-mentees' as any, params: { id: selectedMentor?.id }})},
         },
         {
             icon: 'person-remove-outline',
             label: 'Remove a Mentee',
-            onPress: () => router.push('/mentors/remove-mentee'),
+            onPress: () => router.push({pathname: '/mentors/remove-mentee' as any, params: { id: selectedMentor?.id }}),
         },
         {
             icon: 'clipboard-outline',
             label: 'Roadmaps of Mentees',
-            onPress: () => console.log('Roadmaps of Mentees'),
-        },
+            onPress: () => router.push({pathname: '/mentors/roadmaps-of-mentees' as any, params: { id: selectedMentor?.id }}),
+        },  
         {
             icon: 'checkmark-done-outline',
             label: 'Assessments of Mentees',
@@ -215,17 +219,18 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'stats-chart-outline',
             label: 'Progress of Mentees',
-            onPress: () => console.log('Progress of Mentees'),
+            onPress: () => router.push({ pathname: "/mentors/progress" as any, params: { id: selectedMentor?.id } }),
         },
         {
             icon: 'calendar-outline',
             label: 'Schedule a Meeting',
-            onPress: () => console.log('Schedule a Meeting'),
+            onPress: () => console.log("Schedule a Meeting"),
+            // onPress: () => router.push({ pathname: "/mentors/meeting" as any, params: { id: selectedMentor?.id } }),
         },
         {
             icon: 'create-outline',
             label: 'Edit Profile',
-            onPress: () => console.log('Edit Profile'),
+            onPress: () => router.push({ pathname: `/mentors/${selectedMentor?.id}` as any, params: { id: selectedMentor?.id } }),
         },
     ];
 
@@ -248,17 +253,17 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'calendar-outline',
             label: 'Schedule a Meeting',
-            onPress: () => console.log('Schedule a Meeting'),
+            onPress: () => router.push({ pathname: "/mentors/meeting" as any, params: { id: selectedMentor?.id } }),
         },
         {
             icon: 'create-outline',
             label: 'Edit Profile',
-            onPress: () => console.log('Edit Profile'),
+            onPress: () => router.push({ pathname: "/mentors/" as any, params: { id: selectedMentor?.id } }),
         },
         {
             icon: 'person-remove-outline',
             label: 'Remove as Field Mentor',
-            onPress: () => console.log('Remove as Field Mentor'),
+            onPress: () => router.push({ pathname: "/mentors/remove-mentee" as any, params: { id: selectedMentor?.id } }),
         },
     ];
 
@@ -541,7 +546,7 @@ export default function RevitalizationRoadmap() {
         { key: 'mentees', label: 'Mentees' },
     ];
 
-    console.log('All Roadmaps images: ', roadmapLibrary.map(r => r.image));
+    // console.log('All Roadmaps images: ', roadmapLibrary.map(r => r.image));
     return (
         <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
             <View style={styles.flex1}>
@@ -657,10 +662,16 @@ export default function RevitalizationRoadmap() {
                             filteredMentors.map(mentor => (
                                 <TouchableOpacity
                                     key={mentor.id}
-                                    onPress={() => router.push(`/mentors/${mentor.id}`)}
                                     activeOpacity={0.8}
-                                >
+                                    >
                                     <MentorCard
+                                    onPress={() => {
+                                        console.log('Mentor email: ', mentor.email);
+                                        router.push({
+                                            pathname: `/(director)/(tabs)/mentors/${mentor.id}` as any,
+                                            params: { email: mentor.email },
+                                        })
+                                    }}
                                         mentor={{
                                             id: mentor.id,
                                             name: `${mentor.firstName} ${mentor.lastName ?? ''}`,
@@ -685,13 +696,16 @@ export default function RevitalizationRoadmap() {
                             ))}
 
                         {activeTab === 'mentees' &&
-                            filteredMentees.map(mentee => (
+                            filteredMentees.map((mentee: Mentee) => (
                                 <MenteeCard
                                     key={mentee.id}
                                     data={mentee}
                                     layout={viewMode}
                                     onPress={() =>
-                                        router.push(`/mentees/${mentee.id}/progress`)
+                                        router.push({
+                                            pathname: `/(director)/(tabs)/mentees/${mentee.id}/` as any,
+                                            params: { email: mentee.email },
+                                        })
                                     }
                                     onCall={() => console.log('Call', mentee.phoneNumber)}
                                     onChat={() => console.log('Chat', mentee.id)}

@@ -9,6 +9,8 @@ interface ConfirmModalProps {
     onCancel: () => void;
     confirmText?: string;
     cancelText?: string;
+    confirmButtonStyle?: any;
+    confirmTextStyle?: any;
 }
 
 export default function ConfirmModal({
@@ -18,6 +20,8 @@ export default function ConfirmModal({
     onCancel,
     confirmText = 'Save',
     cancelText = 'Cancel',
+    confirmButtonStyle,
+    confirmTextStyle,
 }: ConfirmModalProps) {
     return (
         <Modal
@@ -38,8 +42,8 @@ export default function ConfirmModal({
                         <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
                             <Text style={styles.cancelText}>{cancelText}</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={styles.confirmButton} onPress={onConfirm}>
-                            <Text style={styles.confirmText}>{confirmText}</Text>
+                        <TouchableOpacity style={[styles.confirmButton, confirmButtonStyle]} onPress={onConfirm}>
+                            <Text style={[styles.confirmText, confirmTextStyle]}>{confirmText}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

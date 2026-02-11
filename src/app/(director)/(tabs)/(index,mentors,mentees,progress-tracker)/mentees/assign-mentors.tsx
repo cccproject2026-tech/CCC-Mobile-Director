@@ -27,14 +27,17 @@ export default function AssignMentorsToMenteeScreen() {
     const { top, bottom } = useSafeAreaInsets();
     const { id: menteeIdParam } = useLocalSearchParams();
     const menteeId = Array.isArray(menteeIdParam) ? menteeIdParam[0] : menteeIdParam;
-
+console.log(menteeId,"------")
     const [search, setSearch] = useState('');
     const [selectedMentors, setSelectedMentors] = useState<string[]>([]);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState('Latest Join');
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
-    const { mentors, isLoading } = useMentors();
+    const { data: mentorsData, isLoading } = useMentors();
+    const mentors = useMemo(() => {
+        return mentorsData?.pages.flatMap(page => page.mentors) || [];
+    }, [mentorsData]);
 
     const assignMutation = useAssignMentorsToMentee();
 

@@ -139,6 +139,10 @@ export const profileService = {
         });
     },
 
+    // Delete user
+    deleteUser: async (userId: string): Promise<void> => {
+        await apiClient.delete(ENDPOINTS.USERS.GET_USER(userId));
+    },
     // Notifications
     // getNotifications: async (userId: string): Promise<any[]> => {
     //     const response = await apiClient.get<{

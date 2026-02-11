@@ -37,7 +37,9 @@ export default function MentorProgressTracker() {
 
     // Fetch all mentees
     const { data: menteesData, isLoading: menteesLoading } = useMentees();
-    const allMentees: Mentee[] = menteesData?.mentees ?? [];
+    const allMentees: Mentee[] = useMemo(() => {
+        return menteesData?.pages.flatMap(page => page.mentees) ?? [];
+    }, [menteesData]);
 
     // Extract mentor data and assigned IDs
     const mentorData = mentorProfile;
@@ -85,7 +87,7 @@ export default function MentorProgressTracker() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentors/mentor-mentees');
+                    router.push('/(director)/(tabs)/mentors/mentor-mentees' as any);
                 }, 300);
             },
         },
@@ -95,7 +97,7 @@ export default function MentorProgressTracker() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/assign-mentors');
+                    router.push('/(director)/(tabs)/mentees/assign-mentors' as any);
                 }, 300);
             },
         },
@@ -105,14 +107,14 @@ export default function MentorProgressTracker() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/remove-mentors');
+                    router.push('/(director)/(tabs)/mentees/remove-mentors' as any);
                 }, 300);
             },
         },
         {
             icon: 'person-add-outline',
             label: 'Assessments',
-            onPress: () => router.push('/(director)/(tabs)/assessments'),
+            onPress: () => router.push('/(director)/(tabs)/assessments' as any),
         },
         {
             icon: 'person-remove-outline',
@@ -130,7 +132,7 @@ export default function MentorProgressTracker() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/notes');
+                    router.push('/(director)/(tabs)/mentees/notes' as any);
                 }, 300);
             },
         },
@@ -318,7 +320,7 @@ export default function MentorProgressTracker() {
                                     layout={viewMode}
                                     onPress={() =>
                                         router.push(
-                                            `/(director)/(tabs)/mentees/${mentee.id}/progress`,
+                                            `/(director)/(tabs)/mentees/${mentee.id}/progress` as any,
                                         )
                                     }
                                     onCall={() =>

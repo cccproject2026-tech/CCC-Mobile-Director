@@ -320,6 +320,22 @@ export const useDeleteDocument = () => {
 };
 
 // --------------------------------------------
+// Delete User
+// --------------------------------------------
+export const useDeleteUser = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (userId: string) => profileService.deleteUser(userId),
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: profileKeys.all });
+            await queryClient.invalidateQueries({ queryKey: ["mentees"] });
+            await queryClient.invalidateQueries({ queryKey: ["mentors"] });
+        },
+    });
+};
+
+// --------------------------------------------
 // Notifications
 // --------------------------------------------
 // export const useNotifications = (userId?: string) => {
