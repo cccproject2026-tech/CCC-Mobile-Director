@@ -10,6 +10,7 @@ import {
     Alert,
     ActivityIndicator,
     StyleSheet,
+    Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -73,7 +74,12 @@ export default function RoadmapFormScreen() {
     const [currentSectionId, setCurrentSectionId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [menuVisible, setMenuVisible] = useState(false);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, right: 16 });
+    const [menuPosition, setMenuPosition] = useState<{
+        top?: number;
+        bottom?: number;
+        left?: number;
+        right?: number;
+    }>({ top: 0, right: 16 });
 
     // ✅ Ref for "Add Field" button to get position
     const addFieldButtonRef = useRef<any>(null);
@@ -363,8 +369,9 @@ export default function RoadmapFormScreen() {
         if (addFieldButtonRef.current) {
             addFieldButtonRef.current.measure(
                 (x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
+                    const screenHeight = Dimensions.get('window').height;
                     setMenuPosition({
-                        top: pageY + height + 8,
+                        bottom: screenHeight - pageY -60,
                         right: 16,
                     });
                     setMenuVisible(true);

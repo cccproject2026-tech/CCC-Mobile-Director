@@ -8,7 +8,8 @@ export type UserRole =
     | "Pastor"
     | "Seminarian"
     | "lay leader"
-    | "field_mentor";
+    | "field_mentor"
+    | "mentee";
 
 export type UserStatus = "new" | "pending" | "accepted" | "rejected";
 

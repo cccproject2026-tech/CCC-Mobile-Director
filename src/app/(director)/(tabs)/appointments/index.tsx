@@ -1,16 +1,465 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import GradientCalendar from '@/components/Appointments/calendar';
+import SimpleSuccessModal from '@/components/Appointments/SimpleSuccessModal';
+import { Header } from "@/components/Header/Header";
+import AppointmentCard, { MenuItem } from "@/components/Cards/AppointmentCard";
+import ScheduleMeetingBottomSheet from "@/components/Sheets/ScheduleMeetingBottomSheet";
+import SearchBar from "@/components/Header/SearchBar";
+import TopBar from "@/components/Header/TopBar";
+import { Colors } from "@/constants/Colors";
+import { icons } from "@/constants";
+import { appointmentService } from '@/services/appointments.service';
+import { Appointment } from '@/types/appointment.types';
+import { Mentor } from '@/types/user.types';
+import { BottomSheetModal, BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useMentors } from "@/hooks/useMentors";
+import { useMentees } from "@/hooks/useMentees";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient';
+import MeetingOptionModal from '@/components/Modals/MeetingOptionModal';
+import CancelConfirmationModal from '@/components/Modals/CancelConfirmationModal';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type Props = {}
+type ResponseModalState = {
+    visible: boolean;
+    message: string;
+    buttonText: string;
+};
 
-const AppointmentsScreen = (props: Props) => {
+const Appointments: React.FC = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const [selectedDate, setSelectedDate] = React.useState<string>(today);
+    const [searchQuery, setSearchQuery] = React.useState<string>('');
+    const [activeTab, setActiveTab] = React.useState<'appointments' | 'availability'>('appointments');
+    const router = useRouter();
+    const [responseModal, setResponseModal] = React.useState<ResponseModalState>({
+        visible: false,
+        message: '',
+        buttonText: '',
+    });
+    const { bottom } = useSafeAreaInsets();
+
+    // Reset active tab when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            setActiveTab('appointments');
+        }, [])
+    );
+
+    // Bottom sheet ref
+    const scheduleMeetingBottomSheetRef = React.useRef<BottomSheetModal>(null);
+    const { openSheet } = useLocalSearchParams();
+
+    React.useEffect(() => {
+        if (openSheet === 'true' && scheduleMeetingBottomSheetRef.current) {
+            setTimeout(() => {
+                scheduleMeetingBottomSheetRef.current?.present();
+            }, 200); // Ensure sheet presents after mount
+        }
+    }, [openSheet]);
+
+    // Fetch real data
+    const { data: mentorsData } = useMentors(100);
+    const { data: menteesData } = useMentees(100);
+
+    const allUsers = useMemo(() => {
+        const mentors = mentorsData?.pages.flatMap(page => page.mentors) || [];
+        const mentees = menteesData?.pages.flatMap(page => page.mentees) || [];
+        return [...mentors, ...mentees];
+    }, [mentorsData, menteesData]);
+
+    // Mock appointments data
+    const [appointments, setAppointments] = useState<Appointment[]>([
+        {
+            id: '101',
+            userId: 'user1',
+            mentorId: '1',
+            meetingDate: new Date().toISOString(),
+            endTime: new Date(Date.now() + 3600000).toISOString(),
+            platform: 'zoom',
+            status: 'scheduled',
+            notes: 'Follow-up on project structure',
+        }
+    ]);
+
+    const filteredAppointments = appointments.filter(app =>
+        app.meetingDate.split('T')[0] === selectedDate &&
+        (app.notes || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+    const [showOptionsModal, setShowOptionsModal] = useState(false);
+    const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
+
+    const handleReschedule = (appointment: Appointment) => {
+        setSelectedAppointment(appointment);
+        scheduleMeetingBottomSheetRef.current?.present();
+    };
+
+    const handleCancelPress = (appointment: Appointment) => {
+        setSelectedAppointment(appointment);
+        setShowCancelConfirmModal(true);
+    };
+
+    const handleConfirmCancel = () => {
+        if (selectedAppointment) {
+            setAppointments(prev => prev.filter((a: Appointment) => a.id !== selectedAppointment.id));
+            setShowCancelConfirmModal(false);
+            setSelectedAppointment(null);
+            setResponseModal({
+                visible: true,
+                message: 'Meeting Cancelled Successfully',
+                buttonText: 'OK',
+            });
+        }
+    };
+
+    const handleScheduleMeeting = (data: any) => {
+        console.log('Scheduling meeting:', data);
+        // Add logic to save appointment via API
+        const newApp: Appointment = {
+            id: Math.random().toString(),
+            userId: 'current-user-id',
+            mentorId: data.mentorId,
+            meetingDate: data.meetingDate,
+            endTime: new Date(new Date(data.meetingDate).getTime() + 3600000).toISOString(),
+            platform: data.platform as any,
+            status: 'scheduled',
+            notes: data.notes,
+        };
+        setAppointments(prev => [...prev, newApp]);
+    };
+
+    const handleNewMeeting = () => {
+        scheduleMeetingBottomSheetRef.current?.present();
+    };
+
+    const handleTabPress = (tab: 'appointments' | 'availability') => {
+        setActiveTab(tab);
+        if (tab === 'availability') {
+            router.push('/(director)/(tabs)/appointments/availability');
+        }
+    };
+
+    const renderAppointment = ({ item }: { item: Appointment }) => {
+        const mentor = allUsers.find(m => m.id === item.mentorId);
+        const date = new Date(item.meetingDate);
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        const menuItems: MenuItem[] = [
+            {
+                key: 'reschedule',
+                title: 'Reschedule',
+                onSelect: () => handleReschedule(item),
+                icon: { ios: 'calendar', android: 'ic_menu_today' }
+            },
+            {
+                key: 'cancel',
+                title: 'Cancel Meeting',
+                destructive: true,
+                onSelect: () => handleCancelPress(item),
+                icon: { ios: 'trash', android: 'ic_menu_delete' }
+            }
+        ];
+
+        return (
+            <AppointmentCard
+                date={date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                time={timeStr}
+                tz="IST"
+                person={mentor ? `${mentor.firstName} ${mentor.lastName || ''}` : 'Unknown'}
+                role={mentor?.role}
+                mode={item.platform === 'zoom' ? 'Zoom Meeting' : 'Google Meet'}
+                platformIcon={item.platform === 'zoom' ? icons.duoMeet : icons.googleMeet}
+                menuItems={menuItems}
+                onPressMenu={() => {
+                    setSelectedAppointment(item);
+                    setShowOptionsModal(true);
+                }}
+            />
+        );
+    };
+
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>AppointmentsScreen</Text>
-        </View>
-    )
-}
+        <BottomSheetModalProvider>
+            <LinearGradient
+                colors={['#1E3A6F', '#176192']}
+                style={{ flex: 1 }}
+            >
+                <View style={styles.topBarContainer}>
+                    <TopBar role="director" />
+                </View>
 
-export default AppointmentsScreen
+                {/* Header */}
+                <Header
+                    title="Schedule"
+                    showNewMeeting={true}
+                    onNewMeetingPress={handleNewMeeting}
+                />
 
-const styles = StyleSheet.create({})
+                {/* Tab Switcher */}
+                <View style={styles.tabContainer}>
+                    <Pressable
+                        style={[
+                            styles.tab,
+                            activeTab === 'appointments' && styles.activeTab,
+                        ]}
+                        onPress={() => handleTabPress('appointments')}
+                    >
+                        <Text
+                            style={[
+                                styles.tabText,
+                                activeTab === 'appointments' && styles.activeTabText,
+                            ]}
+                        >
+                            Appointments
+                        </Text>
+                    </Pressable>
+                    <Pressable
+                        style={[
+                            styles.tab,
+                            activeTab === 'availability' && styles.activeTab,
+                        ]}
+                        onPress={() => handleTabPress('availability')}
+                    >
+                        <Text
+                            style={[
+                                styles.tabText,
+                                activeTab === 'availability' && styles.activeTabText,
+                            ]}
+                        >
+                            Availability
+                        </Text>
+                    </Pressable>
+                </View>
+
+                <ScrollView
+                    style={styles.content}
+                    contentContainerStyle={{ paddingBottom: bottom + 20 }}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.searchContainer}>
+                        <SearchBar
+                            backgroundColor="transparent"
+                            value={searchQuery}
+                            onChangeValue={setSearchQuery}
+                            placeholder="Enter a date (dd-mm-yyyy)"
+                        />
+                    </View>
+
+                    <View style={styles.calendarSection}>
+                        <View style={styles.sectionHeader}>
+                            <Ionicons name="calendar-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                            <Text style={styles.sectionTitle}>Monthly Meeting Calendar</Text>
+                        </View>
+
+                        <View style={styles.calendarWrapper}>
+                            <GradientCalendar
+                                selected={selectedDate}
+                                setSelected={setSelectedDate}
+                            />
+                        </View>
+                    </View>
+
+                    <View style={styles.summaryContainer}>
+                        <Text style={styles.summaryText}>
+                            {selectedDate === today
+                                ? `You have ${filteredAppointments.length} Appointments Today`
+                                : filteredAppointments.length > 0
+                                    ? `You ${new Date(selectedDate) < new Date(today) ? 'had' : 'have'} ${filteredAppointments.length} Appointments on ${new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}`
+                                    : `No appointments on ${new Date(selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })}`
+                            }
+                        </Text>
+                    </View>
+
+                    <View style={styles.searchSection}>
+                        <SearchBar
+                            value={searchQuery}
+                            onChangeValue={setSearchQuery}
+                            placeholder="Search Meetings"
+                        />
+                    </View>
+
+                    <View style={styles.appointmentsList}>
+                        <FlatList
+                            data={filteredAppointments}
+                            renderItem={renderAppointment}
+                            keyExtractor={item => item.id}
+                            scrollEnabled={false}
+                            ListEmptyComponent={
+                                <View style={styles.emptyState}>
+                                    <Text style={styles.emptyStateText}>No meetings scheduled for this date</Text>
+                                </View>
+                            }
+                        />
+                    </View>
+
+                    {/* Next Appointment Section */}
+                    {appointments.length > 0 && (
+                        <View style={styles.nextAppointmentSection}>
+                            <Text style={styles.nextAppointmentTitle}>Next Appointment</Text>
+                            {renderAppointment({ item: appointments[0] })}
+                        </View>
+                    )}
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerInfo}>
+                            Schedule meetings with your Mentors / Field Mentors.
+                        </Text>
+                        <View style={styles.buttonContainer}>
+                            <Pressable
+                                style={[styles.tab, { backgroundColor: '#FFFFFF', width: '100%' }]}
+                                onPress={() => scheduleMeetingBottomSheetRef.current?.present()}
+                            >
+                                <Text style={[styles.tabText, { color: '#1E3A6F' }]}>New Meeting</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                </ScrollView>
+
+                <ScheduleMeetingBottomSheet
+                    ref={scheduleMeetingBottomSheetRef}
+                    mentors={allUsers}
+                    onClose={() => scheduleMeetingBottomSheetRef.current?.dismiss()}
+                    onSchedule={handleScheduleMeeting}
+                />
+
+                <SimpleSuccessModal
+                    visible={responseModal.visible}
+                    onClose={() => setResponseModal(prev => ({ ...prev, visible: false }))}
+                    title={responseModal.message}
+                />
+
+                <MeetingOptionModal
+                    visible={showOptionsModal}
+                    onClose={() => setShowOptionsModal(false)}
+                    onReschedule={() => {
+                        if (selectedAppointment) handleReschedule(selectedAppointment);
+                    }}
+                    onCancel={() => {
+                        if (selectedAppointment) setShowCancelConfirmModal(true);
+                    }}
+                />
+
+                <CancelConfirmationModal
+                    visible={showCancelConfirmModal}
+                    onClose={() => setShowCancelConfirmModal(false)}
+                    onConfirm={handleConfirmCancel}
+                />
+            </LinearGradient>
+        </BottomSheetModalProvider>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    topBarContainer: {
+        width: '100%',
+    },
+    tabContainer: {
+        flexDirection: "row",
+        marginHorizontal: 16,
+        marginVertical: 10,
+        backgroundColor: "rgba(255, 255, 255, 0.12)",
+        borderRadius: 14,
+        padding: 5,
+    },
+    tab: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 10,
+        alignItems: "center",
+    },
+    activeTab: {
+        backgroundColor: "#FFFFFF",
+    },
+    tabText: {
+        fontSize: 15,
+        fontWeight: "600",
+        color: "rgba(255, 255, 255, 0.8)",
+    },
+    activeTabText: {
+        color: "#1E3A6F",
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: 16,
+    },
+    searchContainer: {
+        marginVertical: 10,
+    },
+    calendarSection: {
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+    calendarWrapper: {
+        width: '100%',
+    },
+    summaryContainer: {
+        marginBottom: 16,
+    },
+    summaryText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#FFEA00', // Yellowish color from the image
+    },
+    searchSection: {
+        marginBottom: 16,
+    },
+    appointmentsList: {
+        marginBottom: 20,
+    },
+    nextAppointmentSection: {
+        marginTop: 10,
+        marginBottom: 20,
+    },
+    nextAppointmentTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        marginBottom: 12,
+    },
+    emptyState: {
+        padding: 40,
+        alignItems: 'center',
+    },
+    emptyStateText: {
+        color: 'rgba(255, 255, 255, 0.6)',
+        fontSize: 15,
+        textAlign: 'center',
+    },
+    footer: {
+        marginTop: 20,
+        alignItems: 'center',
+    },
+    footerInfo: {
+        color: 'rgba(255, 255, 255, 0.8)',
+        fontSize: 15,
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 20,
+    },
+    buttonContainer: {
+        width: '100%',
+    },
+});
+
+export default Appointments;

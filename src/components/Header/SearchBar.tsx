@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
         borderColor: '#d0edf8',
         borderWidth: 1,
         paddingHorizontal: Platform.OS === 'android' ? 14 : 18,
-        paddingVertical: Platform.OS === 'android' ? 2 : 11,
+        paddingVertical: Platform.OS === 'android' ? 10 : 11,
     },
     input: {
         flex: 1,

@@ -2,6 +2,7 @@ import { icons } from '@/constants';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import AppointmentCard from '../Cards/AppointmentCard';
+import { useRouter } from 'expo-router';
 
 
 
@@ -33,6 +34,7 @@ export const appointments = [
 type Props = {}
 
 const AppointmentsSection = (props: Props) => {
+    const router = useRouter();
     return (
         <View
             style={{
@@ -56,7 +58,7 @@ const AppointmentsSection = (props: Props) => {
                 }]}>
                     Today&apos;s Appointments
                 </Text>
-                <Pressable>
+                <Pressable onPress={() => router.push('/(director)/(tabs)/appointments' as any)}>
                     <Text
                         style={{
                             color: "#cfe9f3",
@@ -78,7 +80,7 @@ const AppointmentsSection = (props: Props) => {
                     mode={a.mode}
                     platformIcon={a.icon}
                     avatar={icons.myProfile}
-                    onPressChevron={() => { }}
+                    onPressChevron={() => router.push('/(director)/(tabs)/appointments' as any)}
                     onCall={() => { }}
                     onChat={() => { }}
                     onMail={() => { }}

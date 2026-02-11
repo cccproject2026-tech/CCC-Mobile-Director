@@ -92,6 +92,7 @@ export const ENDPOINTS = {
         UPDATE: (appointmentId: string) => `/appointments/${appointmentId}`,
         GET_WEEKLY_AVAILABILITY: (mentorId: string) => `/appointments/availability/${mentorId}`,
         GET_MONTHLY_AVAILABILITY: (mentorId: string, month: number, year: number) => `/appointments/availability/${mentorId}/month?month=${month}&year=${year}`,
+        SET_AVAILABILITY: '/appointments/availability',
         RESCHEDULE: (appointmentId: string) => `/appointments/${appointmentId}/reschedule`,
     },
 

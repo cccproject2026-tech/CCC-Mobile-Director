@@ -62,84 +62,50 @@ const AppointmentCard: React.FC<Props> = ({
                     </View>
 
                     {/* Absolutely positioned right icons */}
-                    {/* <View style={styles.rightIconsContainer}>
+                    <View style={styles.rightIconsContainer}>
                         {(onPressMenu || menuItems) && (
-                            menuItems ? (
-                                // Use Zeego menu if menuItems provided
-                                <DropdownMenu.Root>
-                                    <DropdownMenu.Trigger>
-                                        <Pressable hitSlop={12} style={styles.iconButton}>
-                                            <Ionicons name="ellipsis-vertical" size={20} color="#EAF7FF" />
-                                        </Pressable>
-                                    </DropdownMenu.Trigger>
-                                    <DropdownMenu.Content >
-                                        {menuItems.map((item) => (
-                                            item.key.startsWith('separator') ? (
-                                                <DropdownMenu.Separator key={item.key} />
-                                            ) : (
-                                                <DropdownMenu.Item
-                                                    key={item.key}
-                                                    destructive={item.destructive}
-                                                    onSelect={item.onSelect}
-                                                >
-                                                    <DropdownMenu.ItemTitle>{item.title}</DropdownMenu.ItemTitle>
-                                                    {item.icon && (
-                                                        <DropdownMenu.ItemIcon
-                                                            ios={{
-                                                                name: Platform.OS === 'android'
-                                                                    ? (item.icon.android || 'ic_menu_view') as any
-                                                                    : (item.icon.ios || 'circle') as any,
-                                                            }}
-                                                        />
-                                                    )}
-                                                </DropdownMenu.Item>
-                                            )
-                                        ))}
-                                    </DropdownMenu.Content>
-                                </DropdownMenu.Root>
-                            ) : (
-                                // Use regular Pressable if only onPressMenu provided (backward compatible)
-                                <Pressable onPress={onPressMenu} hitSlop={12} style={styles.iconButton}>
-                                    <Ionicons name="ellipsis-vertical" size={20} color="#EAF7FF" />
-                                </Pressable>
-                            )
+                            <Pressable onPress={onPressMenu} hitSlop={12} style={styles.iconButton}>
+                                <Ionicons name="ellipsis-vertical" size={20} color="#EAF7FF" />
+                            </Pressable>
                         )}
                         {onPressChevron && (
                             <Pressable onPress={onPressChevron} hitSlop={12} style={styles.iconButton}>
                                 <Ionicons name="chevron-forward" size={20} color="#EAF7FF" />
                             </Pressable>
                         )}
-                    </View> */}
+                    </View>
 
                     <View style={styles.personRow}>
-                        {avatar ? (
-                            <Image source={avatar} style={styles.avatar} />
-                        ) : (
-                            <View style={[styles.avatar, { backgroundColor: 'rgba(255, 255, 255, 0.3)', justifyContent: 'center', alignItems: 'center' }]}>
-                                <Ionicons name="person-circle-outline" size={24} color="#fff" />
-                            </View>
-                        )}
+                        <View style={styles.avatarContainer}>
+                            {avatar ? (
+                                <Image source={avatar} style={styles.avatar} />
+                            ) : (
+                                <View style={[styles.avatar, { backgroundColor: 'rgba(255, 255, 255, 0.15)', justifyContent: 'center', alignItems: 'center' }]}>
+                                    <Ionicons name="person" size={14} color="#fff" />
+                                </View>
+                            )}
+                            <View style={[styles.statusDot, { backgroundColor: '#10B981' }]} />
+                        </View>
                         <Text style={styles.personName} numberOfLines={1}>
-                            {person}{role ? ` - ${role}` : ''}
+                            Pr. {person}
                         </Text>
                     </View>
 
                     <View style={styles.modeRow}>
                         <Text style={styles.modeLabel}>
-                            Mode :{' '}
-                            <Text style={styles.modeValue}>{mode}</Text>
+                            Mode : <Text style={styles.modeValue}>{mode}</Text>
                         </Text>
                     </View>
 
                     <View style={styles.actions}>
-                        <Pressable onPress={onCall} hitSlop={12}>
-                            <Ionicons name="call-outline" size={20} color="#EAF7FF" />
+                        <Pressable onPress={onCall} hitSlop={12} style={styles.actionIcon}>
+                            <Ionicons name="call" size={18} color="#EAF7FF" />
                         </Pressable>
-                        <Pressable onPress={onChat} hitSlop={12}>
-                            <MaterialCommunityIcons name="message-outline" size={20} color="#EAF7FF" />
+                        <Pressable onPress={onChat} hitSlop={12} style={styles.actionIcon}>
+                            <MaterialCommunityIcons name="chat" size={18} color="#EAF7FF" />
                         </Pressable>
-                        <Pressable onPress={onMail} hitSlop={12}>
-                            <MaterialIcons name="mail-outline" size={20} color="#EAF7FF" />
+                        <Pressable onPress={onMail} hitSlop={12} style={styles.actionIcon}>
+                            <MaterialIcons name="mail" size={18} color="#EAF7FF" />
                         </Pressable>
                     </View>
                 </View>
@@ -150,95 +116,112 @@ const AppointmentCard: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 16,
-        padding: 8,
-        marginBottom: 12,
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 20,
+        padding: 12,
+        marginBottom: 16,
     },
     cardInner: {
         flexDirection: 'row',
-        gap: 12,
+        gap: 16,
     },
     thumbnailWrap: {
-        width: 85,
-        height: 85,
+        width: 100,
+        height: 100,
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#FFFFFF',
+        padding: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     thumbnail: {
         width: '100%',
         height: '100%',
-        borderRadius: 12,
     },
     content: {
         flex: 1,
-        justifyContent: 'space-between',
         position: 'relative',
     },
     topRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingRight: 32,
+        paddingRight: 25,
     },
     dateTime: {
-        color: '#EAF7FF',
+        color: '#FFFFFF',
         fontSize: 14,
         fontWeight: '600',
     },
     timeHighlight: {
-        color: '#d7f96c',
+        color: '#FFEA00',
         fontWeight: '700',
     },
     rightIconsContainer: {
         position: 'absolute',
-        right: 0,
-        top: 0,
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 12,
+        right: -5,
+        top: -2,
     },
     iconButton: {
-        padding: 2,
+        padding: 5,
     },
     personRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        marginTop: 8,
-        paddingRight: 32,
+        gap: 10,
+        marginTop: 10,
+    },
+    avatarContainer: {
+        position: 'relative',
     },
     avatar: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.4)',
+    },
+    statusDot: {
+        position: 'absolute',
+        right: 0,
+        bottom: 0,
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        borderWidth: 2,
+        borderColor: '#1E3A6F',
     },
     personName: {
-        color: '#EAF7FF',
-        fontSize: 14,
-        fontWeight: '600',
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '700',
         flex: 1,
     },
     modeRow: {
         marginTop: 6,
-        paddingRight: 32,
     },
     modeLabel: {
-        color: '#CFE9F3',
+        color: 'rgba(255, 255, 255, 0.7)',
         fontSize: 13,
+        fontWeight: '500',
     },
     modeValue: {
-        color: '#EAF7FF',
-        fontWeight: '500',
-        textDecorationLine: 'underline',
+        color: '#FFFFFF',
+        fontWeight: '600',
     },
     actions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
-        marginTop: 8,
+        gap: 15,
+        marginTop: 12,
+    },
+    actionIcon: {
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        padding: 6,
+        borderRadius: 8,
     },
 });
 
