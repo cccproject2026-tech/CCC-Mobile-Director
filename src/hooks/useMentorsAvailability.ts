@@ -1,10 +1,64 @@
 import { appointmentService } from '@/services/appointments.service';
-import { SetAvailabilityPayload, SetAvailabilityResponse, TimeSlot } from '@/types/appointment.types';
+import { MonthlyAvailabilityDay, SetAvailabilityPayload, SetAvailabilityResponse, TimeSlot, WeeklyAvailability } from '@/types/appointment.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
+// Default time slots for users who don't set their own availability (e.g., Pastors)
+export const DEFAULT_TIME_SLOTS: TimeSlot[] = [
+    { startTime: '09:00', startPeriod: 'AM', endTime: '10:00', endPeriod: 'AM', _id: 'default-1' },
+    { startTime: '10:00', startPeriod: 'AM', endTime: '11:00', endPeriod: 'AM', _id: 'default-2' },
+    { startTime: '11:00', startPeriod: 'AM', endTime: '12:00', endPeriod: 'PM', _id: 'default-3' },
+    { startTime: '01:00', startPeriod: 'PM', endTime: '02:00', endPeriod: 'PM', _id: 'default-4' },
+    { startTime: '02:00', startPeriod: 'PM', endTime: '03:00', endPeriod: 'PM', _id: 'default-5' },
+    { startTime: '03:00', startPeriod: 'PM', endTime: '04:00', endPeriod: 'PM', _id: 'default-6' },
+    { startTime: '04:00', startPeriod: 'PM', endTime: '05:00', endPeriod: 'PM', _id: 'default-7' },
+];
+
+/**
+ * Generate default monthly availability (Mon-Fri, 9AM-5PM)
+ */
+export const generateDefaultMonthlyAvailability = (month: number, year: number): MonthlyAvailabilityDay[] => {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const availability: MonthlyAvailabilityDay[] = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month - 1, day);
+        const dayOfWeek = date.getDay();
+
+        // Monday to Friday (1-5)
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            availability.push({
+                date: dateString,
+                day: dayOfWeek,
+                slots: DEFAULT_TIME_SLOTS
+            });
+        }
+    }
+
+    return availability;
+};
+
+/**
+ * Generate default weekly availability (Mon-Fri, 9AM-5PM)
+ */
+export const generateDefaultWeeklyAvailability = (mentorId: string): WeeklyAvailability => {
+    return {
+        mentorId,
+        weeklySlots: [1, 2, 3, 4, 5].map(day => ({
+            day,
+            date: new Date().toISOString(),
+            rawSlots: DEFAULT_TIME_SLOTS
+        })),
+        maxBookingsPerDay: 5,
+        meetingDuration: 60,
+        minSchedulingNoticeHours: 24
+    };
+};
+
 interface UseWeeklyAvailabilityOptions {
     enabled?: boolean;
+    role?: string;
 }
 
 // Helper function to format time slot
@@ -35,7 +89,16 @@ export const useWeeklyAvailability = (
 ) => {
     const query = useQuery({
         queryKey: ['weekly-availability', mentorId],
-        queryFn: () => appointmentService.getWeeklyAvailability(mentorId!),
+        queryFn: async () => {
+            const data = await appointmentService.getWeeklyAvailability(mentorId!);
+            
+            // If it's a pastor/mentee and they have no availability set, return defaults
+            const isMentee = options?.role?.toLowerCase() === 'pastor' || options?.role?.toLowerCase() === 'mentee';
+            if (isMentee && (!data || !data.weeklySlots || data.weeklySlots.length === 0)) {
+                return generateDefaultWeeklyAvailability(mentorId!);
+            }
+            return data;
+        },
         staleTime: 1000 * 60 * 5, // 5 minutes
         retry: 2,
         enabled: Boolean(mentorId) && (options?.enabled !== false),
@@ -54,6 +117,7 @@ interface UseMonthlyAvailabilityParams {
     mentorId: string | null;
     month: number;
     year: number;
+    role?: string;
 }
 
 interface UseMonthlyAvailabilityOptions {
@@ -64,11 +128,20 @@ export const useMonthlyAvailability = (
     params: UseMonthlyAvailabilityParams,
     options?: UseMonthlyAvailabilityOptions
 ) => {
-    const { mentorId, month, year } = params;
+    const { mentorId, month, year, role } = params;
 
     const query = useQuery({
         queryKey: ['monthly-availability', mentorId, month, year],
-        queryFn: () => appointmentService.getMonthlyAvailability(mentorId!, month, year),
+        queryFn: async () => {
+            const data = await appointmentService.getMonthlyAvailability(mentorId!, month, year);
+            
+            // If it's a pastor/mentee and they have no availability set, return defaults
+            const isMentee = role?.toLowerCase() === 'pastor' || role?.toLowerCase() === 'mentee';
+            if (isMentee && (!data || data.length === 0)) {
+                return generateDefaultMonthlyAvailability(month, year);
+            }
+            return data;
+        },
         staleTime: 1000 * 60 * 5, // 5 minutes
         retry: 2,
         enabled: Boolean(mentorId) && (options?.enabled !== false),
@@ -96,7 +169,7 @@ export const useCurrentMonthAvailability = (
 };
 
 // Helper hook to navigate between months
-export const useAvailabilityNavigator = (mentorId: string | null) => {
+export const useAvailabilityNavigator = (mentorId: string | null, role?: string) => {
     const [selectedDate, setSelectedDate] = React.useState(new Date());
 
     const month = selectedDate.getMonth() + 1;
@@ -106,6 +179,7 @@ export const useAvailabilityNavigator = (mentorId: string | null) => {
         mentorId,
         month,
         year,
+        role,
     });
 
     const goToNextMonth = () => {

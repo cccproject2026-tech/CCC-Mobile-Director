@@ -177,6 +177,34 @@ const AvailabilityScreen = () => {
         }));
     };
 
+    const [dateSearchQuery, setDateSearchQuery] = useState("");
+
+    const handleDateSearch = (value: string) => {
+        setDateSearchQuery(value);
+        // If it's a valid dd-mm-yyyy format, update selectedDate
+        const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (match) {
+            const [_, day, month, year] = match;
+            const newDate = `${year}-${month}-${day}`;
+            setSelectedDate(newDate);
+        }
+    };
+
+    const parseDuration = (durationStr: string): number => {
+        const num = parseInt(durationStr);
+        return isNaN(num) ? 60 : num;
+    };
+
+    const parseNoticeHours = (noticeStr: string): number => {
+        const lower = noticeStr.toLowerCase();
+        if (lower === 'same day') return 0;
+        const num = parseInt(noticeStr);
+        if (isNaN(num)) return 48;
+        if (lower.includes('day')) return num * 24;
+        if (lower.includes('week')) return num * 24 * 7;
+        return num;
+    };
+
     const handleSubmit = () => {
         if (!user?.id) return;
 
@@ -200,8 +228,8 @@ const AvailabilityScreen = () => {
         setAvailability({
             mentorId: user.id,
             weeklySlots,
-            meetingDuration: parseInt(meetingDuration) || 60,
-            minSchedulingNoticeHours: parseInt(minSchedulingNotice) * 24 || 48,
+            meetingDuration: parseDuration(meetingDuration),
+            minSchedulingNoticeHours: parseNoticeHours(minSchedulingNotice),
             maxBookingsPerDay: parseInt(maxBookingPerDay) || 5,
         });
     };
@@ -308,8 +336,8 @@ const AvailabilityScreen = () => {
                             <View style={styles.searchContainer}>
                                 <SearchBar
                                     backgroundColor="transparent"
-                                    value=""
-                                    onChangeValue={() => { }}
+                                    value={dateSearchQuery}
+                                    onChangeValue={handleDateSearch}
                                     placeholder="Enter a date (dd-mm-yyyy)"
                                 />
                             </View>

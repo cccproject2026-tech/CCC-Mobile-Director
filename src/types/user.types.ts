@@ -6,6 +6,7 @@ export type UserRole =
     | "super admin"
     | "mentor"
     | "Pastor"
+    | "pastor"
     | "Seminarian"
     | "lay leader"
     | "field_mentor"

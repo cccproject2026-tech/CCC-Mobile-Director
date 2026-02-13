@@ -1,5 +1,5 @@
-import { Appointment, TimeSlot as APITimeSlot } from '@/types/appointment.types';
-import { Mentor, Mentee } from '@/types/user.types';
+import { Appointment, TimeSlot as APITimeSlot, AppointmentPlatform, WeeklyAvailability } from '@/types/appointment.types';
+import { Mentor, UserRole } from '@/types/user.types';
 import {
     getDeviceType,
     getFontSize,
@@ -12,14 +12,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View, Alert, Dimensions, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatTimeSlot, useMonthlyAvailability } from '@/hooks/useMentorsAvailability';
+import { formatTimeSlot, useMonthlyAvailability, useWeeklyAvailability } from '@/hooks/useMentorsAvailability';
+import { appointmentService } from '@/services/appointments.service';
 import GradientCalendar from '../Appointments/calendar';
 import SimpleSuccessModal from '../Appointments/SimpleSuccessModal';
 import SearchBar from '../Header/SearchBar';
-import { useMentors } from '@/hooks/useMentors';
-import { useMentees } from '@/hooks/useMentees';
+import { useUsersByRole } from '@/hooks/useUsersByRole';
+import { useAuthStore } from '@/stores/auth.store';
+import { useUserAppointments, useMentorAppointments } from '@/hooks/useAppointments';
 
 interface TimeSlot {
     id: string;
@@ -30,7 +32,6 @@ interface TimeSlot {
 }
 
 export interface ScheduleMeetingBottomSheetProps {
-    mentors: Mentor[];
     onClose: () => void;
     onSchedule: (data: {
         mentorId: string;
@@ -38,7 +39,6 @@ export interface ScheduleMeetingBottomSheetProps {
         platform: string;
         meetingLink?: string;
         notes?: string;
-        // Optional fields for rescheduling (not required for initial schedule)
         startTime?: string;
         startPeriod?: 'AM' | 'PM' | string;
     }) => void;
@@ -54,10 +54,10 @@ export interface ScheduleMeetingBottomSheetProps {
     showCancelButton?: boolean;
     onScheduleComplete?: () => void;
 }
+
 const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingBottomSheetProps>(
     (
         {
-            mentors,
             onClose,
             onSchedule,
             mode = 'schedule',
@@ -76,71 +76,63 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
     ) => {
         const { bottom } = useSafeAreaInsets();
         const deviceType = getDeviceType();
-        const snapPoints = useMemo(() => ['85%'], []);
+        const snapPoints = useMemo(() => ['95%'], []);
 
-        // ✅ Initialize mentor BEFORE using it
-        const initialMentor = useMemo(() => {
-            if (mode === 'reschedule' && existingAppointment) {
-                return mentors.find(m => m.id === existingAppointment.mentorId) || null;
-            }
-            return null;
-        }, [mode, existingAppointment, mentors]);
+        // Get current user (Director in this app)
+        const { user: currentUser } = useAuthStore();
 
         // Initialize state
         const [currentStep, setCurrentStep] = useState<1 | 2>(mode === 'reschedule' ? 2 : 1);
         const [searchQuery, setSearchQuery] = useState('');
-        const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(initialMentor);
+        const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
         const [selectedDate, setSelectedDate] = useState<string>(
             mode === 'reschedule' && existingAppointment
                 ? existingAppointment.meetingDate.split('T')[0]
                 : ''
         );
         const [selectedTime, setSelectedTime] = useState<TimeSlot | null>(null);
-        const [selectedRole, setSelectedRole] = useState<'mentor' | 'field_mentor' | 'mentee'>('mentor');
-        const [meetingOption, setMeetingOption] = useState('Zoom Meeting');
+        const [selectedRole, setSelectedRole] = useState<UserRole>('mentor');
+        const [meetingOption, setMeetingOption] = useState('Zoom');
         const [showMeetingOptions, setShowMeetingOptions] = useState(false);
         const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-        // Infinite scroll hooks
+        // Fetch users based on selectedRole
         const {
-            data: mentorsData,
-            fetchNextPage: fetchNextMentorsPage,
-            hasNextPage: hasNextMentorsPage,
-            isFetchingNextPage: isFetchingNextMentorsPage
-        } = useMentors(20);
+            data: usersData,
+            fetchNextPage,
+            hasNextPage,
+            isFetchingNextPage,
+            isLoading: isLoadingUsers
+        } = useUsersByRole(selectedRole, 20);
 
-        const {
-            data: menteesData,
-            fetchNextPage: fetchNextMenteesPage,
-            hasNextPage: hasNextMenteesPage,
-            isFetchingNextPage: isFetchingNextMenteesPage
-        } = useMentees(20);
+        const allUsers = useMemo(() => {
+            return usersData?.pages.flatMap((page: any) => page.users) || [];
+        }, [usersData]);
 
-        const allMentors = useMemo(() => mentorsData?.pages.flatMap((page: any) => page.mentors) || [], [mentorsData]);
-        const allMentees = useMemo(() => menteesData?.pages.flatMap((page: any) => page.mentees) || [], [menteesData]);
+        const filteredMentors = useMemo(() => {
+            if (!searchQuery) return allUsers;
+            const query = searchQuery.toLowerCase();
+            return allUsers.filter((user: any) =>
+                user.firstName.toLowerCase().includes(query) ||
+                (user.lastName || '').toLowerCase().includes(query)
+            );
+        }, [allUsers, searchQuery]);
 
-        // Combined data for Step 1
-        const mentorListStep1 = useMemo(() => {
-            if (selectedRole === 'mentee') return allMentees;
-            // For mentor and field_mentor, we currently filter from the same mentor list
-            return allMentors;
-        }, [selectedRole, allMentors, allMentees]);
+        // ✅ Rescheduling logic: Initialize mentor when data is loaded
+        useEffect(() => {
+            if (mode === 'reschedule' && existingAppointment && allUsers.length > 0) {
+                const found = allUsers.find((m: any) => m.id === existingAppointment.mentorId);
+                if (found) setSelectedMentor(found);
+            }
+        }, [mode, existingAppointment, allUsers]);
 
         // Get current month and year for availability
         const currentDate = new Date();
         const [currentMonth] = useState(currentDate.getMonth() + 1);
         const [currentYear] = useState(currentDate.getFullYear());
 
-        // ✅ Fix: Make sure selectedMentor is set before fetching availability
         const mentorIdForAvailability = useMemo(() => {
-            if (selectedMentor?.id) {
-                return selectedMentor.id;
-            }
-            // In reschedule mode, use the appointment's mentor ID
-            if (mode === 'reschedule' && existingAppointment) {
-                return existingAppointment.mentorId;
-            }
-            return null;
+            return selectedMentor?.id || (mode === 'reschedule' && existingAppointment ? existingAppointment.mentorId : null);
         }, [selectedMentor, mode, existingAppointment]);
 
         // Fetch availability for selected mentor
@@ -151,13 +143,17 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
             mentorId: mentorIdForAvailability,
             month: currentMonth,
             year: currentYear,
+            role: selectedRole
         });
+
+        // Validation hooks
+        const { availability: settings } = useWeeklyAvailability(mentorIdForAvailability, { role: selectedRole });
+        const { data: mentorAppointments = [] } = useMentorAppointments(mentorIdForAvailability);
+        const { data: userAppointments = [] } = useUserAppointments(currentUser?.id || null);
 
         // Transform API availability to available dates
         const availableDates = useMemo(() => {
-            if (!monthlyAvailability) {
-                return [];
-            }
+            if (!monthlyAvailability) return [];
             return monthlyAvailability
                 .filter(day => day.slots.length > 0)
                 .map(day => day.date);
@@ -203,37 +199,9 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
             { id: 'in_person', label: 'In-Person Meeting', icon: 'people-outline' },
         ];
 
-        const filteredMentors = useMemo(() => {
-            let list = mentorListStep1;
-
-            if (selectedRole === 'mentor') {
-                list = allMentors.filter(m => m.role?.toLowerCase() === 'mentor');
-            } else if (selectedRole === 'field_mentor') {
-                list = allMentors.filter(m => m.role?.toLowerCase() === 'field_mentor');
-            } else if (selectedRole === 'mentee') {
-                list = allMentees;
-            }
-
-            if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                list = list.filter(mentor =>
-                    mentor.firstName.toLowerCase().includes(query) ||
-                    (mentor.lastName || '').toLowerCase().includes(query)
-                );
-            }
-
-            return list;
-        }, [mentorListStep1, allMentors, allMentees, selectedRole, searchQuery]);
-
         const handleLoadMore = () => {
-            if (selectedRole === 'mentee') {
-                if (hasNextMenteesPage && !isFetchingNextMenteesPage) {
-                    fetchNextMenteesPage();
-                }
-            } else {
-                if (hasNextMentorsPage && !isFetchingNextMentorsPage) {
-                    fetchNextMentorsPage();
-                }
+            if (hasNextPage && !isFetchingNextPage) {
+                fetchNextPage();
             }
         };
 
@@ -266,7 +234,51 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
 
         const handleSchedule = () => {
             if (selectedMentor && selectedDate && selectedTime) {
-                // Build meeting date in ISO format
+                // Client-side validations
+                const selectedDateTime = new Date(selectedDate);
+                const [time, period] = selectedTime.startTime.split(' ');
+                let [hours, minutes] = time.split(':').map(Number);
+                if (period === 'PM' && hours !== 12) hours += 12;
+                if (period === 'AM' && hours === 12) hours = 0;
+                selectedDateTime.setHours(hours, minutes, 0, 0);
+
+                const now = new Date();
+                
+                // 1. Min Scheduling Notice Hours
+                if (settings?.minSchedulingNoticeHours) {
+                    const noticeLimit = new Date(now.getTime() + settings.minSchedulingNoticeHours * 60 * 60 * 1000);
+                    if (selectedDateTime < noticeLimit) {
+                        Alert.alert('Validation Error', `Appointments must be scheduled at least ${settings.minSchedulingNoticeHours} hours in advance.`);
+                        return;
+                    }
+                }
+
+                // 2. Max Bookings Per Day
+                if (settings?.maxBookingsPerDay) {
+                    const existingOnDay = mentorAppointments.filter((app: Appointment) => app.meetingDate.split('T')[0] === selectedDate);
+                    if (existingOnDay.length >= settings.maxBookingsPerDay) {
+                        Alert.alert('Validation Error', `This mentor has reached the maximum of ${settings.maxBookingsPerDay} appointments for this day.`);
+                        return;
+                    }
+                }
+
+                // 3. Overlapping Appointments
+                const isOverlapping = mentorAppointments.some((app: Appointment) => {
+                    if (app.id === existingAppointment?.id) return false;
+                    const appDate = new Date(app.meetingDate);
+                    return appDate.getTime() === selectedDateTime.getTime();
+                }) || userAppointments.some((app: Appointment) => {
+                    if (app.id === existingAppointment?.id) return false;
+                    const appDate = new Date(app.meetingDate);
+                    return appDate.getTime() === selectedDateTime.getTime();
+                });
+
+                if (isOverlapping) {
+                    Alert.alert('Conflict', 'There is already an appointment scheduled for this time.');
+                    return;
+                }
+
+                // Build meeting date in ISO format (using the same logic as before for consistency)
                 const [year, month, day] = selectedDate.split('-').map(Number);
                 let hour = parseInt(selectedTime.apiSlot.startTime, 10);
                 if (selectedTime.apiSlot.startPeriod === 'PM' && hour !== 12) {
@@ -279,21 +291,13 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                 const utcTimestamp = istDate.getTime() - (5.5 * 60 * 60 * 1000);
                 const meetingDate = new Date(utcTimestamp).toISOString();
 
-                // Map platform
-                const platformMap: Record<string, string> = {
-                    'Zoom': 'zoom',
-                    'Google Meet': 'google_meet',
-                    'Microsoft Teams': 'teams',
-                    'Phone Call': 'phone',
-                    'In-Person Meeting': 'in_person',
-                };
-                const platform = meetingOption.toLowerCase().replace(' ', '_');
+                const platform = appointmentService.mapPlatformToApiValue(meetingOption);
 
                 onSchedule({
                     mentorId: selectedMentor.id,
                     meetingDate,
                     platform,
-                    meetingLink: platform === 'zoom' ? 'https://zoom.us/j/123456789' : undefined,
+                    meetingLink: undefined,
                     notes: `Meeting with ${selectedMentor.firstName} ${selectedMentor.lastName || ''}`,
                     ...(mode === 'reschedule' && {
                         startTime: selectedTime.apiSlot.startTime,
@@ -316,7 +320,7 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
 
         const resetForm = () => {
             setCurrentStep(mode === 'reschedule' ? 2 : 1);
-            setSelectedMentor(initialMentor);
+            setSelectedMentor(null);
             setSelectedDate('');
             setSelectedTime(null);
             setSearchQuery('');
@@ -375,16 +379,10 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                                 <Text style={[styles.roleTabText, selectedRole === 'mentor' && styles.activeRoleTabText]}>Mentor</Text>
                                             </Pressable>
                                             <Pressable
-                                                style={[styles.roleTab, selectedRole === 'field_mentor' && styles.activeRoleTab]}
-                                                onPress={() => setSelectedRole('field_mentor')}
+                                                style={[styles.roleTab, selectedRole === 'pastor' && styles.activeRoleTab]}
+                                                onPress={() => setSelectedRole('pastor')}
                                             >
-                                                <Text style={[styles.roleTabText, selectedRole === 'field_mentor' && styles.activeRoleTabText]}>Field Mentor</Text>
-                                            </Pressable>
-                                            <Pressable
-                                                style={[styles.roleTab, selectedRole === 'mentee' && styles.activeRoleTab]}
-                                                onPress={() => setSelectedRole('mentee')}
-                                            >
-                                                <Text style={[styles.roleTabText, selectedRole === 'mentee' && styles.activeRoleTabText]}>Mentee</Text>
+                                                <Text style={[styles.roleTabText, selectedRole === 'pastor' && styles.activeRoleTabText]}>Mentee</Text>
                                             </Pressable>
                                         </View>
 
@@ -399,7 +397,11 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                     </View>
 
                                     <View style={[styles.mentorListContainer, { borderColor: 'rgba(255, 255, 255, 0.3)' }]}>
-                                        {filteredMentors.length > 0 ? (
+                                        {isLoadingUsers ? (
+                                            <View style={styles.emptyStateContainer}>
+                                                <ActivityIndicator color={colorScheme.text} />
+                                            </View>
+                                        ) : filteredMentors.length > 0 ? (
                                             <BottomSheetFlatList
                                                 data={filteredMentors}
                                                 renderItem={({ item: mentor }: { item: Mentor }) => (
@@ -446,7 +448,7 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                                 onEndReachedThreshold={0.5}
                                                 contentContainerStyle={{ paddingBottom: getSpacing(20) }}
                                                 ListFooterComponent={
-                                                    (isFetchingNextMentorsPage || isFetchingNextMenteesPage) ? (
+                                                    isFetchingNextPage ? (
                                                         <View style={{ paddingVertical: 20 }}>
                                                             <ActivityIndicator color={colorScheme.text} />
                                                         </View>
@@ -456,7 +458,7 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                         ) : (
                                             <View style={styles.emptyStateContainer}>
                                                 <Text style={[styles.emptyStateText, { color: 'rgba(255, 255, 255, 0.6)' }]}>
-                                                    No {selectedRole === 'mentor' ? 'mentors' : selectedRole === 'field_mentor' ? 'field mentors' : 'mentees'} found
+                                                    No {selectedRole === 'mentor' ? 'mentors' : 'mentees'} found
                                                 </Text>
                                             </View>
                                         )}
@@ -534,21 +536,15 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
 
                                                 {isLoadingAvailability ? (
                                                     <View style={styles.noTimeSlotsContainer}>
-                                                        <Text style={[styles.noTimeSlotsText, { color: `${colorScheme.text}80` }]}>
-                                                            Loading available slots...
-                                                        </Text>
+                                                        <ActivityIndicator color={colorScheme.text} />
                                                     </View>
                                                 ) : timeSlots.length > 0 ? (
-                                                    <ScrollView
-                                                        horizontal
-                                                        showsHorizontalScrollIndicator={false}
-                                                        style={styles.timeSlotContainer}
-                                                    >
+                                                    <View style={styles.timeSlotGrid}>
                                                         {timeSlots.map((slot) => (
                                                             <Pressable
                                                                 key={slot.id}
                                                                 style={[
-                                                                    styles.timeSlot,
+                                                                    styles.timeSlotGridItem,
                                                                     {
                                                                         backgroundColor: selectedTime?.id === slot.id
                                                                             ? '#FFFFFF'
@@ -572,7 +568,7 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                                                 </Text>
                                                             </Pressable>
                                                         ))}
-                                                    </ScrollView>
+                                                    </View>
                                                 ) : (
                                                     <View style={styles.noTimeSlotsContainer}>
                                                         <Text style={[styles.noTimeSlotsText, { color: `${colorScheme.text}80` }]}>
@@ -680,6 +676,8 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
+        // maxHeight: Dimensions.get('window').height * 0.9,
+        // minHeight: Dimensions.get('window').height * 0.3,
         paddingHorizontal: getSpacing(16),
     },
     stepContent: {
@@ -689,7 +687,9 @@ const styles = StyleSheet.create({
         flexShrink: 0,
     },
     mentorListContainer: {
-        flex: 1,
+        // flex: 1,
+        maxHeight: Dimensions.get('window').height * 0.5,
+        minHeight: Dimensions.get('window').height * 0.3,
         borderWidth: 1.5,
         borderRadius: getSpacing(12),
         padding: getSpacing(isSmallDevice ? 14 : 16),
@@ -743,12 +743,6 @@ const styles = StyleSheet.create({
     searchBarContainer: {
         marginBottom: getSpacing(isSmallDevice ? 10 : 12),
     },
-    mentorListStep1: {
-        borderWidth: 1.5,
-        borderRadius: getSpacing(12),
-        padding: getSpacing(isSmallDevice ? 14 : 16),
-        marginBottom: getSpacing(isSmallDevice ? 16 : 18),
-    },
     mentorItemStep1: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -791,19 +785,6 @@ const styles = StyleSheet.create({
         fontSize: getFontSize(isSmallDevice ? 10 : 11),
         marginTop: 2,
         textTransform: 'capitalize',
-    },
-    loadMoreButton: {
-        paddingVertical: getSpacing(12),
-        alignItems: 'center',
-        marginTop: getSpacing(8),
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    loadMoreText: {
-        color: '#FFFFFF',
-        fontSize: getFontSize(13),
-        fontWeight: '600',
-        textDecorationLine: 'underline',
     },
     emptyStateContainer: {
         paddingVertical: getSpacing(20),
@@ -886,22 +867,27 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.2)',
     },
-    timeSlotContainer: {
+    timeSlotGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
         marginTop: getSpacing(8),
-        marginBottom: getSpacing(16),
+        marginBottom: getSpacing(8),
     },
-    timeSlot: {
-        paddingHorizontal: getSpacing(16),
-        paddingVertical: getSpacing(10),
-        borderRadius: getSpacing(20),
+    timeSlotGridItem: {
+        width: '48.5%',
+        paddingVertical: getSpacing(12),
+        paddingHorizontal: getSpacing(8),
+        borderRadius: getSpacing(10),
         borderWidth: 1,
-        marginRight: getSpacing(10),
-        minWidth: getSpacing(100),
+        marginBottom: getSpacing(10),
         alignItems: 'center',
+        justifyContent: 'center',
     },
     timeSlotText: {
-        fontSize: getFontSize(13),
+        fontSize: getFontSize(12),
         fontWeight: '600',
+        textAlign: 'center',
     },
     noTimeSlotsContainer: {
         paddingVertical: getSpacing(20),

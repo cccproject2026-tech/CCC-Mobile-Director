@@ -35,7 +35,7 @@ export default function RemoveMenteeScreen() {
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
     const { mentees, isLoading } = useMentorMentees(mentorId);
-
+console.log('Mentees:', mentees);
 
     const removeMutation = useRemoveMenteesFromMentor();
 

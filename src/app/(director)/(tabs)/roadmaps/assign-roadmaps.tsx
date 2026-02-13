@@ -1,5 +1,5 @@
 // app/(director)/(tabs)/roadmaps/assign-roadmaps.tsx
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, ListRenderItem, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import TopBar from '@/components/Header/TopBar';
@@ -28,8 +28,30 @@ const AssignRoadmaps = () => {
     const [selectedMentees, setSelectedMentees] = useState<Set<string>>(new Set());
 
     // Fetch mentees
-    const { data, isLoading, error } = useMentees();
-    const mentees = data?.mentees ?? [];
+    const { 
+        data, 
+        isLoading, 
+        error, 
+        hasNextPage, 
+        fetchNextPage, 
+        isFetchingNextPage 
+    } = useMentees();
+    const mentees = data?.pages.flatMap((page) => page.mentees) ?? [];
+
+    const handleLoadMore = () => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    };
+
+    const renderFooter = () => {
+        if (!isFetchingNextPage) return null;
+        return (
+            <View style={styles.footerLoading}>
+                <ActivityIndicator size="small" color="#fff" />
+            </View>
+        );
+    };
 
     // Assign mutation
     const assignMutation = useAssignRoadmapsToMentee();
@@ -82,7 +104,7 @@ const AssignRoadmaps = () => {
 
         try {
             const menteeIdArray = Array.from(selectedMentees);
-
+            console.log("Mentee ID Array:", menteeIdArray);
             await assignMutation.mutateAsync({
                 menteeIds: menteeIdArray,
                 roadmapIds: selectedRoadmapIds,
@@ -167,20 +189,24 @@ const AssignRoadmaps = () => {
                         </Text>
                     </View>
                 ) : (
-                    <ScrollView
+                    <FlatList
+                        data={filteredMentees}
+                        renderItem={({ item }) => (
+                            <MenteeCard
+                                key={item.id}
+                                data={item}
+                                layout="card"
+                                isSelected={selectedMentees.has(item.id)}
+                                onToggleSelect={() => handleToggleSelection(item.id)}
+                            />
+                        )}
+                        keyExtractor={(item) => item.id}
                         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 100 }]}
                         showsVerticalScrollIndicator={false}
-                    >
-                        {filteredMentees.map((mentee) => (
-                            <MenteeCard
-                                key={mentee.id}
-                                data={mentee}
-                                layout="card"
-                                isSelected={selectedMentees.has(mentee.id)}
-                                onToggleSelect={() => handleToggleSelection(mentee.id)}
-                            />
-                        ))}
-                    </ScrollView>
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={renderFooter}
+                    />
                 )}
             </View>
 
@@ -329,5 +355,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         opacity: 0.7,
+    },
+    footerLoading: {
+        paddingVertical: 20,
+        alignItems: 'center',
     },
 });

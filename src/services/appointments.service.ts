@@ -199,14 +199,9 @@ export const appointmentService = {
             hour = 0;
         }
 
-        // Create date in IST timezone (treating it as UTC first)
-        // For 11 AM IST: we want 05:30 UTC
-        const istDate = new Date(Date.UTC(year, month - 1, day, hour, 0, 0, 0));
-
-        // IST is UTC+5:30, so subtract 5.5 hours to get UTC
-        const utcTimestamp = istDate.getTime() - (5.5 * 60 * 60 * 1000);
-
-        return new Date(utcTimestamp).toISOString();
+        // IST is UTC+5:30. We use an ISO string with offset for reliable conversion.
+        const isoString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:00:00+05:30`;
+        return new Date(isoString).toISOString();
     },
 
 

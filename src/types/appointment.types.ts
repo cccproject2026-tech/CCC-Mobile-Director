@@ -80,6 +80,9 @@ export interface WeeklySlot {
 export interface WeeklyAvailability {
     mentorId: string;
     weeklySlots: WeeklySlot[];
+    maxBookingsPerDay?: number;
+    meetingDuration?: number;
+    minSchedulingNoticeHours?: number;
 }
 
 export interface GetWeeklyAvailabilityApiResponse {

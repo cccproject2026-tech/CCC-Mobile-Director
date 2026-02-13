@@ -33,9 +33,7 @@ export default function AssignScholarshipScreen() {
     const router = useRouter();
     const params = useLocalSearchParams<{ menteeId?: string }>();
     const menteeId = params.menteeId || '';
-
     const { data: mentee } = useGetUserById(menteeId);
-
     const { top, bottom } = useSafeAreaInsets();
     const [isRural, setIsRural] = useState(true);
     const [editAmount, setEditAmount] = useState('');
@@ -133,7 +131,7 @@ export default function AssignScholarshipScreen() {
     const handleAssignMentor = () => {
         setShowAcceptModal(false);
         router.push({
-            pathname: '/(director)/(tabs)/mentees/assign-mentors',
+            pathname: '/(director)/(tabs)/mentees/assign-mentors' as any,
             params: { id: menteeId },
         });
     };

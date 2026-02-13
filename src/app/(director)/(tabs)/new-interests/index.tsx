@@ -66,7 +66,7 @@ export default function InterestReceivedScreen() {
      * Apply search + filter
      -------------------------------------*/
     const filteredInterests = useMemo(() => {
-        let list = groupedInterests[activeTab] ?? [];
+        let list = groupedInterests[activeTab as keyof typeof groupedInterests] ?? [];
 
         if (search.trim()) {
             const q = search.toLowerCase();

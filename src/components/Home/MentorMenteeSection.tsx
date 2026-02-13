@@ -14,16 +14,18 @@ const MentorMenteeSection: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'mentors' | 'mentees'>('mentors');
 
     // Fetch mentors and mentees from API
-    const { mentors: allMentors, isLoading: isLoadingMentors, error: isErrorMentors } = useMentors();
-    const { data: menteesData, isLoading: isLoadingMentees, isError: isErrorMentees } = useMentees();
-
+    const { data: allMentors, isLoading: isLoadingMentors, error: isErrorMentors } = useMentors(5);
+    const { data: menteesData, isLoading: isLoadingMentees, isError: isErrorMentees } = useMentees(5);
+    console.log(menteesData, 'menteesData');
+    console.log(allMentors, 'allMentors');
     // Limit to first 3 items
     const mentors = useMemo(() => {
-        return allMentors && Array.isArray(allMentors) ? allMentors.slice(0, 3) : [];
+        const allMentor = allMentors?.pages.flatMap((page: any) => page.mentors) ?? [];
+        return allMentor && Array.isArray(allMentor) ? allMentor.slice(0, 3) : [];
     }, [allMentors]);
 
     const mentees = useMemo(() => {
-        const allMentees = menteesData?.mentees ?? [];
+        const allMentees = menteesData?.pages.flatMap((page: any) => page.mentees) ?? [];
         return Array.isArray(allMentees) ? allMentees.slice(0, 3) : [];
     }, [menteesData]);
 
@@ -31,14 +33,14 @@ const MentorMenteeSection: React.FC = () => {
     const isError = activeTab === 'mentors' ? isErrorMentors : isErrorMentees;
 
     const handleMentorPress = (mentorId: string) => {
-        const mentor = allMentors.find(m => m.id === mentorId);
+        const mentor = mentors.find(m => m.id === mentorId);
         const email = mentor?.email || '';
         router.push(`/(director)/(tabs)/mentors/${mentorId}${email ? `?email=${encodeURIComponent(email)}` : ''}` as any);
     };
 
     const handleMenteePress = (menteeId: string) => {
-        const allMentees = menteesData?.mentees ?? [];
-        const mentee = allMentees.find((m: any) => m.id === menteeId);
+        // const allMentees = mentees ?? [];
+        const mentee = mentees.find((m: any) => m.id === menteeId);
         const email = mentee?.email || '';
         router.push(`/(director)/(tabs)/mentees/${menteeId}${email ? `?email=${encodeURIComponent(email)}` : ''}` as any);
     };

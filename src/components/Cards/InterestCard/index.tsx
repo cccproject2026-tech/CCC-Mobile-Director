@@ -41,6 +41,8 @@ const InterestCard: React.FC<Props> = memo(({ data, onCall, onChat, onMail, onPr
             });
         }
     };
+    console.log("Data:", data);
+    console.log("Interest ID:", data.id);
 
     const fullName = `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim() || 'Unknown';
 

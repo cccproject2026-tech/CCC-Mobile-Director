@@ -61,7 +61,7 @@ export default function InterestFormScreen() {
     const router = useRouter();
     const { top, bottom } = useSafeAreaInsets();
     const { interestId } = useLocalSearchParams<{ interestId: string }>();
-
+console.log("Interest ID:--------", interestId);
     const { data: interestsData, isLoading } = useInterests();
     const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateInterestStatus();
 
@@ -93,7 +93,8 @@ export default function InterestFormScreen() {
         updateStatus(
             { interestId: interest.user?._id as string, status: "accepted" },
             {
-                onSuccess: () => {
+                onSuccess: (e) => {
+                    console.log("Success:", e);
                     Alert.alert("Success", "Request accepted", [
                         {
                             text: "OK",
@@ -105,6 +106,7 @@ export default function InterestFormScreen() {
                     ]);
                 },
                 onError: (error) => {
+                    console.log("Error:", error);
                     Alert.alert("Error", error.message || "Failed to accept the request");
                 },
             }

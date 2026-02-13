@@ -35,9 +35,10 @@ export default function ProgressTrackerIndex() {
     const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
 
     const { data: menteesData, isLoading: menteesLoading } = useMentees();
-    const mentees: Mentee[] = menteesData?.mentees ?? [];
+    const mentees: Mentee[] = menteesData?.pages.flatMap((page) => page.mentees) ?? [];
 
-    const { mentors, isLoading: mentorsLoading } = useMentors();
+    const { data: mentorsData, isLoading: mentorsLoading } = useMentors();
+    const mentors: Mentor[] = mentorsData?.pages.flatMap((page) => page.mentors) ?? [];
 
     const getFilterOptions = (): FilterOption[] => {
         return [

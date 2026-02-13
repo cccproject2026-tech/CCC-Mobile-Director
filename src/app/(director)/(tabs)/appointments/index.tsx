@@ -7,6 +7,8 @@ import SearchBar from "@/components/Header/SearchBar";
 import TopBar from "@/components/Header/TopBar";
 import { Colors } from "@/constants/Colors";
 import { icons } from "@/constants";
+import { useAuthStore } from '@/stores/auth.store';
+import { useUserAppointments, useCreateAppointment } from '@/hooks/useAppointments';
 import { appointmentService } from '@/services/appointments.service';
 import { Appointment } from '@/types/appointment.types';
 import { Mentor } from '@/types/user.types';
@@ -19,7 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import MeetingOptionModal from '@/components/Modals/MeetingOptionModal';
 import CancelConfirmationModal from '@/components/Modals/CancelConfirmationModal';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type ResponseModalState = {
@@ -70,19 +72,9 @@ const Appointments: React.FC = () => {
         return [...mentors, ...mentees];
     }, [mentorsData, menteesData]);
 
-    // Mock appointments data
-    const [appointments, setAppointments] = useState<Appointment[]>([
-        {
-            id: '101',
-            userId: 'user1',
-            mentorId: '1',
-            meetingDate: new Date().toISOString(),
-            endTime: new Date(Date.now() + 3600000).toISOString(),
-            platform: 'zoom',
-            status: 'scheduled',
-            notes: 'Follow-up on project structure',
-        }
-    ]);
+    const user = useAuthStore(state => state.user);
+    const { data: appointments = [], isLoading: isLoadingAppointments } = useUserAppointments(user?.id || null);
+    const { mutate: createAppointment } = useCreateAppointment();
 
     const filteredAppointments = appointments.filter(app =>
         app.meetingDate.split('T')[0] === selectedDate &&
@@ -105,7 +97,8 @@ const Appointments: React.FC = () => {
 
     const handleConfirmCancel = () => {
         if (selectedAppointment) {
-            setAppointments(prev => prev.filter((a: Appointment) => a.id !== selectedAppointment.id));
+            // TODO: Implement actual cancel API call if needed, currently it just filters local state which is now driven by react-query
+            // For now, we'll just show success. Ideally useDeleteAppointment hook.
             setShowCancelConfirmModal(false);
             setSelectedAppointment(null);
             setResponseModal({
@@ -117,19 +110,33 @@ const Appointments: React.FC = () => {
     };
 
     const handleScheduleMeeting = (data: any) => {
+        if (!user) {
+            Alert.alert('Error', 'You must be logged in to schedule a meeting.');
+            return;
+        }
+
         console.log('Scheduling meeting:', data);
-        // Add logic to save appointment via API
-        const newApp: Appointment = {
-            id: Math.random().toString(),
-            userId: 'current-user-id',
+        
+        createAppointment({
+            userId: user.id,
             mentorId: data.mentorId,
             meetingDate: data.meetingDate,
-            endTime: new Date(new Date(data.meetingDate).getTime() + 3600000).toISOString(),
             platform: data.platform as any,
-            status: 'scheduled',
             notes: data.notes,
-        };
-        setAppointments(prev => [...prev, newApp]);
+        }, {
+            onSuccess: () => {
+                setResponseModal({
+                    visible: true,
+                    message: 'Meeting Scheduled Successfully',
+                    buttonText: 'OK',
+                });
+                scheduleMeetingBottomSheetRef.current?.dismiss();
+            },
+            onError: (error: any) => {
+                console.error('Error scheduling meeting:', error);
+                Alert.alert('Error', 'Failed to schedule meeting. Please try again.');
+            }
+        });
     };
 
     const handleNewMeeting = () => {
@@ -144,7 +151,7 @@ const Appointments: React.FC = () => {
     };
 
     const renderAppointment = ({ item }: { item: Appointment }) => {
-        const mentor = allUsers.find(m => m.id === item.mentorId);
+        const mentor = allUsers.find((m: any) => m.id === item.mentorId);
         const date = new Date(item.meetingDate);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 
@@ -283,17 +290,21 @@ const Appointments: React.FC = () => {
                     </View>
 
                     <View style={styles.appointmentsList}>
-                        <FlatList
-                            data={filteredAppointments}
-                            renderItem={renderAppointment}
-                            keyExtractor={item => item.id}
-                            scrollEnabled={false}
-                            ListEmptyComponent={
-                                <View style={styles.emptyState}>
-                                    <Text style={styles.emptyStateText}>No meetings scheduled for this date</Text>
-                                </View>
-                            }
-                        />
+                        {isLoadingAppointments ? (
+                            <ActivityIndicator color="#FFFFFF" style={{ marginVertical: 20 }} />
+                        ) : (
+                            <FlatList
+                                data={filteredAppointments}
+                                renderItem={renderAppointment}
+                                keyExtractor={item => item.id}
+                                scrollEnabled={false}
+                                ListEmptyComponent={
+                                    <View style={styles.emptyState}>
+                                        <Text style={styles.emptyStateText}>No meetings scheduled for this date</Text>
+                                    </View>
+                                }
+                            />
+                        )}
                     </View>
 
                     {/* Next Appointment Section */}
@@ -321,7 +332,6 @@ const Appointments: React.FC = () => {
 
                 <ScheduleMeetingBottomSheet
                     ref={scheduleMeetingBottomSheetRef}
-                    mentors={allUsers}
                     onClose={() => scheduleMeetingBottomSheetRef.current?.dismiss()}
                     onSchedule={handleScheduleMeeting}
                 />

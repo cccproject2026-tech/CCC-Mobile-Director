@@ -23,8 +23,8 @@ import {
     ActivityIndicator,
     Alert,
     Dimensions,
+    FlatList,
     Pressable,
-    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -58,9 +58,26 @@ export default function RevitalizationRoadmap() {
 
     const deleteRoadmapMutation = useDeleteRoadmap();
 
-    const { data:mentors, isLoading: mentorsLoading } = useMentors();
-    const { data: menteesData, isLoading: menteesLoading } = useMentees();
-    const mentees: Mentee[] = menteesData?.pages.flatMap(page => page.mentees) ?? [];
+    // ✅ Destructure pagination methods for mentors
+    const {
+        data: mentors,
+        isLoading: mentorsLoading,
+        fetchNextPage: fetchNextMentors,
+        hasNextPage: hasNextMentors,
+        isFetchingNextPage: isFetchingNextMentors,
+    } = useMentors();
+
+    // ✅ Destructure pagination methods for mentees
+    const {
+        data: menteesData,
+        isLoading: menteesLoading,
+        fetchNextPage: fetchNextMentees,
+        hasNextPage: hasNextMentees,
+        isFetchingNextPage: isFetchingNextMentees,
+    } = useMentees();
+
+    // Flatten data for lists
+    // const mentees: Mentee[] = menteesData?.pages.flatMap(page => page.mentees) ?? [];
 
     // ✅ Transform roadmaps to RoadmapCardData
     const roadmapLibrary: RoadmapCardData[] = useMemo(() => {
@@ -114,7 +131,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push({pathname: '/mentees/assign-mentors' as any, params: { id: selectedMentee?.id }});
+                    router.push({ pathname: '/mentees/assign-mentors' as any, params: { id: selectedMentee?.id } });
                 }, 300);
             },
         },
@@ -124,7 +141,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push({pathname: '/mentees/remove-mentors' as any, params: { id: selectedMentee?.id }});
+                    router.push({ pathname: '/mentees/remove-mentors' as any, params: { id: selectedMentee?.id } });
                 }, 300);
             },
         },
@@ -134,7 +151,7 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push({pathname: '/(director)/(tabs)/assessments' as any, params: { id: selectedMentee?.id }});
+                    router.push({ pathname: '/(director)/(tabs)/assessments' as any, params: { id: selectedMentee?.id } });
                 }, 300);
             },
         },
@@ -154,14 +171,14 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push({pathname: `/mentees/notes` as any, params: { id: selectedMentee?.id }});
+                    router.push({ pathname: `/mentees/notes` as any, params: { id: selectedMentee?.id } });
                 }, 300);
             },
         },
         {
             icon: 'book-outline',
             label: 'View Progress Report',
-            onPress: () => router.push({pathname: `/mentees/${selectedMentee?.id}/progress` as any, params: { id: selectedMentee?.id }}),
+            onPress: () => router.push({ pathname: `/mentees/${selectedMentee?.id}/progress` as any, params: { id: selectedMentee?.id } }),
         },
         {
             icon: 'stats-chart-outline',
@@ -182,25 +199,27 @@ export default function RevitalizationRoadmap() {
             label: 'List of Mentees',
             onPress: () => {
                 console.log('List of Mentees: ', selectedMentor?.id);
-                router.push({pathname: '/mentors/mentor-mentees' as any, params: { id: selectedMentor?.id }})},
+                router.push({ pathname: '/mentors/mentor-mentees' as any, params: { id: selectedMentor?.id } })
+            },
         },
         {
             icon: 'person-add-outline',
             label: 'Assign New Mentee',
             onPress: () => {
-               console.log('Assign New Mentee: ', selectedMentor?.id);
-                router.push({pathname: '/mentors/assign-mentees' as any, params: { id: selectedMentor?.id }})},
+                console.log('Assign New Mentee: ', selectedMentor?.id);
+                router.push({ pathname: '/mentors/assign-mentees' as any, params: { id: selectedMentor?.id } })
+            },
         },
         {
             icon: 'person-remove-outline',
             label: 'Remove a Mentee',
-            onPress: () => router.push({pathname: '/mentors/remove-mentee' as any, params: { id: selectedMentor?.id }}),
+            onPress: () => router.push({ pathname: '/mentors/remove-mentee' as any, params: { id: selectedMentor?.id } }),
         },
         {
             icon: 'clipboard-outline',
             label: 'Roadmaps of Mentees',
-            onPress: () => router.push({pathname: '/mentors/roadmaps-of-mentees' as any, params: { id: selectedMentor?.id }}),
-        },  
+            onPress: () => router.push({ pathname: '/mentors/roadmaps-of-mentees' as any, params: { id: selectedMentor?.id } }),
+        },
         {
             icon: 'checkmark-done-outline',
             label: 'Assessments of Mentees',
@@ -275,13 +294,14 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 if (!selectedRoadmap) return;
                 const roadmap = roadmaps.find(r => r.name === selectedRoadmap.title);
+                console.log("Roadmap:", roadmap);
                 if (!roadmap) return;
 
                 handleCloseModal();
                 setTimeout(() => {
                     router.push({
-                        pathname: '/mentors/assign-mentees',
-                        params: { roadmapId: roadmap._id },
+                        pathname: '/(director)/(tabs)/roadmaps/assign-roadmaps',
+                        params: { roadmapIds: JSON.stringify([roadmap._id]) },
                     });
                 }, 300);
             },
@@ -504,8 +524,9 @@ export default function RevitalizationRoadmap() {
         return filtered;
     }, [mentors, search]);
 
-    const filteredMentees = useMemo(() => {
-        let filtered = mentees;
+    const filteredMentees: Mentee[] = useMemo(() => {
+        const allMentees = menteesData?.pages.flatMap(page => page.mentees) ?? [];
+        let filtered = allMentees;
 
         if (search) {
             const q = search.toLowerCase();
@@ -515,7 +536,7 @@ export default function RevitalizationRoadmap() {
         }
 
         return filtered;
-    }, [mentees, search]);
+    }, [menteesData, search]);
 
     const filteredRoadmaps = useMemo(() => {
         let filtered = roadmapLibrary;
@@ -546,7 +567,154 @@ export default function RevitalizationRoadmap() {
         { key: 'mentees', label: 'Mentees' },
     ];
 
-    // console.log('All Roadmaps images: ', roadmapLibrary.map(r => r.image));
+    // ✅ List Header Component
+    const renderListHeader = () => (
+        <View>
+            {/* Profile Swiper */}
+            <View style={styles.swiperContainer}>
+                <ProfileSwiper
+                    profiles={mentorProfiles}
+                    onProfilePress={profile =>
+                        router.push(`/mentors/${profile.id}`)
+                    }
+                />
+            </View>
+
+            {/* Tabs */}
+            <TabSwitcher
+                tabs={tabData}
+                activeTab={activeTab}
+                onChange={key =>
+                    handleTabChange(key as 'roadmap-library' | 'mentors' | 'mentees')
+                }
+            />
+
+            {/* Sort By */}
+            <View style={styles.sortContainer}>
+                <Text style={styles.sortByText}>Sort by</Text>
+                <Pressable
+                    onPress={() => setFilterModalVisible(true)}
+                    style={styles.filterButton}
+                >
+                    <Text style={styles.filterButtonText} numberOfLines={1}>
+                        {getFilterDisplayText()}
+                    </Text>
+                    <Ionicons name="chevron-down" size={18} color="#fff" />
+                </Pressable>
+            </View>
+        </View>
+    );
+
+    // ✅ List Footer Component for Pagination
+    const renderListFooter = () => {
+        const isFetching = activeTab === 'mentors' ? isFetchingNextMentors :
+                           activeTab === 'mentees' ? isFetchingNextMentees : false;
+
+        if (isFetching) {
+            return (
+                <View style={styles.centerContent}>
+                    <ActivityIndicator size="small" color="#fff" />
+                    <Text style={styles.loadingText}>Loading more...</Text>
+                </View>
+            );
+        }
+        return <View style={{ height: bottom + height * 0.05 }} />;
+    };
+
+    // ✅ Data Source based on Tab
+    const getListData = (): any[] => {
+        switch (activeTab) {
+            case 'roadmap-library':
+                return filteredRoadmaps;
+            case 'mentors':
+                return filteredMentors;
+            case 'mentees':
+                return filteredMentees;
+            default:
+                return [];
+        }
+    };
+
+    // ✅ Render Item based on Tab
+    const renderItem = ({ item }: { item: any }) => {
+        if (activeTab === 'roadmap-library') {
+            const roadmap = item as RoadmapCardData;
+            return (
+                <View style={styles.cardWrapper}>
+                    <RoadmapCard
+                        data={roadmap}
+                        showMenu={true}
+                        onMenuPress={() => handleRoadmapMenuPress(roadmap)}
+                        onPress={() => handlePhasePress(roadmap)}
+                    />
+                </View>
+            );
+        } else if (activeTab === 'mentors') {
+            const mentor = item as Mentor;
+            return (
+                <TouchableOpacity activeOpacity={0.8} style={styles.cardWrapper}>
+                    <MentorCard
+                        onPress={() => {
+                            router.push({
+                                pathname: `/(director)/(tabs)/mentors/${mentor.id}` as any,
+                                params: { email: mentor.email },
+                            })
+                        }}
+                        mentor={{
+                            id: mentor.id,
+                            name: `${mentor.firstName} ${mentor.lastName ?? ''}`,
+                            role: mentor.role === 'field_mentor' ? 'Field Mentor' : 'Mentor',
+                            menteesCount: mentor.assignedId?.length ?? 0,
+                            description: mentor.profileInfo ?? '',
+                            profilePicture: mentor.profilePicture,
+                        }}
+                        layout={viewMode}
+                        onCall={() => console.log('Call', mentor.phoneNumber)}
+                        onChat={() => console.log('Chat', mentor.id)}
+                        onMail={() => console.log('Mail', mentor.email)}
+                        onWhatsApp={() => console.log('WhatsApp', mentor.phoneNumber)}
+                        onMenu={() => handleMentorMenuPress(mentor)}
+                    />
+                </TouchableOpacity>
+            );
+        } else if (activeTab === 'mentees') {
+            const mentee = item as Mentee;
+            return (
+                 <View style={styles.cardWrapper}>
+                    <MenteeCard
+                        data={mentee}
+                        layout={viewMode}
+                        onPress={() =>
+                            router.push({
+                                pathname: `/(director)/(tabs)/roadmaps/roadmap-paths` as any,
+                                params: { email: mentee.email },
+                            })
+                        }
+                        onCall={() => console.log('Call', mentee.phoneNumber)}
+                        onChat={() => console.log('Chat', mentee.id)}
+                        onMail={() => console.log('Mail', mentee.email)}
+                        onWhatsApp={() => console.log('WhatsApp', mentee.phoneNumber)}
+                        onMenuPress={() => handleMenuPress(mentee)}
+                        onMarkComplete={() => console.log('Mark complete', mentee.firstName)}
+                        onIssueCertificate={() => console.log('Issue certificate', mentee.firstName)}
+                        onInviteAsFieldMentor={() => console.log('Invite as field mentor', mentee.firstName)}
+                    />
+                </View>
+            );
+        }
+        return null;
+    };
+
+    // ✅ On End Reached
+    const handleEndReached = () => {
+        if (activeTab === 'mentors' && hasNextMentors && !isFetchingNextMentors) {
+            fetchNextMentors();
+        } else if (activeTab === 'mentees' && hasNextMentees && !isFetchingNextMentees) {
+            fetchNextMentees();
+        }
+    };
+
+
     return (
         <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
             <View style={styles.flex1}>
@@ -559,172 +727,28 @@ export default function RevitalizationRoadmap() {
                     <SearchBar value={search} onChangeValue={setSearch} />
                 </View>
 
-                <ScrollView
-                    style={styles.flex1}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{
-                        paddingBottom: bottom + height * 0.05,
-                        paddingTop: 6,
-                    }}
-                >
-                    {/* Profile Swiper */}
-                    <View style={styles.swiperContainer}>
-                        <ProfileSwiper
-                            profiles={mentorProfiles}
-                            onProfilePress={profile =>
-                                router.push(`/mentors/${profile.id}`)
-                            }
-                        />
+                {/* ✅ Single Main FlatList */}
+                {/* Check for empty state or loading for initial load if needed, but handled inside hooks */}
+                {((activeTab === 'mentors' && mentorsLoading) || 
+                  (activeTab === 'mentees' && menteesLoading) || 
+                  (activeTab === 'roadmap-library' && isLoadingRoadmaps)) && !getListData().length ? (
+                    <View style={styles.centerContent}>
+                        <ActivityIndicator size="large" color="#fff" />
+                        <Text style={styles.loadingText}>Loading...</Text>
                     </View>
-
-                    {/* Tabs */}
-                    <TabSwitcher
-                        tabs={tabData}
-                        activeTab={activeTab}
-                        onChange={key =>
-                            handleTabChange(key as 'roadmap-library' | 'mentors' | 'mentees')
-                        }
+                ) : (
+                    <FlatList
+                        data={getListData()}
+                        renderItem={renderItem}
+                        keyExtractor={(item, index) => item.id || item._id || index.toString()}
+                        ListHeaderComponent={renderListHeader}
+                        ListFooterComponent={renderListFooter}
+                        onEndReached={handleEndReached}
+                        onEndReachedThreshold={0.5}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
                     />
-
-                    {/* Sort By */}
-                    <View style={styles.sortContainer}>
-                        <Text style={styles.sortByText}>Sort by</Text>
-                        <Pressable
-                            onPress={() => setFilterModalVisible(true)}
-                            style={styles.filterButton}
-                        >
-                            <Text style={styles.filterButtonText} numberOfLines={1}>
-                                {getFilterDisplayText()}
-                            </Text>
-                            <Ionicons name="chevron-down" size={18} color="#fff" />
-                        </Pressable>
-                    </View>
-
-                    {/* Content List */}
-                    <View style={styles.contentList}>
-                        {activeTab === 'roadmap-library' && (
-                            <>
-                                {isLoadingRoadmaps ? (
-                                    <View style={styles.centerContent}>
-                                        <ActivityIndicator size="large" color="#fff" />
-                                        <Text style={styles.loadingText}>Loading roadmaps...</Text>
-                                    </View>
-                                ) : roadmapsError ? (
-                                    <View style={styles.errorContent}>
-                                        <Ionicons
-                                            name="alert-circle-outline"
-                                            size={48}
-                                            color="#ff6b6b"
-                                        />
-                                        <Text style={styles.errorTitle}>Failed to load roadmaps</Text>
-                                        <Text style={styles.errorMessage}>
-                                            {roadmapsError instanceof Error
-                                                ? roadmapsError.message
-                                                : 'An unexpected error occurred'}
-                                        </Text>
-                                        <TouchableOpacity
-                                            onPress={() => refetchRoadmaps()}
-                                            style={styles.retryButton}
-                                        >
-                                            <Text style={styles.retryButtonText}>Retry</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ) : filteredRoadmaps.length === 0 ? (
-                                    <View style={styles.centerContent}>
-                                        <Ionicons
-                                            name="document-outline"
-                                            size={48}
-                                            color="#fff"
-                                            style={styles.emptyIcon}
-                                        />
-                                        <Text style={styles.emptyText}>No roadmaps found</Text>
-                                        {search && (
-                                            <Text style={styles.emptySubtext}>
-                                                Try adjusting your search
-                                            </Text>
-                                        )}
-                                    </View>
-                                ) : (
-                                    filteredRoadmaps.map((roadmap: RoadmapCardData, index: number) => (
-                                        <RoadmapCard
-                                            key={`roadmap-${roadmap.title}-${index}`}
-                                            data={roadmap}
-                                            showMenu={true}
-                                            onMenuPress={() => handleRoadmapMenuPress(roadmap)}
-                                            onPress={() => handlePhasePress(roadmap)}
-                                        />
-                                    ))
-                                )}
-                            </>
-                        )}
-
-                        {activeTab === 'mentors' &&
-                            filteredMentors.map(mentor => (
-                                <TouchableOpacity
-                                    key={mentor.id}
-                                    activeOpacity={0.8}
-                                    >
-                                    <MentorCard
-                                    onPress={() => {
-                                        console.log('Mentor email: ', mentor.email);
-                                        router.push({
-                                            pathname: `/(director)/(tabs)/mentors/${mentor.id}` as any,
-                                            params: { email: mentor.email },
-                                        })
-                                    }}
-                                        mentor={{
-                                            id: mentor.id,
-                                            name: `${mentor.firstName} ${mentor.lastName ?? ''}`,
-                                            role:
-                                                mentor.role === 'field_mentor'
-                                                    ? 'Field Mentor'
-                                                    : 'Mentor',
-                                            menteesCount: mentor.assignedId?.length ?? 0,
-                                            description: mentor.profileInfo ?? '',
-                                            profilePicture: mentor.profilePicture,
-                                        }}
-                                        layout={viewMode}
-                                        onCall={() => console.log('Call', mentor.phoneNumber)}
-                                        onChat={() => console.log('Chat', mentor.id)}
-                                        onMail={() => console.log('Mail', mentor.email)}
-                                        onWhatsApp={() =>
-                                            console.log('WhatsApp', mentor.phoneNumber)
-                                        }
-                                        onMenu={() => handleMentorMenuPress(mentor)}
-                                    />
-                                </TouchableOpacity>
-                            ))}
-
-                        {activeTab === 'mentees' &&
-                            filteredMentees.map((mentee: Mentee) => (
-                                <MenteeCard
-                                    key={mentee.id}
-                                    data={mentee}
-                                    layout={viewMode}
-                                    onPress={() =>
-                                        router.push({
-                                            pathname: `/(director)/(tabs)/mentees/${mentee.id}/` as any,
-                                            params: { email: mentee.email },
-                                        })
-                                    }
-                                    onCall={() => console.log('Call', mentee.phoneNumber)}
-                                    onChat={() => console.log('Chat', mentee.id)}
-                                    onMail={() => console.log('Mail', mentee.email)}
-                                    onWhatsApp={() => console.log('WhatsApp', mentee.phoneNumber)}
-                                    onMenuPress={() => handleMenuPress(mentee)}
-                                    onMarkComplete={() =>
-                                        console.log('Mark complete', mentee.firstName)
-                                    }
-                                    onIssueCertificate={() =>
-                                        console.log('Issue certificate', mentee.firstName)
-                                    }
-                                    onInviteAsFieldMentor={() =>
-                                        console.log('Invite as field mentor', mentee.firstName)
-                                    }
-                                />
-                            ))}
-                    </View>
-                </ScrollView>
+                )}
 
                 <ActionBottomSheet
                     ref={bottomSheetModalRef}
@@ -798,24 +822,31 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 8,
         gap: 8,
-        maxWidth: '60%',
     },
-    filterButtonText: { color: '#fff', fontSize: 13, fontWeight: '500', flex: 1 },
-    contentList: { paddingHorizontal: 16, gap: 12 },
-    centerContent: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
-    loadingText: { color: '#fff', fontSize: 16, marginTop: 12 },
-    errorContent: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
-    errorTitle: { color: '#ff6b6b', fontSize: 18, fontWeight: '700', marginTop: 16 },
-    errorMessage: { color: '#fff', fontSize: 14, marginTop: 8, textAlign: 'center', paddingHorizontal: 32 },
-    retryButton: {
-        backgroundColor: '#7C3AED',
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 8,
-        marginTop: 16,
+    filterButtonText: { color: '#fff', fontSize: 13, fontWeight: '500' },
+    contentList: {
+        // paddingBottom: 100, // Moved to ListFooterComponent
     },
-    retryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-    emptyIcon: { marginBottom: 12 },
-    emptyText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-    emptySubtext: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8 },
+    listContent: {
+        paddingTop: 6,
+    },
+    centerContent: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 20,
+    },
+    loadingText: { color: '#fff', marginTop: 12, fontSize: 16 },
+    errorContent: { alignItems: 'center', padding: 24, marginTop: 40 },
+    errorTitle: { color: '#fff', fontSize: 18, fontWeight: '600', marginTop: 16 },
+    errorMessage: { color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginTop: 8, marginBottom: 24 },
+    retryButton: { backgroundColor: '#fff', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+    retryButtonText: { color: '#176192', fontWeight: '600' },
+    emptyIcon: { opacity: 0.5, marginBottom: 16 },
+    emptyText: { color: '#fff', fontSize: 18, fontWeight: '600' },
+    emptySubtext: { color: 'rgba(255,255,255,0.7)', marginTop: 8 },
+    cardWrapper: {
+        paddingHorizontal: 16,
+        marginBottom: 8,
+    },
 });
