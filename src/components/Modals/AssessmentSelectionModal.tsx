@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
+    ActivityIndicator,
     Image,
     Modal,
     ScrollView,
@@ -10,6 +11,7 @@ import {
     View,
 } from "react-native";
 import SearchBar from "../Header/SearchBar";
+import { useAssessments } from "@/hooks/useAssessments";
 
 export interface Assessment {
     id: string;
@@ -26,47 +28,30 @@ interface AssessmentSelectionModalProps {
     assessments?: Assessment[];
 }
 
-// Mock assessments data
-const defaultAssessments: Assessment[] = [
-    {
-        id: "1",
-        name: "Pastoral Ministry Profile (PMP)",
-        type: "PMP",
-        description: "This Survey is about Lorem ipsum dolor sit amet, consectetur",
-        image: require("@/assets/images/app/jumpstart.png"),
-    },
-    {
-        id: "2",
-        name: "Pastoral Ministry Profile (PMP)",
-        type: "PMP",
-        description: "This Survey is about Lorem ipsum dolor sit amet, consectetur",
-        image: require("@/assets/images/app/roadmap.jpg"),
-    },
-    {
-        id: "3",
-        name: "Pastoral Ministry Profile (PMP)",
-        type: "PMP",
-        description: "This Survey is about Lorem ipsum dolor sit amet, consectetur",
-        image: require("@/assets/images/app/jumpstart.png"),
-    },
-    {
-        id: "4",
-        name: "Pastoral Ministry Profile (PMP)",
-        type: "PMP",
-        description: "This Survey is about Lorem ipsum dolor sit amet, consectetur",
-        image: require("@/assets/images/app/roadmap.jpg"),
-    },
-];
-
 const AssessmentSelectionModal: React.FC<AssessmentSelectionModalProps> = ({
     visible,
     onClose,
     onSelect,
-    assessments = defaultAssessments,
+    assessments: providedAssessments,
 }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedAssessment, setSelectedAssessment] =
         useState<Assessment | null>(null);
+
+    const { data: apiAssessments, isLoading, isError, error } = useAssessments();
+
+    const assessments = useMemo(() => {
+        if (providedAssessments) return providedAssessments;
+        if (!apiAssessments) return [];
+
+        return apiAssessments.map(api => ({
+            id: api._id,
+            name: api.name,
+            type: api.type || "PMP",
+            description: api.description,
+            image: api.bannerImage ? { uri: api.bannerImage } : undefined
+        }));
+    }, [providedAssessments, apiAssessments]);
 
     const filteredAssessments = assessments.filter(
         (assessment) =>
@@ -116,55 +101,71 @@ const AssessmentSelectionModal: React.FC<AssessmentSelectionModalProps> = ({
                 </View>
 
                 {/* Assessment List */}
-                <ScrollView
-                    style={styles.scrollView}
-                    showsVerticalScrollIndicator={false}
-                >
-                    {filteredAssessments.map((assessment) => (
-                        <TouchableOpacity
-                            key={assessment.id}
-                            style={styles.assessmentCard}
-                            onPress={() => setSelectedAssessment(assessment)}
-                            activeOpacity={0.7}
-                        >
-                            <View style={styles.radioButton}>
-                                <View
-                                    style={[
-                                        styles.radioCircle,
-                                        selectedAssessment?.id === assessment.id &&
-                                        styles.radioCircleSelected,
-                                    ]}
-                                >
-                                    {selectedAssessment?.id === assessment.id && (
-                                        <View style={styles.radioInner} />
+                {isLoading ? (
+                    <View style={styles.centerContainer}>
+                        <ActivityIndicator size="large" color="#fff" />
+                        <Text style={styles.loadingText}>Loading assessments...</Text>
+                    </View>
+                ) : isError ? (
+                    <View style={styles.centerContainer}>
+                        <Ionicons name="alert-circle-outline" size={48} color="#FF6B6B" />
+                        <Text style={styles.errorText}>Failed to load assessments</Text>
+                    </View>
+                ) : filteredAssessments.length === 0 ? (
+                    <View style={styles.centerContainer}>
+                        <Text style={styles.emptyText}>No assessments found</Text>
+                    </View>
+                ) : (
+                    <ScrollView
+                        style={styles.scrollView}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {filteredAssessments.map((assessment) => (
+                            <TouchableOpacity
+                                key={assessment.id}
+                                style={styles.assessmentCard}
+                                onPress={() => setSelectedAssessment(assessment)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.radioButton}>
+                                    <View
+                                        style={[
+                                            styles.radioCircle,
+                                            selectedAssessment?.id === assessment.id &&
+                                            styles.radioCircleSelected,
+                                        ]}
+                                    >
+                                        {selectedAssessment?.id === assessment.id && (
+                                            <View style={styles.radioInner} />
+                                        )}
+                                    </View>
+                                </View>
+
+                                <View style={styles.assessmentImageContainer}>
+                                    {assessment.image ? (
+                                        <Image
+                                            source={assessment.image}
+                                            style={styles.assessmentImage}
+                                        />
+                                    ) : (
+                                        <View style={styles.assessmentPlaceholder}>
+                                            <Text style={styles.assessmentType}>{assessment.type}</Text>
+                                        </View>
                                     )}
                                 </View>
-                            </View>
 
-                            <View style={styles.assessmentImageContainer}>
-                                {assessment.image ? (
-                                    <Image
-                                        source={assessment.image}
-                                        style={styles.assessmentImage}
-                                    />
-                                ) : (
-                                    <View style={styles.assessmentPlaceholder}>
-                                        <Text style={styles.assessmentType}>{assessment.type}</Text>
-                                    </View>
-                                )}
-                            </View>
-
-                            <View style={styles.assessmentInfo}>
-                                <Text style={styles.assessmentName} numberOfLines={2}>
-                                    {assessment.name}
-                                </Text>
-                                <Text style={styles.assessmentDescription} numberOfLines={2}>
-                                    {assessment.description}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                                <View style={styles.assessmentInfo}>
+                                    <Text style={styles.assessmentName} numberOfLines={2}>
+                                        {assessment.name}
+                                    </Text>
+                                    <Text style={styles.assessmentDescription} numberOfLines={2}>
+                                        {assessment.description}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
 
                 {/* Bottom Bar with Selected Info and Select Button */}
                 <View style={styles.bottomBar}>
@@ -316,6 +317,28 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
         color: "#fff",
+    },
+    centerContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20,
+    },
+    loadingText: {
+        color: "#fff",
+        marginTop: 12,
+        fontSize: 16,
+    },
+    errorText: {
+        color: "#FF6B6B",
+        marginTop: 12,
+        fontSize: 16,
+        textAlign: "center",
+    },
+    emptyText: {
+        color: "rgba(255, 255, 255, 0.6)",
+        fontSize: 16,
+        textAlign: "center",
     },
 });
 

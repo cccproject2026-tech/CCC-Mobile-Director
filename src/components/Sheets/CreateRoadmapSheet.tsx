@@ -160,9 +160,9 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                 errors.push(`${completionLabel} is required`);
             }
 
-            if (formData.type === 'phase' && formData.divisions.length === 0) {
-                errors.push('At least one division is required for Phase type');
-            }
+            // if (formData.type === 'phase' && formData.divisions.length === 0) {
+            //     errors.push('At least one division is required for Phase type');
+            // }
 
             return errors;
         };
@@ -186,7 +186,7 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                     roadMapDetails: formData.subheading,
                     duration: formData.completionTime,
                     imageUrl: formData.bannerImage,
-                    divisions: formData.divisions,
+                    divisions: formData.divisions.length > 0 ? formData.divisions : ['All'],
                     extras: [],
                     roadmaps: [],
                 };

@@ -6,10 +6,11 @@ interface RoadMapFormHeaderProps {
     subheading?: string;
     bannerImage?: string | null;
     isEditMode?: boolean;
+    division?: string;
 }
 
 
-export default function RoadMapFormHeader({ name, bannerImage, isEditMode }: RoadMapFormHeaderProps) {
+export default function RoadMapFormHeader({ name, bannerImage, isEditMode, division }: RoadMapFormHeaderProps) {
     return (
         <View style={styles.outerContainer}>
             <View style={styles.cardContainer}>
@@ -31,6 +32,11 @@ export default function RoadMapFormHeader({ name, bannerImage, isEditMode }: Roa
                         <Text style={styles.title} numberOfLines={1}>
                             {name || 'Roadmap Title'}
                         </Text>
+                        {division && (
+                            <View style={styles.divisionBadge}>
+                                <Text style={styles.divisionText}>{division}</Text>
+                            </View>
+                        )}
                     </View>
                 </View>
             </View>
@@ -98,6 +104,20 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
         letterSpacing: 0.5,
+    },
+    divisionBadge: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 4,
+        marginTop: 4,
+        alignSelf: 'flex-start',
+    },
+    divisionText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '500',
+        textTransform: 'uppercase',
     },
     infoText: {
         marginTop: 16,

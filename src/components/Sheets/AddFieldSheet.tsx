@@ -29,7 +29,10 @@ export type FieldType =
     | "section"
     | "upload"
     | "datepicker"
-    | "assessment";
+    | "assessment"
+    | "checkbox_item"
+    | "text_display"
+    | "button";
 
 export interface AddFieldSheetRef {
     present: () => void;
@@ -220,6 +223,57 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                             },
                         ],
                     };
+                case "checkbox_item":
+                    return {
+                        title: "Add Check Box",
+                        snapPoint: "55%",
+                        fields: [
+                            {
+                                key: "name",
+                                label: "Name",
+                                placeholder: "Enter name of Check Box",
+                                type: "input",
+                            },
+                            // {
+                            //     key: "haveButton",
+                            //     label: "Add Action Button",
+                            //     type: "checkbox",
+                            // },
+                            // {
+                            //     key: "buttonName",
+                            //     label: "Button Name",
+                            //     placeholder: "Enter Button Label",
+                            //     type: "input",
+                            //     conditional: "haveButton",
+                            // },
+                        ],
+                    };
+                case "text_display":
+                    return {
+                        title: "Add Text Display",
+                        snapPoint: "45%",
+                        fields: [
+                            {
+                                key: "name",
+                                label: "Display Text",
+                                placeholder: "Enter the text to display",
+                                type: "input",
+                            },
+                        ],
+                    };
+                case "button":
+                    return {
+                        title: "Add Action Button",
+                        snapPoint: "45%",
+                        fields: [
+                            {
+                                key: "name",
+                                label: "Button Label",
+                                placeholder: "Enter the button label",
+                                type: "input",
+                            },
+                        ],
+                    };
                 default:
                     return null;
             }
@@ -285,6 +339,12 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 isValid = !!formData.label?.trim();
             } else if (fieldType === "assessment") {
                 isValid = !!formData.selectedAssessment;
+            } else if (fieldType === "checkbox_item") {
+                isValid = !!formData.name?.trim();
+            } else if (fieldType === "text_display") {
+                isValid = !!formData.name?.trim();
+            } else if (fieldType === "button") {
+                isValid = !!formData.name?.trim();
             }
 
             if (isValid) {
@@ -537,6 +597,11 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                     visible={showAssessmentModal}
                     onClose={() => setShowAssessmentModal(false)}
                     onSelect={(assessment) => {
+                        console.log("----------------------------------------------")
+                        console.log("----------------------------------------------")
+                        console.log('assessment', assessment);
+                        console.log("----------------------------------------------")
+                        console.log("----------------------------------------------")
                         setFormData({
                             ...formData,
                             selectedAssessment: assessment,

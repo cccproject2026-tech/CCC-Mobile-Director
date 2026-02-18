@@ -4,7 +4,7 @@ export type RoadmapStatus = 'not started' | 'in progress' | 'completed';
 export type RoadmapType = 'single' | 'phase';
 
 export interface RoadmapExtra {
-    type: 'TEXT_FIELD' | 'TEXT_AREA' | 'CHECKBOX' | 'DATE_PICKER' | 'UPLOAD' | 'ASSESSMENT' | 'SECTION' | 'TEXT_DISPLAY';
+    type: 'TEXT_FIELD' | 'TEXT_AREA' | 'CHECKBOX' | 'DATE_PICKER' | 'UPLOAD' | 'ASSESSMENT' | 'SECTION' | 'TEXT_DISPLAY' | 'BUTTON';
     name: string;
     placeHolder?: string;
     buttonName?: string;
@@ -12,6 +12,7 @@ export interface RoadmapExtra {
     date?: string;
     checkboxes?: RoadmapExtra[];
     sections?: RoadmapExtra[];
+    assessmentId?: string;
 }
 
 export interface NestedRoadmap {
@@ -171,6 +172,7 @@ export interface AssessmentField {
     id: string;
     type: 'assessment';
     selectedAssessment?: string; // ✅ Optional
+    assessmentId?: string; // ✅ Added
     buttonName?: string; // ✅ Optional
     scheduleMeeting?: boolean;
 }

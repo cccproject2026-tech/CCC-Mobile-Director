@@ -89,12 +89,12 @@ export default function CreateAssessmentPage() {
             layers: [
                 {
                     id: '1',
-                    title: '',
+                    title: 'Assessment Layer',
                     choices: [{ id: '1', text: '' }],
                 },
                 {
                     id: '2',
-                    title: '',
+                    title: 'Assessment Layer',
                     choices: [{ id: '1', text: '' }],
                 },
             ],
@@ -176,7 +176,7 @@ export default function CreateAssessmentPage() {
                 layers: [
                     {
                         id: layer1Id,
-                        title: '',
+                        title: 'Assessment Layer',
                         choices: [{ id: '1', text: '' }],
                     },
                 ],
@@ -214,7 +214,7 @@ export default function CreateAssessmentPage() {
                     newLayers.push(
                         existingLayer || {
                             id: layerId,
-                            title: '',
+                            title: 'Assessment Layer',
                             choices: [{ id: `${Date.now()}-choice-${i}`, text: '' }],
                         }
                     );
@@ -244,20 +244,6 @@ export default function CreateAssessmentPage() {
             }
             return next;
         });
-    };
-
-    const updateLayerTitle = (sectionId: string, layerId: string, title: string) => {
-        setSections(
-            sections.map((s) => {
-                if (s.id !== sectionId) return s;
-                return {
-                    ...s,
-                    layers: s.layers.map((l) =>
-                        l.id === layerId ? { ...l, title } : l
-                    ),
-                };
-            })
-        );
     };
 
     const addChoice = (sectionId: string, layerId: string) => {
@@ -728,21 +714,6 @@ export default function CreateAssessmentPage() {
                                     <Text style={styles.layerTitle}>
                                         Layer {layerIndex + 1}
                                     </Text>
-
-                                    {/* LAYER TITLE INPUT - THIS IS REQUIRED */}
-                                    <TextInput
-                                        style={styles.inputBox}
-                                        placeholder={
-                                            layerIndex === 0
-                                                ? 'Feeling physically drained most of the time.'
-                                                : 'Not physically active'
-                                        }
-                                        placeholderTextColor="rgba(255,255,255,0.5)"
-                                        value={layer.title}
-                                        onChangeText={(text) =>
-                                            updateLayerTitle(section.id, layer.id, text)
-                                        }
-                                    />
 
                                     {/* Choice inputs */}
                                     {layer.choices.map((choice, choiceIndex) => (

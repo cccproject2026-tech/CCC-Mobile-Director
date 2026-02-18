@@ -78,6 +78,7 @@ const EditSections = () => {
         const updatedSections = [...sections];
         const layerWithTempId = {
             ...layer,
+            title: 'Assessment Layer',
             _id: `temp-layer-${Date.now()}`,
             choices: layer.choices.map((choice: any, idx: number) => ({
                 ...choice,
@@ -113,12 +114,6 @@ const EditSections = () => {
     const handleUpdateSectionDescription = (text: string) => {
         const updated = [...sections];
         updated[currentSectionIndex].description = text;
-        setSections(updated);
-    };
-
-    const handleUpdateLayerTitle = (layerIndex: number, text: string) => {
-        const updated = [...sections];
-        updated[currentSectionIndex].layers[layerIndex].title = text;
         setSections(updated);
     };
 
@@ -352,14 +347,6 @@ const EditSections = () => {
                             <View style={styles.layerHeaderRow}>
                                 <View style={styles.layerTitleContainer}>
                                     <Text style={styles.layerNumber}>{layerIndex + 1}</Text>
-                                    <TextInput
-                                        style={styles.layerTitleInput}
-                                        value={layer.title}
-                                        onChangeText={(text) => handleUpdateLayerTitle(layerIndex, text)}
-                                        placeholder="Feeling physically drained most of the time."
-                                        placeholderTextColor="rgba(255,255,255,0.5)"
-                                        multiline
-                                    />
                                 </View>
                                 <TouchableOpacity
                                     style={styles.menuButton}

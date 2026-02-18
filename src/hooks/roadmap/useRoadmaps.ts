@@ -31,8 +31,8 @@ export function useAllRoadmaps() {
     return useQuery({
         queryKey: roadmapKeys.lists(),
         queryFn: () => roadmapService.getAllRoadmaps(),
-        staleTime: 1000 * 60 * 5, // 5 minutes
-        gcTime: 1000 * 60 * 15, // 15 minutes
+        staleTime: 0, // 30 seconds
+        // gcTime: 1000 * 60 * 15, // 15 minutes
         retry: 1,
     });
 }
@@ -45,7 +45,7 @@ export function useRoadmap(roadmapId: string | undefined) {
         queryKey: roadmapKeys.detail(roadmapId || ''),
         queryFn: () => roadmapService.getRoadmapById(roadmapId!),
         enabled: !!roadmapId,
-        staleTime: 1000 * 60 * 5,
+        staleTime: 30 * 1000,
         retry: 1,
     });
 }
@@ -198,8 +198,8 @@ export function useAssignedRoadmaps(userId?: string) {
             return assignedRoadmaps;
         },
         enabled: !isIdsLoading && !isIdsError && roadmapIds.length > 0,
-        staleTime: 1000 * 60 * 5,
-        gcTime: 1000 * 60 * 15,
+        staleTime: 0,
+        // gcTime: 1000 * 60 * 15,
         retry: 1,
     });
 

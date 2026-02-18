@@ -1,6 +1,6 @@
 // app/(director)/(tabs)/roadmaps/(creation)/roadmap-creation.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -34,8 +34,29 @@ export default function RoadmapCreationScreen() {
     const [name, setName] = useState('');
     const [subheading, setSubheading] = useState('');
     const [completionTime, setCompletionTime] = useState('');
-    const [selectedDivision, setSelectedDivision] = useState('');
+    const [selectedDivision, setSelectedDivision] = useState('All');
     const [bannerImage, setBannerImage] = useState<string | null>(null);
+
+    // ✅ Load existing data when in edit mode
+    useEffect(() => {
+        if (isEditMode && parentRoadmap) {
+            let roadmapToEdit = null;
+
+            if (roadmapType === 'phase' && params.nestedRoadmapId) {
+                roadmapToEdit = parentRoadmap.roadmaps?.find((r) => r._id === params.nestedRoadmapId);
+            } else if (roadmapType === 'single') {
+                roadmapToEdit = parentRoadmap.roadmaps?.[0];
+            }
+
+            if (roadmapToEdit) {
+                setName(roadmapToEdit.name || '');
+                setSubheading(roadmapToEdit.roadMapDetails || '');
+                setCompletionTime(roadmapToEdit.duration || '');
+                setSelectedDivision(roadmapToEdit.phase || 'All');
+                setBannerImage(roadmapToEdit.imageUrl || null);
+            }
+        }
+    }, [isEditMode, parentRoadmap, params.nestedRoadmapId, roadmapType]);
 
     const handleImagePick = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -56,32 +77,31 @@ export default function RoadmapCreationScreen() {
             return;
         }
 
+        const commonParams = {
+            roadmapId,
+            isEditMode: isEditMode ? 'true' : 'false',
+            name,
+            subheading,
+            completionTime,
+            selectedDivision: selectedDivision || 'All',
+            bannerImage: bannerImage || '',
+            ...(params.nestedRoadmapId && { nestedRoadmapId: params.nestedRoadmapId }),
+        };
+
         if (roadmapType === 'phase') {
             router.push({
                 pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
                 params: {
-                    roadmapId,
+                    ...commonParams,
                     type: 'phase',
-                    isEditMode: 'false',
-                    name,
-                    subheading,
-                    completionTime,
-                    selectedDivision,
-                    bannerImage: bannerImage || '',
                 },
             });
         } else {
             router.push({
                 pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
                 params: {
-                    roadmapId,
+                    ...commonParams,
                     type: 'single',
-                    isEditMode: isEditMode ? 'true' : 'false',
-                    name,
-                    subheading,
-                    completionTime,
-                    selectedDivision,
-                    bannerImage: bannerImage || '',
                 },
             });
         }
@@ -189,6 +209,62 @@ export default function RoadmapCreationScreen() {
                         keyboardType="default"
                     />
                 </View>
+
+                {/* ✅ Division Selection (Chips) */}
+                {roadmapType === 'phase' && parentRoadmap?.divisions && (
+                    <View style={styles.section}>
+                        <Text style={styles.label}>Division of Phase</Text>
+                        <View style={styles.chipsContainer}>
+                            {/* ✅ Default "All" chip */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.chip,
+                                    (selectedDivision === 'All' || !selectedDivision) && styles.activeChip
+                                ]}
+                                onPress={() => setSelectedDivision('All')}
+                            >
+                                <Text
+                                    style={[
+                                        styles.chipText,
+                                        (selectedDivision === 'All' || !selectedDivision) && styles.activeChipText
+                                    ]}
+                                >
+                                    All
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* ✅ Other dynamic chips */}
+                            {parentRoadmap.divisions.map((division: string) => {
+                                if (division.toLowerCase() === 'all') return null; // Skip if 'all' already exists in data
+                                return (
+                                    <TouchableOpacity
+                                        key={division}
+                                        style={[
+                                            styles.chip,
+                                            selectedDivision === division && styles.activeChip
+                                        ]}
+                                        onPress={() => {
+                                            if (selectedDivision === division) {
+                                                setSelectedDivision('All'); // Revert to All if unselected
+                                            } else {
+                                                setSelectedDivision(division);
+                                            }
+                                        }}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.chipText,
+                                                selectedDivision === division && styles.activeChipText
+                                            ]}
+                                        >
+                                            {division}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </View>
+                )}
 
                 {/* Banner Image Upload */}
                 <View style={styles.section}>
@@ -401,5 +477,32 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '700',
+    },
+    // ✅ Division Chips Styles
+    chipsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginTop: 4,
+    },
+    chip: {
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
+    },
+    activeChip: {
+        backgroundColor: '#fff',
+        borderColor: '#fff',
+    },
+    chipText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    activeChipText: {
+        color: '#1D548D',
     },
 });

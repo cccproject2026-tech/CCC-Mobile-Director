@@ -4,3 +4,6 @@ export { default as UploadButtonRenderer } from './UploadButtonRenderer';
 export { default as DatePickerRenderer } from './DatePickerRenderer';
 export { default as SectionRenderer } from './SectionRenderer';
 export { default as AssessmentRenderer } from './AssessmentRenderer';
+export { default as CheckboxRenderer } from './CheckboxRenderer';
+export { default as TextDisplayRenderer } from './TextDisplayRenderer';
+export { default as ButtonRenderer } from './ButtonRenderer';

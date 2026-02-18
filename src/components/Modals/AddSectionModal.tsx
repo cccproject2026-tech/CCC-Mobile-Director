@@ -46,13 +46,13 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
     }>>([
         {
             id: '1',
-            title: '',
+            title: 'Assessment Layer',
             choices: [{ id: '1', text: '' }],
             recommendations: [{ id: '1', text: '' }],
         },
         {
             id: '2',
-            title: '',
+            title: 'Assessment Layer',
             choices: [{ id: '1', text: '' }],
             recommendations: [{ id: '1', text: '' }],
         },
@@ -78,7 +78,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             } else {
                 newLayers.push({
                     id: `${i + 1}`,
-                    title: '',
+                    title: 'Assessment Layer',
                     choices: [{ id: '1', text: '' }],
                     recommendations: [{ id: '1', text: '' }],
                 });
@@ -121,12 +121,6 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
         setLayers(newLayers);
     };
 
-    const handleUpdateLayerTitle = (layerIndex: number, text: string) => {
-        const newLayers = [...layers];
-        newLayers[layerIndex].title = text;
-        setLayers(newLayers);
-    };
-
     const handleCreateSection = () => {
         // Validate
         if (!sectionTitle.trim()) {
@@ -158,13 +152,13 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
         setLayers([
             {
                 id: '1',
-                title: '',
+                title: 'Assessment Layer',
                 choices: [{ id: '1', text: '' }],
                 recommendations: [{ id: '1', text: '' }],
             },
             {
                 id: '2',
-                title: '',
+                title: 'Assessment Layer',
                 choices: [{ id: '1', text: '' }],
                 recommendations: [{ id: '1', text: '' }],
             },
@@ -274,21 +268,6 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
                         {layers.map((layer, layerIndex) => (
                             <View key={layer.id} style={styles.layerContainer}>
                                 <Text style={styles.layerTitle}>Layer {layerIndex + 1}</Text>
-
-                                {/* Layer Title */}
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder={
-                                        layerIndex === 0
-                                            ? 'Feeling physically drained most of the time.'
-                                            : 'Not physically active'
-                                    }
-                                    placeholderTextColor="rgba(255,255,255,0.5)"
-                                    value={layer.title}
-                                    onChangeText={(text) =>
-                                        handleUpdateLayerTitle(layerIndex, text)
-                                    }
-                                />
 
                                 {/* Choices */}
                                 {layer.choices.map((choice, choiceIndex) => (

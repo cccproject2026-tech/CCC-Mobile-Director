@@ -11,7 +11,7 @@ export const useAssessments = () => {
     return useQuery<ApiAssessment[]>({
         queryKey: ['assessments'],
         queryFn: () => assessmentService.getAssessments(),
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 30 * 1000, // 30 seconds
         retry: 2,
     });
 };
@@ -103,6 +103,8 @@ export const useCreateAssessmentMutation = () => {
         onSuccess: () => {
             // Invalidate and refetch assessments query
             queryClient.invalidateQueries({ queryKey: ['assessments'] });
+            // Invalidate progress cache
+            queryClient.invalidateQueries({ queryKey: ['progress'] });
         },
     });
 }
@@ -112,7 +114,7 @@ export const useAssessment = (assessmentId: string | undefined) => {
         queryKey: ['assessment', assessmentId],
         queryFn: () => assessmentService.getAssessmentById(assessmentId!),
         enabled: !!assessmentId,
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 30 * 1000, // 30 seconds
         retry: 2,
     });
 };

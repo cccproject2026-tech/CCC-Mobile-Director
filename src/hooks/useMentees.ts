@@ -57,7 +57,7 @@ export const useMentees = (limit: number = 10) => {
             return undefined;
         },
         initialPageParam: 1,
-        staleTime: 1000 * 60 * 5,
+        staleTime: 30 * 1000,
         retry: 1,
     });
 };
@@ -129,7 +129,7 @@ export const useMenteeMentors = (menteeId: string | undefined) => {
                 mentors: assignedMentors,
             };
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: 30 * 1000,
         retry: 1,
     });
 

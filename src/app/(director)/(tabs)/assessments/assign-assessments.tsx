@@ -1,5 +1,5 @@
 // app/(director)/(tabs)/assessments/assign-assessments.tsx
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import TopBar from '@/components/Header/TopBar';
@@ -9,6 +9,7 @@ import SearchBar from '@/components/Header/SearchBar';
 import { useMentees, useAssignAssignmentsToMentee } from '@/hooks/useMentees';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MenteeCard from '@/components/Cards/MenteeCard';
+import { Mentee } from '@/types/user.types';
 
 const AssignAssessments = () => {
     const router = useRouter();
@@ -27,9 +28,16 @@ const AssignAssessments = () => {
     const [search, setSearch] = useState('');
     const [selectedMentees, setSelectedMentees] = useState<Set<string>>(new Set());
 
-    // Fetch mentees
-    const { data, isLoading, error } = useMentees();
-    const mentees = data?.mentees ?? [];
+    // Fetch mentees with pagination
+    const { 
+        data, 
+        isLoading, 
+        error, 
+        fetchNextPage, 
+        hasNextPage, 
+        isFetchingNextPage 
+    } = useMentees(20);
+    const mentees = data?.pages.flatMap(page => page.mentees) ?? [];
 
     // Assign mutation
     const assignMutation = useAssignAssignmentsToMentee();
@@ -123,6 +131,31 @@ const AssignAssessments = () => {
         return names.join(', ');
     }, [selectedMentees, mentees]);
 
+    const handleLoadMore = () => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    };
+
+    const renderMenteeItem = ({ item: mentee }: { item: Mentee }) => (
+        <MenteeCard
+            key={mentee.id}
+            data={mentee}
+            layout="card"
+            isSelected={selectedMentees.has(mentee.id)}
+            onToggleSelect={() => handleToggleSelection(mentee.id)}
+        />
+    );
+
+    const renderFooter = () => {
+        if (!isFetchingNextPage) return null;
+        return (
+            <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color="#fff" />
+            </View>
+        );
+    };
+
     console.log('Selected User IDs:', Array.from(selectedMentees));
     return (
         <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
@@ -168,23 +201,19 @@ const AssignAssessments = () => {
                         </Text>
                     </View>
                 ) : (
-                    <ScrollView
+                    <FlatList
+                        data={filteredMentees}
+                        renderItem={renderMenteeItem}
+                        keyExtractor={(item) => item.id}
                         contentContainerStyle={[
                             styles.scrollContent,
                             { paddingBottom: bottom + 100 },
                         ]}
                         showsVerticalScrollIndicator={false}
-                    >
-                        {filteredMentees.map((mentee) => (
-                            <MenteeCard
-                                key={mentee.id}
-                                data={mentee}
-                                layout="card"
-                                isSelected={selectedMentees.has(mentee.id)}
-                                onToggleSelect={() => handleToggleSelection(mentee.id)}
-                            />
-                        ))}
-                    </ScrollView>
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        ListFooterComponent={renderFooter}
+                    />
                 )}
             </View>
 
@@ -335,5 +364,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         opacity: 0.7,
+    },
+    footerLoader: {
+        paddingVertical: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });

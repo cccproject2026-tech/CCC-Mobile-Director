@@ -25,6 +25,10 @@ const buildFormData = (formData: FormData, data: any, parentKey?: string) => {
 
             const formKey = parentKey ? `${parentKey}[${key}]` : key;
 
+            if (__DEV__) {
+                console.log(`[buildFormData] Appending key: ${formKey}, type: ${typeof value}`);
+            }
+
             if (Array.isArray(value)) {
                 value.forEach((item, index) => {
                     const arrayKey = `${formKey}[${index}]`;

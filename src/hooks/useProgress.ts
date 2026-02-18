@@ -199,8 +199,8 @@ export const useFinalComments = (userId: string | undefined) => {
       return response.data;
     },
     enabled: !!id,
-    staleTime: 1000 * 60 * 2,
-    gcTime: 1000 * 60 * 10,
+    staleTime: 0,
+    // gcTime: 1000 * 60 * 10,
   });
 };
 
