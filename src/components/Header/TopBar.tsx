@@ -109,6 +109,11 @@ const TopBar: React.FC<Props> = ({
             </View>
             {/* Right */}
             <View style={styles.rightIconBox}>
+                {/* Search button — navigates to global search */}
+                <Pressable onPress={() => router.push('/search')} hitSlop={10} style={{ marginRight: 8 }}>
+                    <Ionicons name="search" size={size - 6} color={color} />
+                </Pressable>
+
                 {showNotifications && (
                     <Pressable onPress={handleNotificationsPress} hitSlop={10} style={{ position: 'relative', marginRight: 7 }}>
                         <Ionicons name="notifications-outline" size={size - 10} color={color} />
