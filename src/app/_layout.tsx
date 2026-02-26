@@ -28,7 +28,7 @@ function RootNav() {
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
 
-      {/* DIRECTOR ROUTES */}
+      {/* DIRECTOR ROUTESs */}
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(director)" />
       </Stack.Protected>
