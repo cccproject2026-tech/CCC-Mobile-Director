@@ -264,12 +264,18 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "button":
                     return {
                         title: "Add Action Button",
-                        snapPoint: "45%",
+                        snapPoint: "50%",
                         fields: [
                             {
                                 key: "name",
                                 label: "Button Label",
                                 placeholder: "Enter the button label",
+                                type: "input",
+                            },
+                            {
+                                key: "linkUrl",
+                                label: "Button Link",
+                                placeholder: "Enter Link Url",
                                 type: "input",
                             },
                         ],

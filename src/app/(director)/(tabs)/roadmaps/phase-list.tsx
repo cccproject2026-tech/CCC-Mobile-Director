@@ -51,6 +51,10 @@ export default function PhaseListScreen() {
 
     const handleAddTask = () => {
         // Navigate to roadmap-creation for new phase
+        console.log('Routing to here : roadmap-creation for new phase')
+        console.log('roadmapId', roadmapId);
+        console.log('type', 'phase');
+        console.log('isEditMode', 'false');
         router.push({
             pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
             params: {
@@ -84,6 +88,7 @@ export default function PhaseListScreen() {
 
     // Transform phases to RoadmapCardData format
     const phaseCards: (RoadmapCardData & { id: string })[] = phases.map((phase) => ({
+        _id: phase._id,
         id: phase._id,
         title: phase.name,
         description: phase.roadMapDetails || phase.description || '',

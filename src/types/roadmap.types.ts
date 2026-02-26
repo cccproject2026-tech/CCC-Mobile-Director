@@ -13,6 +13,7 @@ export interface RoadmapExtra {
     checkboxes?: RoadmapExtra[];
     sections?: RoadmapExtra[];
     assessmentId?: string;
+    linkUrl?: string;
 }
 
 export interface NestedRoadmap {

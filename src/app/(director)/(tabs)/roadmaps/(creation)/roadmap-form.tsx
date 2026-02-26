@@ -172,7 +172,8 @@ export default function RoadmapFormScreen() {
                     fields.push({
                         id: fieldId,
                         type: 'button',
-                        name: extra.name,
+                        name: extra.name || 'Action Button',
+                        linkUrl: extra.linkUrl || '',
                     });
                     break;
                 case 'SECTION':
@@ -184,29 +185,94 @@ export default function RoadmapFormScreen() {
                         showDuplicateButton: extra.checkboxes?.some((cb) => cb.haveButton) || false,
                     };
 
+                    fields.push(sectionField);
+
                     if (extra.sections) {
                         extra.sections.forEach((sectionExtra) => {
                             const nestedFieldId = `field_${Date.now()}_${fieldIndex++}`;
-                            if (sectionExtra.type === 'TEXT_FIELD') {
-                                fields.push({
-                                    id: nestedFieldId,
-                                    type: 'text',
-                                    label: sectionExtra.name,
-                                    placeholder: sectionExtra.placeHolder || '',
-                                    parentSectionId: fieldId,
-                                });
-                            } else if (sectionExtra.type === 'TEXT_AREA') {
-                                fields.push({
-                                    id: nestedFieldId,
-                                    type: 'textarea',
-                                    label: sectionExtra.name,
-                                    placeholder: sectionExtra.placeHolder || '',
-                                    parentSectionId: fieldId,
-                                });
+                            const baseNestedField = {
+                                id: nestedFieldId,
+                                parentSectionId: fieldId,
+                            };
+
+                            switch (sectionExtra.type) {
+                                case 'TEXT_FIELD':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'text',
+                                        label: sectionExtra.name,
+                                        placeholder: sectionExtra.placeHolder || '',
+                                    });
+                                    break;
+                                case 'TEXT_AREA':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'textarea',
+                                        label: sectionExtra.name,
+                                        placeholder: sectionExtra.placeHolder || '',
+                                    });
+                                    break;
+                                case 'UPLOAD':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'upload',
+                                        buttonLabel: sectionExtra.name,
+                                    });
+                                    break;
+                                case 'DATE_PICKER':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'datepicker',
+                                        label: sectionExtra.name,
+                                        date: sectionExtra.date ? new Date(sectionExtra.date) : new Date(),
+                                        buttonName: sectionExtra.buttonName || '',
+                                        allowPastorSelect: sectionExtra.checkboxes?.some(
+                                            (cb) => cb.name === 'Allow pastor to select Date'
+                                        ),
+                                        showOnCard: sectionExtra.checkboxes?.some(
+                                            (cb) => cb.name === 'Show date on info card'
+                                        ),
+                                    });
+                                    break;
+                                case 'ASSESSMENT':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'assessment',
+                                        selectedAssessment: sectionExtra.name,
+                                        assessmentId: sectionExtra.assessmentId,
+                                        buttonName: sectionExtra.buttonName || '',
+                                        scheduleMeeting: sectionExtra.checkboxes?.some(
+                                            (cb) => cb.name === 'Schedule Meeting after the Assessment'
+                                        ),
+                                    });
+                                    break;
+                                case 'CHECKBOX':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'checkbox_item',
+                                        name: sectionExtra.name,
+                                        haveButton: sectionExtra.haveButton || false,
+                                        buttonName: sectionExtra.buttonName || '',
+                                    });
+                                    break;
+                                case 'TEXT_DISPLAY':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'text_display',
+                                        name: sectionExtra.name,
+                                    });
+                                    break;
+                                case 'BUTTON':
+                                    fields.push({
+                                        ...baseNestedField,
+                                        type: 'button',
+                                        name: sectionExtra.name || 'Action Button',
+                                        linkUrl: sectionExtra.linkUrl || '',
+                                    });
+                                    break;
                             }
                         });
                     }
-                    fields.push(sectionField);
                     break;
             }
         });
@@ -284,19 +350,20 @@ export default function RoadmapFormScreen() {
                     case 'checkbox_item':
                         return {
                             type: 'CHECKBOX' as const,
-                            name: field.name || 'Check Box',
+                            name: field.name || field.label || 'Check Box',
                             haveButton: field.haveButton || false,
                             ...(field.buttonName && { buttonName: field.buttonName }),
                         };
                     case 'text_display':
                         return {
                             type: 'TEXT_DISPLAY' as const,
-                            name: field.name || '',
+                            name: field.name || field.label || '',
                         };
                     case 'button':
                         return {
                             type: 'BUTTON' as const,
-                            name: field.name || 'Action Button',
+                            name: field.name || field.label || 'Action Button',
+                            linkUrl: field.linkUrl || '',
                         };
                     case 'section':
                         const sectionCheckboxes = [
@@ -378,19 +445,20 @@ export default function RoadmapFormScreen() {
                                     case 'checkbox_item':
                                         return {
                                             type: 'CHECKBOX' as const,
-                                            name: nestedField.name || 'Check Box',
+                                            name: nestedField.name || nestedField.label || 'Check Box',
                                             haveButton: nestedField.haveButton || false,
                                             ...(nestedField.buttonName && { buttonName: nestedField.buttonName }),
                                         };
                                     case 'text_display':
                                         return {
                                             type: 'TEXT_DISPLAY' as const,
-                                            name: nestedField.name || '',
+                                            name: nestedField.name || nestedField.label || '',
                                         };
                                     case 'button':
                                         return {
                                             type: 'BUTTON' as const,
-                                            name: nestedField.name || 'Action Button',
+                                            name: nestedField.name || nestedField.label || 'Action Button',
+                                            linkUrl: nestedField.linkUrl || '',
                                         };
                                     default:
                                         return null;
@@ -485,12 +553,12 @@ export default function RoadmapFormScreen() {
             icon: 'text-outline',
             onPress: () => handleFieldTypeSelect('text_display'),
         },
-        {
-            id: 'button',
-            label: 'Action Button',
-            icon: 'radio-button-on-outline',
-            onPress: () => handleFieldTypeSelect('button'),
-        },
+        // {
+        //     id: 'button',
+        //     label: 'Action Button',
+        //     icon: 'radio-button-on-outline',
+        //     onPress: () => handleFieldTypeSelect('button'),
+        // },
     ];
 
     // ✅ Field handlers
@@ -574,7 +642,11 @@ export default function RoadmapFormScreen() {
                 console.log('processedData', processedData);
                 console.log("----------------------------------------------")
                 console.log("----------------------------------------------")
-                processedData.assessmentId = processedData.selectedAssessment._id;
+                console.log('selectedAssessment', processedData.selectedAssessment);
+                console.log("----------------------------------------------")
+                console.log("----------------------------------------------")
+                processedData.assessmentId = processedData.selectedAssessment.id;
+                console.log('processedData.assessmentId', processedData);
             }
             if (!processedData.buttonName) {
                 processedData.buttonName = 'Take Assessment';
@@ -625,20 +697,8 @@ export default function RoadmapFormScreen() {
 
         try {
             const extras = transformFieldsToExtras(formData.customFields);
-            console.log("----------------------------------------------")
-            console.log('Final Extras payload:', JSON.stringify(extras, null, 2));
-            console.log("----------------------------------------------")
-            console.log('formData', formData);
-            console.log("----------------------------------------------")
-                console.log('extras', extras);
-                console.log('roadmapType', roadmapType);
-                console.log('parentRoadmap', parentRoadmap);
-                console.log('isEditMode', isEditMode);
-                console.log('roadmapData', roadmapData);
-                console.log('nestedRoadmapId', nestedRoadmapId);
-                console.log('roadmapId', roadmapId);
-                console.log('createNestedMutation', createNestedMutation);
-                console.log('updateRoadmapMutation', updateRoadmapMutation);
+            console.log('Final extras to send:', JSON.stringify(extras, null, 2));
+          
             // ✅ CASE 1: Single Roadmap
             console.log("----------------------------------------------")
             if (roadmapType === 'single') {
@@ -655,9 +715,9 @@ export default function RoadmapFormScreen() {
                             phase: roadmapData.selectedDivision,
                         }),
                         status: 'not started',
-                        ...(extras.length > 0 && { extras }),
+                        extras,
                     };
-                    console.log('payload', payload);
+                    console.log('payload (create nested)----->', payload);
                     await createNestedMutation.mutateAsync({ roadmapId, payload });
                     Alert.alert('Success', 'Roadmap created successfully!', [
                         { text: 'OK', onPress: () => router.back() },
@@ -672,11 +732,11 @@ export default function RoadmapFormScreen() {
                         duration: roadmapData.completionTime,
                         ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
                         phase: roadmapData.selectedDivision || nested?.phase || '',
-                        ...(extras.length > 0 && { extras }),
+                        extras,
                         status: nested?.status || 'not started',
                         meetings: nested?.meetings || [],
                     };
-                    console.log('updatedNested', updatedNested);
+                    console.log('updatedNested (update single)----->', updatedNested);
                     await updateRoadmapMutation.mutateAsync({
                         roadmapId,
                         payload: {
@@ -693,6 +753,7 @@ export default function RoadmapFormScreen() {
             }
             // ✅ CASE 2: Phase Roadmap
             else if (roadmapType === 'phase') {
+              
                 if (!isEditMode) {
                     const payload: CreateNestedRoadmapRequest = {
                         name: roadmapData.name,
@@ -704,8 +765,9 @@ export default function RoadmapFormScreen() {
                             phase: roadmapData.selectedDivision,
                         }),
                         status: 'not started',
-                        ...(extras.length > 0 && { extras }),
+                        extras,
                     };
+                    console.log('payload (create phase)----->', payload);
 
                     await createNestedMutation.mutateAsync({ roadmapId, payload });
                     Alert.alert('Success', 'Phase created successfully!', [
@@ -725,14 +787,14 @@ export default function RoadmapFormScreen() {
                                         imageUrl: roadmapData.bannerImage,
                                     }),
                                     phase: roadmapData.selectedDivision || nested.phase || '',
-                                    ...(extras.length > 0 && { extras }),
+                                    extras,
                                     status: nested.status || 'not started',
                                     meetings: nested.meetings || [],
                                 };
                             }
                             return nested;
                         }) || [];
-
+                    console.log('updatedRoadmaps (update phase)----->', updatedRoadmaps);
                     await updateRoadmapMutation.mutateAsync({
                         roadmapId,
                         payload: {
@@ -986,7 +1048,10 @@ export default function RoadmapFormScreen() {
             <AddFieldSheet
                 ref={addFieldSheetRef}
                 onInsert={handleFieldInsert}
-                onClose={() => setEditingFieldId(null)}
+                onClose={() => {
+                    setEditingFieldId(null);
+                    setCurrentSectionId(null);
+                }}
             />
         </LinearGradient>
     );

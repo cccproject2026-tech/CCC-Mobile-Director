@@ -57,6 +57,23 @@ const AssignAssessments = () => {
         );
     }, [mentees, search]);
 
+    const selectableMentees = useMemo(() => {
+        return filteredMentees.filter((m) =>
+            !selectedAssessmentIds.every((id: string) => m.assignedAssessmentIds?.includes(id))
+        );
+    }, [filteredMentees, selectedAssessmentIds]);
+
+    const alreadyAssignedMentees = useMemo(() => {
+        return filteredMentees.filter((m) =>
+            selectedAssessmentIds.length > 0 &&
+            selectedAssessmentIds.every((id: string) => m.assignedAssessmentIds?.includes(id))
+        );
+    }, [filteredMentees, selectedAssessmentIds]);
+
+    const areAllSelectableSelected = useMemo(() => {
+        return selectableMentees.length > 0 && selectableMentees.every(m => selectedMentees.has(m.id));
+    }, [selectableMentees, selectedMentees]);
+
     const handleToggleSelection = (menteeId: string) => {
         setSelectedMentees((prev) => {
             const newSet = new Set(prev);
@@ -70,14 +87,17 @@ const AssignAssessments = () => {
     };
 
     const handleSelectAll = () => {
-        if (selectedMentees.size === filteredMentees.length) {
-            // Deselect all
-            setSelectedMentees(new Set());
-        } else {
-            // Select all
-            const allIds = new Set(filteredMentees.map((m) => m.id));
-            setSelectedMentees(allIds);
-        }
+        setSelectedMentees((prev) => {
+            const newSet = new Set(prev);
+            if (areAllSelectableSelected) {
+                // Deselect all visible selectable
+                selectableMentees.forEach((m) => newSet.delete(m.id));
+            } else {
+                // Select all visible selectable
+                selectableMentees.forEach((m) => newSet.add(m.id));
+            }
+            return newSet;
+        });
     };
 
     const handleAssign = async () => {
@@ -177,7 +197,11 @@ const AssignAssessments = () => {
             {/* Select All */}
             <View style={styles.selectAllContainer}>
                 <TouchableOpacity onPress={handleSelectAll}>
-                    <Text style={styles.selectAllText}>Select All</Text>
+                    <Text style={styles.selectAllText}>
+                        {areAllSelectableSelected
+                            ? 'Deselect All'
+                            : 'Select All'}
+                    </Text>
                 </TouchableOpacity>
             </View>
 
@@ -202,7 +226,7 @@ const AssignAssessments = () => {
                     </View>
                 ) : (
                     <FlatList
-                        data={filteredMentees}
+                        data={selectableMentees}
                         renderItem={renderMenteeItem}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={[
@@ -212,7 +236,38 @@ const AssignAssessments = () => {
                         showsVerticalScrollIndicator={false}
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.5}
-                        ListFooterComponent={renderFooter}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="checkmark-done-circle-outline" size={56} color="#fff" style={{ opacity: 0.5 }} />
+                                <Text style={styles.emptyText}>All mentees already have these assessments assigned</Text>
+                            </View>
+                        }
+                        ListFooterComponent={
+                            <>
+                                {renderFooter()}
+                                {alreadyAssignedMentees.length > 0 && (
+                                    <View style={styles.assignedSection}>
+                                        <View style={styles.assignedSectionHeader}>
+                                            <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.5)" />
+                                            <Text style={styles.assignedSectionTitle}>
+                                                Already Assigned ({alreadyAssignedMentees.length})
+                                            </Text>
+                                        </View>
+                                        {alreadyAssignedMentees.map((item) => (
+                                            <View key={item.id} style={styles.assignedCard} pointerEvents="none">
+                                                <MenteeCard
+                                                    data={item}
+                                                    layout="card"
+                                                    isSelected={false}
+                                                    onToggleSelect={() => {}}
+                                                    disabled={true}
+                                                />
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
+                            </>
+                        }
                     />
                 )}
             </View>
@@ -369,5 +424,28 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    assignedSection: {
+        marginTop: 8,
+    },
+    assignedSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 4,
+        paddingVertical: 10,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.15)',
+        marginBottom: 4,
+    },
+    assignedSectionTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.5)',
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+    },
+    assignedCard: {
+        opacity: 0.45,
     },
 });

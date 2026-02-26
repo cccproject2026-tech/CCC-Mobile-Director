@@ -27,11 +27,36 @@ export const useMentees = (limit: number = 10) => {
                     }
                 })
             );
-
+            console.log("progressResponses:----->>>>>>>>>>>>>>", progressResponses);
             // merge
             const mentees = backendMentees.map((m, idx) => {
                 const progress = progressResponses[idx];
-                const firstRoadmap = progress?.roadmaps?.items?.[0] ?? null;
+                console.log("progress:----->>>>>>>>>>>>>>", progress);
+                
+                // Handle different roadmap structures (array or paginated object)
+                const roadmaps = Array.isArray(progress?.roadmaps) 
+                    ? progress.roadmaps 
+                    : (progress?.roadmaps?.items ?? []);
+                
+                const firstRoadmap = roadmaps[0] ?? null;                
+                // Extract assigned roadmap IDs
+                const assignedRoadmapIds = roadmaps.map((item: any) => item.roadMapId || item._id);
+
+                // Handle different assessment structures
+                const assessments = Array.isArray(progress?.assessments)
+                    ? progress.assessments
+                    : (progress?.assessments?.items ?? []);
+
+                // Extract assigned assessment IDs
+                // Based on progress.types.ts, AssessmentProgress doesn't strictly have an ID field shown, 
+                // but usually it's _id or assessmentId. I'll check if I can find more info or assume _id/assessmentId.
+                // Looking at assign-roadmaps logic for roadmaps: item.roadMapId || item._id
+                // For assessments, let's assume item.assessmentId || item._id based on common patterns.
+                // Re-reading progress.types.ts... AssessmentProgress has: title, progress, taskStatus, etc. 
+                // It doesn't explicitly show the ID in the interface provided earlier (AssessmentProgress).
+                // However, AssignAssessmentResponse has assessments: AssessmentProgress[]. 
+                // Let's assume the backend returns _id or assessmentId for the assessment item in the progress list.
+                const assignedAssessmentIds = assessments.map((item: any) => item.assessmentId || item._id);
 
                 return {
                     ...m,
@@ -40,6 +65,8 @@ export const useMentees = (limit: number = 10) => {
                     phase: firstRoadmap?.phase,
                     phaseNumber: firstRoadmap?.phaseNumber,
                     completedOn: m.hasCompleted ? m.updatedAt : undefined,
+                    assignedRoadmapIds,
+                    assignedAssessmentIds,
                 };
             });
 

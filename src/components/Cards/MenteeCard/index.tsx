@@ -27,18 +27,20 @@ export interface MenteeCardProps {
     onMarkComplete?: () => void;
     onIssueCertificate?: () => void;
     onInviteAsFieldMentor?: () => void;
+    disabled?: boolean;
+    disabledMessage?: string;
 }
 
 export default function MenteeCard(props: MenteeCardProps) {
-    const { data, layout = "full", isSelected, onToggleSelect, onPress } = props;
+    const { data, layout = "full", isSelected, onToggleSelect, onPress, disabled, disabledMessage } = props;
     const isSelectionMode = onToggleSelect !== undefined;
 
     // ▫ LIST MODE
     if (layout === "list")
         return (
             <Pressable
-                style={[styles.listContainer, isSelected && styles.selectedCard]}
-                onPress={isSelectionMode ? onToggleSelect : onPress}
+                style={[styles.listContainer, isSelected && styles.selectedCard, disabled && { opacity: 0.5 }]}
+                onPress={disabled ? undefined : (isSelectionMode ? onToggleSelect : onPress)}
             >
                 <ProfileImage size={42} uri={data.profilePicture} />
 
@@ -62,15 +64,20 @@ export default function MenteeCard(props: MenteeCardProps) {
     if (layout === "card" && isSelectionMode)
         return (
             <TouchableOpacity
-                activeOpacity={0.8}
-                style={[styles.selectionCard, isSelected && styles.selectedCard]}
-                onPress={onToggleSelect}
+                activeOpacity={disabled ? 1 : 0.8}
+                style={[
+                    styles.selectionCard,
+                    isSelected && styles.selectedCard,
+                ]}
+                onPress={disabled ? undefined : onToggleSelect}
             >
-                <View style={styles.checkboxContainer}>
-                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                        {isSelected && <Ionicons name="checkmark" size={18} color="#1A4882" />}
+                {!disabled && (
+                    <View style={styles.checkboxContainer}>
+                        <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                            {isSelected && <Ionicons name="checkmark" size={18} color="#1A4882" />}
+                        </View>
                     </View>
-                </View>
+                )}
 
                 <View style={styles.topSection}>
                     <ProfileImage uri={data.profilePicture} size={90} />

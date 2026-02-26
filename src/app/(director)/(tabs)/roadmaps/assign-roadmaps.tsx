@@ -1,5 +1,5 @@
 // app/(director)/(tabs)/roadmaps/assign-roadmaps.tsx
-import { ActivityIndicator, Alert, FlatList, ListRenderItem, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import TopBar from '@/components/Header/TopBar';
@@ -37,7 +37,8 @@ const AssignRoadmaps = () => {
         isFetchingNextPage 
     } = useMentees();
     const mentees = data?.pages.flatMap((page) => page.mentees) ?? [];
-
+    let isRoadmapavailable=mentees.some((mentee) => mentee.assignedRoadmapIds?.length > 0);
+    console.log("isRoadmapavailable:----->>>>>>>>>>>>>>", isRoadmapavailable,mentees[0].assignedRoadmapIds?.length);
     const handleLoadMore = () => {
         if (hasNextPage && !isFetchingNextPage) {
             fetchNextPage();
@@ -70,6 +71,24 @@ const AssignRoadmaps = () => {
         );
     }, [mentees, search]);
 
+    const selectableMentees = useMemo(() => {
+        return filteredMentees.filter((m) =>
+            !selectedRoadmapIds.every((id: string) => m.assignedRoadmapIds?.includes(id))
+        );
+    }, [filteredMentees, selectedRoadmapIds]);
+
+    const alreadyAssignedMentees = useMemo(() => {
+        // console.log("Calculating already assigned mentees with selectedRoadmapIds:", selectedRoadmapIds);
+        return filteredMentees.filter((m) =>
+            selectedRoadmapIds.length > 0 &&
+            selectedRoadmapIds.every((id: string) => m.assignedRoadmapIds?.includes(id))
+        );
+    }, [filteredMentees, selectedRoadmapIds]);
+
+    const areAllSelectableSelected = useMemo(() => {
+        return selectableMentees.length > 0 && selectableMentees.every(m => selectedMentees.has(m.id));
+    }, [selectableMentees, selectedMentees]);
+
     const handleToggleSelection = (menteeId: string) => {
         setSelectedMentees((prev) => {
             const newSet = new Set(prev);
@@ -83,12 +102,17 @@ const AssignRoadmaps = () => {
     };
 
     const handleSelectAll = () => {
-        if (selectedMentees.size === filteredMentees.length) {
-            setSelectedMentees(new Set());
-        } else {
-            const allIds = new Set(filteredMentees.map((m) => m.id));
-            setSelectedMentees(allIds);
-        }
+        setSelectedMentees((prev) => {
+            const newSet = new Set(prev);
+            if (areAllSelectableSelected) {
+                // Deselect all visible selectable
+                selectableMentees.forEach((m) => newSet.delete(m.id));
+            } else {
+                // Select all visible selectable
+                selectableMentees.forEach((m) => newSet.add(m.id));
+            }
+            return newSet;
+        });
     };
 
     const handleAssign = async () => {
@@ -104,7 +128,7 @@ const AssignRoadmaps = () => {
 
         try {
             const menteeIdArray = Array.from(selectedMentees);
-            console.log("Mentee ID Array:", menteeIdArray);
+            // console.log("Mentee ID Array:", menteeIdArray);
             await assignMutation.mutateAsync({
                 menteeIds: menteeIdArray,
                 roadmapIds: selectedRoadmapIds,
@@ -120,12 +144,21 @@ const AssignRoadmaps = () => {
                     },
                 ]
             );
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to assign roadmaps:', err);
-            Alert.alert('Error', 'Failed to assign roadmaps. Please try again.');
+            let errorMessage = err?.message || 'Failed to assign roadmaps. Please try again.';
+
+            // Attempt to replace user IDs with names for better readability
+            if (mentees.length > 0) {
+                errorMessage = errorMessage.replace(/[a-f0-9]{24}/g, (match: string) => {
+                    const found = mentees.find((m) => m.id === match);
+                    return found ? `${found.firstName} ${found.lastName}`.trim() || found.username || match : match;
+                });
+            }
+
+            Alert.alert('Assignment Failed', errorMessage);
         }
     };
-
     // Get selected mentee names for footer
     const selectedMenteeNames = useMemo(() => {
         const names = Array.from(selectedMentees)
@@ -162,7 +195,7 @@ const AssignRoadmaps = () => {
             <View style={styles.selectAllContainer}>
                 <TouchableOpacity onPress={handleSelectAll}>
                     <Text style={styles.selectAllText}>
-                        {selectedMentees.size === filteredMentees.length && filteredMentees.length > 0
+                        {areAllSelectableSelected
                             ? 'Deselect All'
                             : 'Select All'}
                     </Text>
@@ -190,7 +223,7 @@ const AssignRoadmaps = () => {
                     </View>
                 ) : (
                     <FlatList
-                        data={filteredMentees}
+                        data={selectableMentees}
                         renderItem={({ item }) => (
                             <MenteeCard
                                 key={item.id}
@@ -205,7 +238,38 @@ const AssignRoadmaps = () => {
                         showsVerticalScrollIndicator={false}
                         onEndReached={handleLoadMore}
                         onEndReachedThreshold={0.5}
-                        ListFooterComponent={renderFooter}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="checkmark-done-circle-outline" size={56} color="#fff" style={{ opacity: 0.5 }} />
+                                <Text style={styles.emptyText}>All mentees already have this roadmap assigned</Text>
+                            </View>
+                        }
+                        ListFooterComponent={
+                            <>
+                                {renderFooter()}
+                                {alreadyAssignedMentees.length > 0 && (
+                                    <View style={styles.assignedSection}>
+                                        <View style={styles.assignedSectionHeader}>
+                                            <Ionicons name="checkmark-circle" size={16} color="rgba(255,255,255,0.5)" />
+                                            <Text style={styles.assignedSectionTitle}>
+                                                Already Assigned ({alreadyAssignedMentees.length})
+                                            </Text>
+                                        </View>
+                                        {alreadyAssignedMentees.map((item) => (
+                                            <View key={item.id} style={styles.assignedCard} pointerEvents="none">
+                                                <MenteeCard
+                                                    data={item}
+                                                    layout="card"
+                                                    isSelected={false}
+                                                    onToggleSelect={() => {}}
+                                                    disabled={true}
+                                                />
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
+                            </>
+                        }
                     />
                 )}
             </View>
@@ -359,5 +423,28 @@ const styles = StyleSheet.create({
     footerLoading: {
         paddingVertical: 20,
         alignItems: 'center',
+    },
+    assignedSection: {
+        marginTop: 8,
+    },
+    assignedSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 4,
+        paddingVertical: 10,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.15)',
+        marginBottom: 4,
+    },
+    assignedSectionTitle: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.5)',
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+    },
+    assignedCard: {
+        opacity: 0.45,
     },
 });

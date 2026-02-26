@@ -748,7 +748,7 @@ export default function CreateAssessmentPage() {
                             {section.layers.map((layer, layerIndex) => (
                                 <View key={`rec-${layer.id}`} style={styles.recommendationBox}>
                                     <Text style={styles.recommendationTitle}>
-                                        Layer {layerIndex + 1} - Recommendations
+                                        Layer {layerIndex + 1} - Customized Development Plans
                                     </Text>
 
                                     {(section.layerRecommendations[layer.id] || []).map(

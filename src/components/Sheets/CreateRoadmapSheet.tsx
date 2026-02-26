@@ -206,7 +206,7 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                         pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
                         params: {
                             roadmapId: createdRoadmapId,
-                            roadmapType: 'phase',
+                            type: 'phase',
                             isEditMode
                         }
                     } as any);
@@ -240,7 +240,7 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
 
         // Helper function to get display text for type
         const getTypeDisplayText = (type: 'single' | 'phase') => {
-            return type === 'phase' ? 'Phase' : 'Single Roadmap';
+            return type === 'phase' ? 'Phase' : 'Single';
         };
 
         return (
@@ -325,7 +325,7 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                                             onPress={() => handleTypeSelect("single")}
                                         >
                                             <Text style={styles.dropdownOptionText}>
-                                                Single Roadmap
+                                                Single
                                             </Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity

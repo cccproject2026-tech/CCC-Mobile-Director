@@ -51,6 +51,8 @@ export interface Mentee extends User {
     phaseNumber?: number | null;
     isFieldMentor?: boolean;
     profileInfo?: string | null;
+    assignedRoadmapIds?: string[]; // IDs of roadmaps already assigned
+    assignedAssessmentIds?: string[]; // IDs of assessments already assigned
 }
 export interface ChurchInfo {
     id?: string;

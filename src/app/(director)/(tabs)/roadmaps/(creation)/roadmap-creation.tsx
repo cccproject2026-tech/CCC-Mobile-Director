@@ -89,6 +89,8 @@ export default function RoadmapCreationScreen() {
         };
 
         if (roadmapType === 'phase') {
+            console.log('Routing to here : roadmap-form for phase')
+            console.log('commonParams', commonParams);
             router.push({
                 pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
                 params: {
