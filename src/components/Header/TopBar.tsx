@@ -107,15 +107,17 @@ const TopBar: React.FC<Props> = ({
                     </LinearGradient>
                 )}
             </View>
+            {/* Spacer so name pill and search icon never touch */}
+            {showUserName && <View style={styles.headerSpacer} />}
             {/* Right */}
             <View style={styles.rightIconBox}>
                 {/* Search button — navigates to global search */}
-                <Pressable onPress={() => router.push('/search')} hitSlop={10} style={{ marginRight: 8 }}>
+                <Pressable onPress={() => router.push('/search')} hitSlop={10} style={styles.searchButton}>
                     <Ionicons name="search" size={size - 6} color={color} />
                 </Pressable>
 
                 {showNotifications && (
-                    <Pressable onPress={handleNotificationsPress} hitSlop={10} style={{ position: 'relative', marginRight: 7 }}>
+                    <Pressable onPress={handleNotificationsPress} hitSlop={10} style={styles.notificationButton}>
                         <Ionicons name="notifications-outline" size={size - 10} color={color} />
                         {notifications > 0 && (
                             <View style={styles.notificationBadge}>
@@ -176,6 +178,10 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
+        paddingRight: 8,
+        marginLeft: 10,
+        minWidth: 0,
+        flexShrink: 1,
     },
     gradientBorder: {
         padding: 2,
@@ -185,11 +191,11 @@ const styles = StyleSheet.create({
         backgroundColor: "#176192",
         borderRadius: 11,
         paddingVertical: 9,
-        paddingHorizontal: 28,
+        paddingHorizontal: 24,
         alignItems: "center",
         justifyContent: "center",
         minWidth: 85,
-        maxWidth: 210,
+        maxWidth: 180,
     },
     nameText: {
         color: "#E2E8F0",
@@ -197,12 +203,16 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         textAlign: "center",
     },
+    headerSpacer: {
+        width: 24,
+        flexShrink: 0,
+    },
     rightIconBox: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "flex-end",
-        flex: 0.2,
-        gap: 8,
+        flexShrink: 0,
+        gap: 10,
     },
     notificationBadge: {
         position: "absolute",
@@ -219,6 +229,13 @@ const styles = StyleSheet.create({
         color: "#000",
         fontWeight: "700",
         fontSize: 11,
+    },
+    searchButton: {
+        marginRight: 4,
+    },
+    notificationButton: {
+        position: "relative",
+        marginRight: 4,
     },
     profileBox: {
         width: 28,
