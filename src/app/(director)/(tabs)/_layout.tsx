@@ -89,6 +89,7 @@ export default function DirectorTabLayout() {
 
             {/* HIDDEN SCREENS - Use href: null */}
             <Tabs.Screen name="profile/documents" options={{ href: null }} />
+            <Tabs.Screen name="profile/personal-notes" options={{ href: null }} />
 
             {/* Hide all route groups and standalone routes from tab bar */}
             <Tabs.Screen

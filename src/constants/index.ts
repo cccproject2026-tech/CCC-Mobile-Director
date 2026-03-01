@@ -49,6 +49,7 @@ export const MENU_ITEMS: MenuItem[] = [
             { id: 'my-profile', label: 'My Profile', icon: 'profile-outline', iconType: 'image', route: '/(director)/(tabs)/profile' },
             { id: 'documents', label: 'Documents', icon: 'folder-outline', route: '/(director)/(tabs)/profile/documents' },
             { id: 'notes', label: 'Notes', icon: 'document-text-outline', route: '/(director)/(tabs)/profile/documents' },
+            { id: 'personal-notes', label: 'Personal Notes', icon: 'journal-outline', route: '/(director)/(tabs)/profile/personal-notes' },
         ],
     },
     {

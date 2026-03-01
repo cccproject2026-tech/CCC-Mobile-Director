@@ -26,6 +26,8 @@ export const ENDPOINTS = {
         GET_DOCUMENTS: (userId: string) => `/users/${userId}/documents`,
         UPLOAD_DOCUMENT: (userId: string) => `/users/${userId}/documents`,
         DELETE_DOCUMENT: (userId: string) => `/users/${userId}/documents`,
+        NOTES: (userId: string) => `/users/${userId}/notes`,
+        NOTE_BY_ID: (userId: string, noteId: string) => `/users/${userId}/notes/${noteId}`,
     },
 
     // Pastor Onboarding (if separate from auth)

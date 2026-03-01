@@ -44,18 +44,24 @@ export const useLogin = () => {
                 // 1. Store tokens in SecureStore (using the global 'storage' utility)
                 await storage.setTokens(accessToken, refreshToken);
 
-                // 2. Update auth store: This single call updates runtime state AND 
-                // triggers Zustand's persistence middleware (MMKV) to save the user object.
-                setUser(user);
+                // 2. Normalize user so id is always set (backend may send _id only)
+                const normalizedUser = {
+                    ...user,
+                    id: (user as { id?: string; _id?: string }).id ?? (user as { _id?: string })._id ?? '',
+                };
 
-                // 3. Invalidate all auth queries
+                // 3. Update auth store: This single call updates runtime state AND
+                // triggers Zustand's persistence middleware (MMKV) to save the user object.
+                setUser(normalizedUser as any);
+
+                // 4. Invalidate all auth queries
                 await queryClient.invalidateQueries({
                     queryKey: authKeys.all,
                 });
 
-                console.log(`✅ Logged in as [${user.role}]:`, user.email);
+                console.log(`✅ Logged in as [${normalizedUser.role}]:`, normalizedUser.email);
 
-                // 4. Unified Routing: Both roles go to the same dashboard layout.
+                // 5. Unified Routing: Both roles go to the same dashboard layout.
                 router.replace('/(director)/(tabs)');
 
             } catch (error) {
