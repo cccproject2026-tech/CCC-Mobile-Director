@@ -15,7 +15,6 @@ import React, {
     useState,
 } from "react";
 import {
-    Keyboard,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -56,29 +55,8 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
         const snapPoints = useMemo(() => ["90%"], []);
         const [formData, setFormData] = useState<any>({});
         const bottomSheetRef = useRef<BottomSheetModal>(null);
-        const scrollViewRef = useRef<any>(null);
-        const contentAreaRef = useRef<View>(null);
-        const layoutRef = useRef<{ contentAreaY: number; fields: Record<string, number> }>({ contentAreaY: 0, fields: {} });
         const openingWithExistingDataRef = useRef(false);
         const [showAssessmentModal, setShowAssessmentModal] = useState(false);
-
-        const scrollToFocusedField = useCallback((fieldKey: string) => {
-            const contentY = layoutRef.current.contentAreaY ?? 0;
-            const fieldY = layoutRef.current.fields[fieldKey] ?? 0;
-            const scrollY = Math.max(0, contentY + fieldY - 80);
-            setTimeout(() => {
-                scrollViewRef.current?.scrollTo?.({ y: scrollY, animated: true });
-            }, 300);
-        }, []);
-
-        useEffect(() => {
-            const sub = Keyboard.addListener("keyboardDidShow", () => {
-                // Small delay so sheet has adjusted; scroll will be triggered by onFocus when needed
-            });
-            return () => sub.remove();
-        }, []);
-
-        console.log("AddFieldSheet component rendered, fieldType:", fieldType);
 
         const getConfig = () => {
             switch (fieldType) {
@@ -456,11 +434,10 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                     keyboardBlurBehavior="restore"
                 >
                     <BottomSheetScrollView
-                        ref={scrollViewRef}
                         style={styles.scrollView}
                         contentContainerStyle={[
                             styles.contentContainer,
-                            { paddingBottom: Math.max(bottom, 20) + 280 },
+                            { paddingBottom: Math.max(bottom, 20), flexGrow: 1 },
                         ]}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
@@ -471,13 +448,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                         </View>
 
                         {/* Content Area */}
-                        <View
-                            ref={contentAreaRef}
-                            style={styles.contentArea}
-                            onLayout={(e) => {
-                                layoutRef.current.contentAreaY = e.nativeEvent.layout.y;
-                            }}
-                        >
+                        <View style={styles.contentArea}>
                             {config.fields.map((field: any) => {
                                 if (field.conditional && !formData[field.conditional]) {
                                     return null;
@@ -485,13 +456,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
 
                                 if (field.type === "input") {
                                     return (
-                                        <View
-                                            key={field.key}
-                                            style={styles.fieldSection}
-                                            onLayout={(e) => {
-                                                layoutRef.current.fields[field.key] = e.nativeEvent.layout.y;
-                                            }}
-                                        >
+                                        <View key={field.key} style={styles.fieldSection}>
                                             <Text style={styles.fieldLabel}>{field.label}</Text>
                                             <BottomSheetTextInput
                                                 style={[styles.textInput, styles.textInputMultiline]}
@@ -501,8 +466,8 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                                 onChangeText={(text) =>
                                                     setFormData({ ...formData, [field.key]: text })
                                                 }
-                                                onFocus={() => scrollToFocusedField(field.key)}
                                                 multiline
+                                                scrollEnabled
                                                 blurOnSubmit={false}
                                                 returnKeyType="default"
                                                 textAlignVertical="top"
@@ -586,35 +551,21 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
 
                                 if (field.type === "choices") {
                                     return (
-                                        <View
-                                            key={field.key}
-                                            style={styles.fieldSection}
-                                            onLayout={(e) => {
-                                                layoutRef.current.fields[field.key] = e.nativeEvent.layout.y;
-                                            }}
-                                        >
+                                        <View key={field.key} style={styles.fieldSection}>
                                             <Text style={styles.fieldLabel}>{field.label}</Text>
                                             {(formData.choices || []).map(
                                                 (choice: string, index: number) => (
-                                                    <View
-                                                        key={index}
-                                                        style={styles.choiceRow}
-                                                        onLayout={(e) => {
-                                                            const sectionY = layoutRef.current.fields[field.key] ?? 0;
-                                                            layoutRef.current.fields[`${field.key}-${index}`] =
-                                                                sectionY + e.nativeEvent.layout.y;
-                                                        }}
-                                                    >
+                                                    <View key={index} style={styles.choiceRow}>
                                                         <BottomSheetTextInput
-                                                            style={[styles.textInput, styles.choiceInput]}
+                                                            style={[styles.textInput, styles.choiceInput, styles.textInputMultiline]}
                                                             placeholder={`Enter Choice ${index + 1}`}
                                                             placeholderTextColor="rgba(255,255,255,0.5)"
                                                             value={choice}
                                                             onChangeText={(text) =>
                                                                 handleChoiceChange(index, text)
                                                             }
-                                                            onFocus={() => scrollToFocusedField(`${field.key}-${index}`)}
                                                             multiline
+                                                            scrollEnabled
                                                             blurOnSubmit={false}
                                                             returnKeyType="default"
                                                             textAlignVertical="top"
@@ -750,6 +701,7 @@ const styles = StyleSheet.create({
     },
     textInputMultiline: {
         minHeight: 56,
+        maxHeight: 200,
         paddingTop: 14,
     },
     checkboxRow: {
