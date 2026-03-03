@@ -1,6 +1,6 @@
 // app/(director)/(tabs)/revitalization-roadmaps/(creation)/roadmap-form.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -26,10 +26,10 @@ import {
     useUpdateRoadmap,
 } from '@/hooks/roadmap/useRoadmaps';
 import { RoadmapExtra, CreateNestedRoadmapRequest } from '@/types/roadmap.types';
+import { AddFieldSheetContext } from '@/contexts/AddFieldSheetContext';
 import CustomMenu, { MenuItem } from '@/components/Menu/CustomMenu';
 import { AssessmentRenderer, ButtonRenderer, CheckboxRenderer, DatePickerRenderer, SectionRenderer, TextAreaRenderer, TextDisplayRenderer, TextFieldRenderer, UploadButtonRenderer } from '@/components/Forms/field-renders';
 import RoadMapFormHeader from '@/components/Header/RoadMapFormHeader';
-import AddFieldSheet from '@/components/Sheets/AddFieldSheet';
 import TopBar from '@/components/Header/TopBar';
 
 export type FieldType = 'text' | 'textarea' | 'upload' | 'datepicker' | 'assessment' | 'section' | 'checkbox_item' | 'text_display' | 'button';
@@ -38,7 +38,7 @@ export default function RoadmapFormScreen() {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams();
-    const addFieldSheetRef = useRef<any>(null);
+    const addFieldSheet = useContext(AddFieldSheetContext);
 
     // ✅ Parse params
     const isEditMode = params.isEditMode === 'true';
@@ -522,7 +522,7 @@ export default function RoadmapFormScreen() {
     const handleFieldTypeSelect = (fieldType: FieldType) => {
         setMenuVisible(false);
         setTimeout(() => {
-            addFieldSheetRef.current?.open(fieldType);
+            addFieldSheet?.open(fieldType);
         }, 300);
     };
 
@@ -530,9 +530,18 @@ export default function RoadmapFormScreen() {
         const field = formData.customFields.find((f) => f.id === fieldId);
         if (field) {
             setEditingFieldId(fieldId);
-            addFieldSheetRef.current?.open(field.type, field);
+            addFieldSheet?.open(field.type, field);
         }
     };
+
+    useEffect(() => {
+        if (!addFieldSheet) return;
+        addFieldSheet.registerHandlers({
+            onInsert: handleFieldInsert,
+            onClose: () => setEditingFieldId(null),
+        });
+        return () => addFieldSheet.registerHandlers(null);
+    }, [addFieldSheet, handleFieldInsert]);
 
     const handleDeleteField = (fieldId: string) => {
         const hasNestedFields = formData.customFields.some((f) => f.parentSectionId === fieldId);
@@ -988,13 +997,6 @@ export default function RoadmapFormScreen() {
                     iconSize={22}
                     itemPadding={{ horizontal: 16, vertical: 14 }}
                     itemTextStyle={{ fontSize: 15, fontWeight: '600', color: '#1A4882' }}
-                />
-
-                {/* ✅ AddFieldSheet for configuring fields */}
-                <AddFieldSheet
-                    ref={addFieldSheetRef}
-                    onInsert={handleFieldInsert}
-                    onClose={() => setEditingFieldId(null)}
                 />
             </LinearGradient>
         </KeyboardAvoidingView>

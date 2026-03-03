@@ -1,6 +1,7 @@
 
+import type { FieldType } from '@/components/Sheets/AddFieldSheet';
+import { AddFieldSheetContext } from '@/contexts/AddFieldSheetContext';
 import ContextMenu, { MenuItem, TextIcon } from '@/components/Menu/CustomMenu';
-import AddFieldSheet, { AddFieldSheetRef, FieldType } from '@/components/Sheets/AddFieldSheet';
 import FormCheckbox from '@/components/Forms/FormCheckBox';
 import FormDropdown from '@/components/Forms/FormDropDown';
 import FormTextArea from '@/components/Forms/FormTextArea';
@@ -9,7 +10,7 @@ import { FormField, FormSection, interestFormConfig } from '@/types/interest.typ
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { JSX, useEffect, useRef, useState } from 'react';
+import React, { JSX, useContext, useEffect, useRef, useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -155,7 +156,7 @@ export default function InterestFormScreen() {
         });
     }, [backendConfig]);
 
-    const addFieldSheetRef = useRef<AddFieldSheetRef>(null);
+    const addFieldSheet = useContext(AddFieldSheetContext);
 
     const handleFieldInsert = (result: any) => {
         const { type, data } = result;
@@ -322,7 +323,7 @@ export default function InterestFormScreen() {
     const handleMenuItemPress = (sectionId: string, type: FieldType) => {
         setTargetSectionId(sectionId);
         try {
-            addFieldSheetRef.current?.open(type);
+            addFieldSheet?.open(type);
             setTimeout(() => {
                 setActiveMenuSection(null);
             }, 300);
@@ -330,6 +331,15 @@ export default function InterestFormScreen() {
             setActiveMenuSection(null);
         }
     };
+
+    useEffect(() => {
+        if (!addFieldSheet) return;
+        addFieldSheet.registerHandlers({
+            onInsert: handleFieldInsert,
+            onClose: () => {},
+        });
+        return () => addFieldSheet.registerHandlers(null);
+    }, [addFieldSheet, handleFieldInsert]);
 
     const handleEdit = () => setIsEditMode(true);
     const handleCancel = () => setIsEditMode(false);
@@ -778,14 +788,6 @@ export default function InterestFormScreen() {
                     </View>
                 )}
             </KeyboardAvoidingView>
-
-            <AddFieldSheet
-                ref={addFieldSheetRef}
-                onInsert={handleFieldInsert}
-                onClose={() => {
-                    addFieldSheetRef.current?.dismiss();
-                }}
-            />
         </LinearGradient>
     );
 }

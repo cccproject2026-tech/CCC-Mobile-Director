@@ -10,6 +10,7 @@ import React, {
     forwardRef,
     useCallback,
     useEffect,
+    useMemo,
     useRef,
     useState,
 } from "react";
@@ -52,6 +53,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
     ({ onInsert, onClose, showHeading = false, showButton = false }, ref) => {
         const { bottom } = useSafeAreaInsets();
         const [fieldType, setFieldType] = useState<FieldType | null>(null);
+        const snapPoints = useMemo(() => ["90%"], []);
         const [formData, setFormData] = useState<any>({});
         const bottomSheetRef = useRef<BottomSheetModal>(null);
         const scrollViewRef = useRef<any>(null);
@@ -414,6 +416,9 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
             setTimeout(() => {
                 try {
                     bottomSheetRef.current?.present();
+                    setTimeout(() => {
+                        (bottomSheetRef.current as any)?.snapToIndex?.(0);
+                    }, 50);
                 } catch (error) {
                     console.error("Error in bottomSheetRef.current.present():", error);
                 }
@@ -434,7 +439,9 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
             <>
                 <BottomSheetModal
                     ref={bottomSheetRef}
-                    snapPoints={[config.snapPoint]}
+                    snapPoints={snapPoints}
+                    enableDynamicSizing={false}
+                    topInset={0}
                     enablePanDownToClose
                     backdropComponent={renderBackdrop}
                     backgroundStyle={styles.bottomSheetBackground}
