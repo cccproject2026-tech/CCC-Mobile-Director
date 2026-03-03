@@ -11,6 +11,8 @@ import {
     ActivityIndicator,
     StyleSheet,
     Dimensions,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -872,23 +874,29 @@ export default function RoadmapFormScreen() {
     };
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
-            <TopBar showUserName />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
+        >
+            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+                <TopBar showUserName />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#fff" />
-                    <Text style={styles.headerTitle}>{
-                        isEditMode ? 'Edit Roadmap' : 'Create Roadmap'}</Text>
-                </TouchableOpacity>
-            </View>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#fff" />
+                        <Text style={styles.headerTitle}>{
+                            isEditMode ? 'Edit Roadmap' : 'Create Roadmap'}</Text>
+                    </TouchableOpacity>
+                </View>
 
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={[styles.content, { paddingBottom: bottom + 40 }]}
-                showsVerticalScrollIndicator={false}
-            >
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={[styles.content, { paddingBottom: bottom + 40, flexGrow: 1 }]}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                 <RoadMapFormHeader
                     name={roadmapData.name}
                     subheading={roadmapData.subheading}
@@ -965,30 +973,31 @@ export default function RoadmapFormScreen() {
                         )}
                     </TouchableOpacity>
                 </View>
-            </ScrollView>
+                </ScrollView>
 
-            {/* Fixed Action Buttons */}
+                {/* Fixed Action Buttons */}
 
-            {/* ✅ Custom Menu for Field Types */}
-            <CustomMenu
-                visible={menuVisible}
-                items={fieldTypeMenuItems}
-                onClose={() => setMenuVisible(false)}
-                position={menuPosition}
-                backgroundColor="#fff"
-                borderRadius={12}
-                iconSize={22}
-                itemPadding={{ horizontal: 16, vertical: 14 }}
-                itemTextStyle={{ fontSize: 15, fontWeight: '600', color: '#1A4882' }}
-            />
+                {/* ✅ Custom Menu for Field Types */}
+                <CustomMenu
+                    visible={menuVisible}
+                    items={fieldTypeMenuItems}
+                    onClose={() => setMenuVisible(false)}
+                    position={menuPosition}
+                    backgroundColor="#fff"
+                    borderRadius={12}
+                    iconSize={22}
+                    itemPadding={{ horizontal: 16, vertical: 14 }}
+                    itemTextStyle={{ fontSize: 15, fontWeight: '600', color: '#1A4882' }}
+                />
 
-            {/* ✅ AddFieldSheet for configuring fields */}
-            <AddFieldSheet
-                ref={addFieldSheetRef}
-                onInsert={handleFieldInsert}
-                onClose={() => setEditingFieldId(null)}
-            />
-        </LinearGradient>
+                {/* ✅ AddFieldSheet for configuring fields */}
+                <AddFieldSheet
+                    ref={addFieldSheetRef}
+                    onInsert={handleFieldInsert}
+                    onClose={() => setEditingFieldId(null)}
+                />
+            </LinearGradient>
+        </KeyboardAvoidingView>
     );
 }
 

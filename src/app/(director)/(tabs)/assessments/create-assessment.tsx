@@ -11,6 +11,8 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -496,27 +498,34 @@ export default function CreateAssessmentPage() {
     };
 
     return (
-        <LinearGradient colors={['#155C93', '#1B2B60']} style={{ flex: 1 }}>
-            <TopBar showUserName />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
+        >
+            <LinearGradient colors={['#155C93', '#1B2B60']} style={{ flex: 1 }}>
+                <TopBar showUserName />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <Pressable onPress={() => router.back()} hitSlop={10}>
-                    <Ionicons name="chevron-back" size={28} color="#E2E8F0" />
-                </Pressable>
-                <Text style={styles.headerTitle}>Create - Assessment</Text>
-            </View>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Pressable onPress={() => router.back()} hitSlop={10}>
+                        <Ionicons name="chevron-back" size={28} color="#E2E8F0" />
+                    </Pressable>
+                    <Text style={styles.headerTitle}>Create - Assessment</Text>
+                </View>
 
-            {/* Form Content */}
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={{
-                    paddingHorizontal: 16,
-                    paddingBottom: bottom + 100,
-                    paddingTop: 16,
-                }}
-                showsVerticalScrollIndicator={false}
-            >
+                {/* Form Content */}
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={{
+                        paddingHorizontal: 16,
+                        paddingBottom: bottom + 100,
+                        paddingTop: 16,
+                        flexGrow: 1,
+                    }}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                 {/* Assessment Details */}
                 <TextInput
                     style={styles.inputBox}
@@ -828,6 +837,7 @@ export default function CreateAssessmentPage() {
                 onClose={handleSuccessModalClose}
             />
         </LinearGradient>
+        </KeyboardAvoidingView>
     );
 }
 

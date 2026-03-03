@@ -180,7 +180,7 @@ console.log("Interest ID:--------", interestId);
             style={[styles.container]}
         >
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
                 <View style={styles.header}>
@@ -188,8 +188,9 @@ console.log("Interest ID:--------", interestId);
                 </View>
                 <ScrollView
                     style={{ flex: 1 }}
-                    contentContainerStyle={{ paddingBottom: bottom + 20 }}
+                    contentContainerStyle={{ paddingBottom: bottom + 20, flexGrow: 1 }}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 >
                     {/* HEADER */}
 

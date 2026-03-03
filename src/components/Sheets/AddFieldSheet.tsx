@@ -3,7 +3,8 @@ import { Ionicons } from "@expo/vector-icons";
 import {
     BottomSheetBackdrop,
     BottomSheetModal,
-    BottomSheetView,
+    BottomSheetScrollView,
+    BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 import React, {
     forwardRef,
@@ -13,9 +14,9 @@ import React, {
     useState,
 } from "react";
 import {
+    Keyboard,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -53,7 +54,26 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
         const [fieldType, setFieldType] = useState<FieldType | null>(null);
         const [formData, setFormData] = useState<any>({});
         const bottomSheetRef = useRef<BottomSheetModal>(null);
+        const scrollViewRef = useRef<any>(null);
+        const contentAreaRef = useRef<View>(null);
+        const layoutRef = useRef<{ contentAreaY: number; fields: Record<string, number> }>({ contentAreaY: 0, fields: {} });
         const [showAssessmentModal, setShowAssessmentModal] = useState(false);
+
+        const scrollToFocusedField = useCallback((fieldKey: string) => {
+            const contentY = layoutRef.current.contentAreaY ?? 0;
+            const fieldY = layoutRef.current.fields[fieldKey] ?? 0;
+            const scrollY = Math.max(0, contentY + fieldY - 80);
+            setTimeout(() => {
+                scrollViewRef.current?.scrollTo?.({ y: scrollY, animated: true });
+            }, 300);
+        }, []);
+
+        useEffect(() => {
+            const sub = Keyboard.addListener("keyboardDidShow", () => {
+                // Small delay so sheet has adjusted; scroll will be triggered by onFocus when needed
+            });
+            return () => sub.remove();
+        }, []);
 
         console.log("AddFieldSheet component rendered, fieldType:", fieldType);
 
@@ -101,13 +121,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
 
                     return {
                         title: fieldType === "text" ? "Add Text Field" : "Add Text Area",
-                        // Adjusted snapPoints to accommodate the extra "Name" field
-                        snapPoint:
-                            showHeading && showButton
-                                ? "75%"
-                                : showHeading || showButton
-                                    ? "65%"
-                                    : "55%",
+                        snapPoint: "90%",
                         fields,
                     };
 
@@ -116,7 +130,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                     return {
                         title: `Add ${fieldType === "checkbox" ? "Check Box" : "Radio Button"
                             }`,
-                        snapPoint: "70%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -135,7 +149,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "section":
                     return {
                         title: "Add Section",
-                        snapPoint: "55%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -160,7 +174,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "upload":
                     return {
                         title: "Add Upload Button",
-                        snapPoint: "45%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "buttonName",
@@ -202,7 +216,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "assessment":
                     return {
                         title: "Add Assessment",
-                        snapPoint: "60%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "importAssessment",
@@ -226,7 +240,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "checkbox_item":
                     return {
                         title: "Add Check Box",
-                        snapPoint: "55%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -251,7 +265,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "text_display":
                     return {
                         title: "Add Text Display",
-                        snapPoint: "45%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -264,7 +278,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "button":
                     return {
                         title: "Add Action Button",
-                        snapPoint: "45%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -417,11 +431,15 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                     keyboardBehavior="interactive"
                     keyboardBlurBehavior="restore"
                 >
-                    <BottomSheetView
-                        style={[
+                    <BottomSheetScrollView
+                        ref={scrollViewRef}
+                        style={styles.scrollView}
+                        contentContainerStyle={[
                             styles.contentContainer,
-                            { paddingBottom: Math.max(bottom, 20) + 16 },
+                            { paddingBottom: Math.max(bottom, 20) + 280 },
                         ]}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
                     >
                         {/* Header */}
                         <View style={styles.headerSection}>
@@ -429,7 +447,13 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                         </View>
 
                         {/* Content Area */}
-                        <View style={styles.contentArea}>
+                        <View
+                            ref={contentAreaRef}
+                            style={styles.contentArea}
+                            onLayout={(e) => {
+                                layoutRef.current.contentAreaY = e.nativeEvent.layout.y;
+                            }}
+                        >
                             {config.fields.map((field: any) => {
                                 if (field.conditional && !formData[field.conditional]) {
                                     return null;
@@ -437,9 +461,15 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
 
                                 if (field.type === "input") {
                                     return (
-                                        <View key={field.key} style={styles.fieldSection}>
+                                        <View
+                                            key={field.key}
+                                            style={styles.fieldSection}
+                                            onLayout={(e) => {
+                                                layoutRef.current.fields[field.key] = e.nativeEvent.layout.y;
+                                            }}
+                                        >
                                             <Text style={styles.fieldLabel}>{field.label}</Text>
-                                            <TextInput
+                                            <BottomSheetTextInput
                                                 style={styles.textInput}
                                                 placeholder={field.placeholder}
                                                 placeholderTextColor="rgba(255, 255, 255, 0.6)"
@@ -447,6 +477,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                                 onChangeText={(text) =>
                                                     setFormData({ ...formData, [field.key]: text })
                                                 }
+                                                onFocus={() => scrollToFocusedField(field.key)}
                                             />
                                         </View>
                                     );
@@ -527,12 +558,26 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
 
                                 if (field.type === "choices") {
                                     return (
-                                        <View key={field.key} style={styles.fieldSection}>
+                                        <View
+                                            key={field.key}
+                                            style={styles.fieldSection}
+                                            onLayout={(e) => {
+                                                layoutRef.current.fields[field.key] = e.nativeEvent.layout.y;
+                                            }}
+                                        >
                                             <Text style={styles.fieldLabel}>{field.label}</Text>
                                             {(formData.choices || []).map(
                                                 (choice: string, index: number) => (
-                                                    <View key={index} style={styles.choiceRow}>
-                                                        <TextInput
+                                                    <View
+                                                        key={index}
+                                                        style={styles.choiceRow}
+                                                        onLayout={(e) => {
+                                                            const sectionY = layoutRef.current.fields[field.key] ?? 0;
+                                                            layoutRef.current.fields[`${field.key}-${index}`] =
+                                                                sectionY + e.nativeEvent.layout.y;
+                                                        }}
+                                                    >
+                                                        <BottomSheetTextInput
                                                             style={[styles.textInput, styles.choiceInput]}
                                                             placeholder={`Enter Choice ${index + 1}`}
                                                             placeholderTextColor="rgba(255,255,255,0.5)"
@@ -540,6 +585,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                                             onChangeText={(text) =>
                                                                 handleChoiceChange(index, text)
                                                             }
+                                                            onFocus={() => scrollToFocusedField(`${field.key}-${index}`)}
                                                         />
                                                         {formData.choices.length > 1 && (
                                                             <TouchableOpacity
@@ -590,7 +636,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                 <Text style={styles.insertButtonText}>Insert</Text>
                             </TouchableOpacity>
                         </View>
-                    </BottomSheetView>
+                    </BottomSheetScrollView>
                 </BottomSheetModal>
 
                 <AssessmentSelectionModal
@@ -628,8 +674,11 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.4)",
         width: 40,
     },
-    contentContainer: {
+    scrollView: {
         flex: 1,
+    },
+    contentContainer: {
+        flexGrow: 1,
         paddingHorizontal: 20,
     },
     headerSection: {

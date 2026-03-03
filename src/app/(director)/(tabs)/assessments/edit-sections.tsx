@@ -2,6 +2,8 @@
 import {
     ActivityIndicator,
     Alert,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -239,12 +241,17 @@ const EditSections = () => {
     }
 
     return (
-        <BottomSheetModalProvider>
-            <LinearGradient colors={['#1B5F8C', '#1D548D', '#264387']} style={styles.container}>
-                <TopBar showUserName={true} showNotifications={true} />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
+        >
+            <BottomSheetModalProvider>
+                <LinearGradient colors={['#1B5F8C', '#1D548D', '#264387']} style={styles.container}>
+                    <TopBar showUserName={true} showNotifications={true} />
 
-                {/* Header */}
-                <View style={styles.header}>
+                    {/* Header */}
+                    <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
                         <Ionicons name="chevron-back" size={24} color="#fff" />
                     </TouchableOpacity>
@@ -294,8 +301,9 @@ const EditSections = () => {
                 </View>
                 <ScrollView
                     style={styles.scrollView}
-                    contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom }]}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom, flexGrow: 1 }]}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 >
 
 
@@ -481,8 +489,9 @@ const EditSections = () => {
                     }
                     onSave={handleSaveRecommendations}
                 />
-            </LinearGradient>
-        </BottomSheetModalProvider>
+                </LinearGradient>
+            </BottomSheetModalProvider>
+        </KeyboardAvoidingView>
     );
 };
 

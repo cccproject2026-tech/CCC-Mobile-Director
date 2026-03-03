@@ -3,6 +3,8 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -238,27 +240,33 @@ const AssessmentDetail = () => {
     }
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
-            <TopBar showUserName={true} showNotifications={true} />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
+        >
+            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+                <TopBar showUserName={true} showNotifications={true} />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
-                    <Ionicons name="arrow-back" size={28} color="#fff" />
-                </TouchableOpacity>
-                <View style={styles.headerTitleContainer}>
-                    <Text style={styles.headerTitle} numberOfLines={1}>
-                        {isSelectionMode ? `${selectedInstructions.size} Selected` : name}
-                    </Text>
-                    {!isSelectionMode && <Text style={styles.headerSubtitle}>Assessment</Text>}
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
+                        <Ionicons name="arrow-back" size={28} color="#fff" />
+                    </TouchableOpacity>
+                    <View style={styles.headerTitleContainer}>
+                        <Text style={styles.headerTitle} numberOfLines={1}>
+                            {isSelectionMode ? `${selectedInstructions.size} Selected` : name}
+                        </Text>
+                        {!isSelectionMode && <Text style={styles.headerSubtitle}>Assessment</Text>}
+                    </View>
                 </View>
-            </View>
 
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 20 }]}
-                showsVerticalScrollIndicator={false}
-            >
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 20, flexGrow: 1 }]}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                 {/* Hero Image with Editable Title Overlay */}
                 <View style={styles.heroContainer}>
                     <Image
@@ -415,8 +423,9 @@ const AssessmentDetail = () => {
                         </View>
                     </>
                 )}
-            </ScrollView>
-        </LinearGradient>
+                </ScrollView>
+            </LinearGradient>
+        </KeyboardAvoidingView>
     );
 };
 

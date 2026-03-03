@@ -11,6 +11,8 @@ import {
     Image,
     Alert,
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -136,22 +138,28 @@ export default function RoadmapCreationScreen() {
     const parentRoadmapName = parentRoadmap?.name || 'Self Revitalization Phase';
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
-            <TopBar showUserName />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
+        >
+            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+                <TopBar showUserName />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#fff" />
-                    <Text style={styles.headerTitle}>Create Roadmap</Text>
-                </TouchableOpacity>
-            </View>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#fff" />
+                        <Text style={styles.headerTitle}>Create Roadmap</Text>
+                    </TouchableOpacity>
+                </View>
 
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={[styles.content, { paddingBottom: bottom + 40 }]}
-                showsVerticalScrollIndicator={false}
-            >
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={[styles.content, { paddingBottom: bottom + 40, flexGrow: 1 }]}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                 {/* Parent Roadmap Banner */}
                 <View style={styles.parentBannerContainer}>
                     {parentBannerImage ? (
@@ -302,8 +310,9 @@ export default function RoadmapCreationScreen() {
                         <Text style={styles.nextButtonText}>Next</Text>
                     </TouchableOpacity>
                 </View>
-            </ScrollView>
-        </LinearGradient>
+                </ScrollView>
+            </LinearGradient>
+        </KeyboardAvoidingView>
     );
 }
 

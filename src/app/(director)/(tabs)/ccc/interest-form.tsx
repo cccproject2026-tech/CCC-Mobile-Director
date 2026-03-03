@@ -657,8 +657,9 @@ export default function InterestFormScreen() {
             >
                 <ScrollView
                     style={{ flex: 1 }}
-                    contentContainerStyle={{ paddingBottom: bottom + 120 }}
+                    contentContainerStyle={{ paddingBottom: bottom + 120, flexGrow: 1 }}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                 >
                     <View style={styles.header}>
                         <TouchableOpacity onPress={() => router.back()}>
