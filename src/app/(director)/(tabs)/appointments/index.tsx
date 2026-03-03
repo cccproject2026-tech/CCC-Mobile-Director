@@ -43,12 +43,12 @@ const Appointments: React.FC = () => {
     });
     const { bottom } = useSafeAreaInsets();
 
-    // Reset active tab when screen comes into focus
-    useFocusEffect(
-        useCallback(() => {
-            setActiveTab('appointments');
-        }, [])
-    );
+    // // Reset active tab when screen comes into focus
+    // useFocusEffect(
+    //     useCallback(() => {
+    //         setActiveTab('appointments');
+    //     }, [])
+    // );
 
     // Bottom sheet ref
     const scheduleMeetingBottomSheetRef = React.useRef<BottomSheetModal>(null);

@@ -54,6 +54,8 @@ apiClient.interceptors.request.use(
         if (accessToken && config.headers) {
             devLog("→ Attached Access Token");
             config.headers.Authorization = `Bearer ${accessToken}`;
+            config.headers['Cache-Control'] = 'no-cache';
+            config.headers['Pragma'] = 'no-cache';
         }
 
         // Clean Params
@@ -98,7 +100,7 @@ apiClient.interceptors.request.use(
 // =========================================
 apiClient.interceptors.response.use(
     (response) => {
-        devLog("✔ RESPONSE:", response.config.url, "Status:", response.status);
+        devLog("✔ RESPONSE:", response.config.url, "Status:", JSON.stringify(response?.data));
         return response;
     },
 
