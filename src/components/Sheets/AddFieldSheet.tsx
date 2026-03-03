@@ -57,6 +57,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
         const scrollViewRef = useRef<any>(null);
         const contentAreaRef = useRef<View>(null);
         const layoutRef = useRef<{ contentAreaY: number; fields: Record<string, number> }>({ contentAreaY: 0, fields: {} });
+        const openingWithExistingDataRef = useRef(false);
         const [showAssessmentModal, setShowAssessmentModal] = useState(false);
 
         const scrollToFocusedField = useCallback((fieldKey: string) => {
@@ -296,6 +297,10 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
         const config = getConfig();
 
         useEffect(() => {
+            if (openingWithExistingDataRef.current) {
+                openingWithExistingDataRef.current = false;
+                return;
+            }
             if (fieldType === "checkbox" || fieldType === "radio") {
                 setFormData({ choices: ["", ""] });
             } else {
@@ -382,6 +387,18 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
             setFieldType(null);
         };
 
+        const normalizeExistingData = useCallback((type: FieldType, data: any): any => {
+            if (!data || typeof data !== "object") return data;
+            const normalized = { ...data };
+            if (type === "upload" && "buttonLabel" in data && !("buttonName" in data)) {
+                normalized.buttonName = data.buttonLabel;
+            }
+            if (type === "section" && "showDuplicateButton" in data && !("addDuplicateButton" in data)) {
+                normalized.addDuplicateButton = !!data.showDuplicateButton;
+            }
+            return normalized;
+        }, []);
+
         const open = (type: FieldType, existingData?: any) => {
             console.log(
                 "AddFieldSheet open method called with type:",
@@ -389,11 +406,11 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 "existingData:",
                 existingData
             );
-            setFieldType(type);
             if (existingData) {
-                // Pre-fill form data for editing
-                setFormData(existingData);
+                openingWithExistingDataRef.current = true;
+                setFormData(normalizeExistingData(type, existingData));
             }
+            setFieldType(type);
             setTimeout(() => {
                 try {
                     bottomSheetRef.current?.present();
@@ -470,7 +487,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                         >
                                             <Text style={styles.fieldLabel}>{field.label}</Text>
                                             <BottomSheetTextInput
-                                                style={styles.textInput}
+                                                style={[styles.textInput, styles.textInputMultiline]}
                                                 placeholder={field.placeholder}
                                                 placeholderTextColor="rgba(255, 255, 255, 0.6)"
                                                 value={formData[field.key] || ""}
@@ -478,6 +495,10 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                                     setFormData({ ...formData, [field.key]: text })
                                                 }
                                                 onFocus={() => scrollToFocusedField(field.key)}
+                                                multiline
+                                                blurOnSubmit={false}
+                                                returnKeyType="default"
+                                                textAlignVertical="top"
                                             />
                                         </View>
                                     );
@@ -586,6 +607,10 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                                                 handleChoiceChange(index, text)
                                                             }
                                                             onFocus={() => scrollToFocusedField(`${field.key}-${index}`)}
+                                                            multiline
+                                                            blurOnSubmit={false}
+                                                            returnKeyType="default"
+                                                            textAlignVertical="top"
                                                         />
                                                         {formData.choices.length > 1 && (
                                                             <TouchableOpacity
@@ -715,6 +740,10 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         fontSize: 16,
         color: "#fff",
+    },
+    textInputMultiline: {
+        minHeight: 56,
+        paddingTop: 14,
     },
     checkboxRow: {
         flexDirection: "row",
