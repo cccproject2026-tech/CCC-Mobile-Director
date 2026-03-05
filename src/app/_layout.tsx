@@ -1,4 +1,5 @@
 import "@/services/api/interceptors";
+import { AddFieldSheetProvider } from "@/contexts/AddFieldSheetContext";
 import { useAuthStore } from "@/stores/auth.store";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -43,11 +44,13 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <KeyboardProvider>
-          <BottomSheetModalProvider>
-            <RootNav />
-          </BottomSheetModalProvider>
-        </KeyboardProvider>
+        <BottomSheetModalProvider>
+          <KeyboardProvider>
+            <AddFieldSheetProvider>
+              <RootNav />
+            </AddFieldSheetProvider>
+          </KeyboardProvider>
+        </BottomSheetModalProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

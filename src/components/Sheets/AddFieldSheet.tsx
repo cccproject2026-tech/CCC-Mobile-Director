@@ -3,19 +3,20 @@ import { Ionicons } from "@expo/vector-icons";
 import {
     BottomSheetBackdrop,
     BottomSheetModal,
-    BottomSheetView,
+    BottomSheetScrollView,
+    BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 import React, {
     forwardRef,
     useCallback,
     useEffect,
+    useMemo,
     useRef,
     useState,
 } from "react";
 import {
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -32,7 +33,8 @@ export type FieldType =
     | "assessment"
     | "checkbox_item"
     | "text_display"
-    | "button";
+    | "button"
+    | "digital_signature";
 
 export interface AddFieldSheetRef {
     present: () => void;
@@ -51,11 +53,11 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
     ({ onInsert, onClose, showHeading = false, showButton = false }, ref) => {
         const { bottom } = useSafeAreaInsets();
         const [fieldType, setFieldType] = useState<FieldType | null>(null);
+        const snapPoints = useMemo(() => ["90%"], []);
         const [formData, setFormData] = useState<any>({});
         const bottomSheetRef = useRef<BottomSheetModal>(null);
+        const openingWithExistingDataRef = useRef(false);
         const [showAssessmentModal, setShowAssessmentModal] = useState(false);
-
-        console.log("AddFieldSheet component rendered, fieldType:", fieldType);
 
         const getConfig = () => {
             switch (fieldType) {
@@ -101,13 +103,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
 
                     return {
                         title: fieldType === "text" ? "Add Text Field" : "Add Text Area",
-                        // Adjusted snapPoints to accommodate the extra "Name" field
-                        snapPoint:
-                            showHeading && showButton
-                                ? "75%"
-                                : showHeading || showButton
-                                    ? "65%"
-                                    : "55%",
+                        snapPoint: "90%",
                         fields,
                     };
 
@@ -116,7 +112,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                     return {
                         title: `Add ${fieldType === "checkbox" ? "Check Box" : "Radio Button"
                             }`,
-                        snapPoint: "70%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -135,7 +131,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "section":
                     return {
                         title: "Add Section",
-                        snapPoint: "55%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -160,7 +156,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "upload":
                     return {
                         title: "Add Upload Button",
-                        snapPoint: "45%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "buttonName",
@@ -202,7 +198,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "assessment":
                     return {
                         title: "Add Assessment",
-                        snapPoint: "60%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "importAssessment",
@@ -226,7 +222,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "checkbox_item":
                     return {
                         title: "Add Check Box",
-                        snapPoint: "55%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -251,7 +247,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "text_display":
                     return {
                         title: "Add Text Display",
-                        snapPoint: "45%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -264,7 +260,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 case "button":
                     return {
                         title: "Add Action Button",
-                        snapPoint: "50%",
+                        snapPoint: "90%",
                         fields: [
                             {
                                 key: "name",
@@ -280,6 +276,41 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                             },
                         ],
                     };
+                case "digital_signature":
+                    return {
+                        title: "Add Digital Signature",
+                        snapPoint: "90%",
+                        fields: [
+                            {
+                                key: "fieldName",
+                                label: "Field Name",
+                                placeholder: "Enter the label for this signature",
+                                type: "input",
+                            },
+                            {
+                                key: "placeholderText",
+                                label: "Placeholder Text",
+                                placeholder: "Sign here using your finger",
+                                type: "input",
+                            },
+                            {
+                                key: "required",
+                                label: "Required",
+                                type: "checkbox",
+                            },
+                            {
+                                key: "clearButtonLabel",
+                                label: "Clear Button Label",
+                                placeholder: "Clear",
+                                type: "input",
+                            },
+                            {
+                                key: "showOnInfoCard",
+                                label: "Show on Info Card",
+                                type: "checkbox",
+                            },
+                        ],
+                    };
                 default:
                     return null;
             }
@@ -288,6 +319,10 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
         const config = getConfig();
 
         useEffect(() => {
+            if (openingWithExistingDataRef.current) {
+                openingWithExistingDataRef.current = false;
+                return;
+            }
             if (fieldType === "checkbox" || fieldType === "radio") {
                 setFormData({ choices: ["", ""] });
             } else {
@@ -351,6 +386,8 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 isValid = !!formData.name?.trim();
             } else if (fieldType === "button") {
                 isValid = !!formData.name?.trim();
+            } else if (fieldType === "digital_signature") {
+                isValid = !!formData.fieldName?.trim();
             }
 
             if (isValid) {
@@ -374,6 +411,18 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
             setFieldType(null);
         };
 
+        const normalizeExistingData = useCallback((type: FieldType, data: any): any => {
+            if (!data || typeof data !== "object") return data;
+            const normalized = { ...data };
+            if (type === "upload" && "buttonLabel" in data && !("buttonName" in data)) {
+                normalized.buttonName = data.buttonLabel;
+            }
+            if (type === "section" && "showDuplicateButton" in data && !("addDuplicateButton" in data)) {
+                normalized.addDuplicateButton = !!data.showDuplicateButton;
+            }
+            return normalized;
+        }, []);
+
         const open = (type: FieldType, existingData?: any) => {
             console.log(
                 "AddFieldSheet open method called with type:",
@@ -381,14 +430,17 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 "existingData:",
                 existingData
             );
-            setFieldType(type);
             if (existingData) {
-                // Pre-fill form data for editing
-                setFormData(existingData);
+                openingWithExistingDataRef.current = true;
+                setFormData(normalizeExistingData(type, existingData));
             }
+            setFieldType(type);
             setTimeout(() => {
                 try {
                     bottomSheetRef.current?.present();
+                    setTimeout(() => {
+                        (bottomSheetRef.current as any)?.snapToIndex?.(0);
+                    }, 50);
                 } catch (error) {
                     console.error("Error in bottomSheetRef.current.present():", error);
                 }
@@ -409,7 +461,9 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
             <>
                 <BottomSheetModal
                     ref={bottomSheetRef}
-                    snapPoints={[config.snapPoint]}
+                    snapPoints={snapPoints}
+                    enableDynamicSizing={false}
+                    topInset={0}
                     enablePanDownToClose
                     backdropComponent={renderBackdrop}
                     backgroundStyle={styles.bottomSheetBackground}
@@ -423,11 +477,14 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                     keyboardBehavior="interactive"
                     keyboardBlurBehavior="restore"
                 >
-                    <BottomSheetView
-                        style={[
+                    <BottomSheetScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={[
                             styles.contentContainer,
-                            { paddingBottom: Math.max(bottom, 20) + 16 },
+                            { paddingBottom: Math.max(bottom, 20), flexGrow: 1 },
                         ]}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
                     >
                         {/* Header */}
                         <View style={styles.headerSection}>
@@ -445,14 +502,19 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                     return (
                                         <View key={field.key} style={styles.fieldSection}>
                                             <Text style={styles.fieldLabel}>{field.label}</Text>
-                                            <TextInput
-                                                style={styles.textInput}
+                                            <BottomSheetTextInput
+                                                style={[styles.textInput, styles.textInputMultiline]}
                                                 placeholder={field.placeholder}
                                                 placeholderTextColor="rgba(255, 255, 255, 0.6)"
                                                 value={formData[field.key] || ""}
                                                 onChangeText={(text) =>
                                                     setFormData({ ...formData, [field.key]: text })
                                                 }
+                                                multiline
+                                                scrollEnabled
+                                                blurOnSubmit={false}
+                                                returnKeyType="default"
+                                                textAlignVertical="top"
                                             />
                                         </View>
                                     );
@@ -538,14 +600,19 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                             {(formData.choices || []).map(
                                                 (choice: string, index: number) => (
                                                     <View key={index} style={styles.choiceRow}>
-                                                        <TextInput
-                                                            style={[styles.textInput, styles.choiceInput]}
+                                                        <BottomSheetTextInput
+                                                            style={[styles.textInput, styles.choiceInput, styles.textInputMultiline]}
                                                             placeholder={`Enter Choice ${index + 1}`}
                                                             placeholderTextColor="rgba(255,255,255,0.5)"
                                                             value={choice}
                                                             onChangeText={(text) =>
                                                                 handleChoiceChange(index, text)
                                                             }
+                                                            multiline
+                                                            scrollEnabled
+                                                            blurOnSubmit={false}
+                                                            returnKeyType="default"
+                                                            textAlignVertical="top"
                                                         />
                                                         {formData.choices.length > 1 && (
                                                             <TouchableOpacity
@@ -596,7 +663,7 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                 <Text style={styles.insertButtonText}>Insert</Text>
                             </TouchableOpacity>
                         </View>
-                    </BottomSheetView>
+                    </BottomSheetScrollView>
                 </BottomSheetModal>
 
                 <AssessmentSelectionModal
@@ -634,8 +701,11 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.4)",
         width: 40,
     },
-    contentContainer: {
+    scrollView: {
         flex: 1,
+    },
+    contentContainer: {
+        flexGrow: 1,
         paddingHorizontal: 20,
     },
     headerSection: {
@@ -672,6 +742,11 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         fontSize: 16,
         color: "#fff",
+    },
+    textInputMultiline: {
+        minHeight: 56,
+        maxHeight: 200,
+        paddingTop: 14,
     },
     checkboxRow: {
         flexDirection: "row",

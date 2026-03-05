@@ -4,6 +4,8 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
+    KeyboardAvoidingView,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
@@ -91,82 +93,95 @@ export default function NewPersonalNoteScreen() {
     };
 
     return (
-        <LinearGradient
-            colors={['#1A3A6B', '#2B5A8E', '#1A3A6B']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={styles.container}
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
         >
-            <SafeAreaView style={styles.safeArea} edges={['top']}>
-                <Stack.Screen options={{ headerShown: false }} />
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ flexGrow: 1 }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                <LinearGradient
+                    colors={['#1A3A6B', '#2B5A8E', '#1A3A6B']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.container}
+                >
+                    <SafeAreaView style={styles.safeArea} edges={['top']}>
+                        <Stack.Screen options={{ headerShown: false }} />
 
-                <View style={styles.header}>
-                    <View style={styles.headerTop}>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => router.back()}
-                            style={styles.backButton}
-                        >
-                            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-                        </TouchableOpacity>
-                        <View style={styles.headerCenter}>
-                            <View style={styles.profileBadge}>
-                                <Text style={styles.profileName}>
-                                    {isEdit ? 'Edit Note' : 'New Note'}
-                                </Text>
+                        <View style={styles.header}>
+                            <View style={styles.headerTop}>
+                                <TouchableOpacity
+                                    activeOpacity={0.7}
+                                    onPress={() => router.back()}
+                                    style={styles.backButton}
+                                >
+                                    <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+                                </TouchableOpacity>
+                                <View style={styles.headerCenter}>
+                                    <View style={styles.profileBadge}>
+                                        <Text style={styles.profileName}>
+                                            {isEdit ? 'Edit Note' : 'New Note'}
+                                        </Text>
+                                    </View>
+                                </View>
+                                <View style={styles.headerRight} />
                             </View>
+                            <View style={styles.titleSection}>
+                                <Text style={styles.title}>Personal Notes</Text>
+                            </View>
+                            {userName ? <Text style={styles.subtitle}>{userName}</Text> : null}
                         </View>
-                        <View style={styles.headerRight} />
-                    </View>
-                    <View style={styles.titleSection}>
-                        <Text style={styles.title}>Personal Notes</Text>
-                    </View>
-                    {userName ? <Text style={styles.subtitle}>{userName}</Text> : null}
-                </View>
 
-                <View style={styles.tabContainer}>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={[styles.tabButton, styles.tabButtonActive]}
-                    >
-                        <Text style={[styles.tabText, styles.tabTextActive]}>New</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={[styles.tabButton, styles.tabButtonInactive]}
-                        onPress={() => router.back()}
-                    >
-                        <Text style={[styles.tabText, styles.tabTextInactive]}>Previous</Text>
-                    </TouchableOpacity>
-                </View>
+                        <View style={styles.tabContainer}>
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                style={[styles.tabButton, styles.tabButtonActive]}
+                            >
+                                <Text style={[styles.tabText, styles.tabTextActive]}>New</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                activeOpacity={0.8}
+                                style={[styles.tabButton, styles.tabButtonInactive]}
+                                onPress={() => router.back()}
+                            >
+                                <Text style={[styles.tabText, styles.tabTextInactive]}>Previous</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                <View style={styles.contentContainer}>
-                    <TextInput
-                        style={styles.textInput}
-                        placeholder="Write your note here..."
-                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                        multiline
-                        textAlignVertical="top"
-                        value={noteContent}
-                        onChangeText={setNoteContent}
-                        editable={!saving}
-                    />
-                </View>
+                        <View style={styles.contentContainer}>
+                            <TextInput
+                                style={styles.textInput}
+                                placeholder="Write your note here..."
+                                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                                multiline
+                                textAlignVertical="top"
+                                value={noteContent}
+                                onChangeText={setNoteContent}
+                                editable={!saving}
+                            />
+                        </View>
 
-                <View style={styles.bottomContainer}>
-                    <TouchableOpacity
-                        activeOpacity={0.85}
-                        style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-                        onPress={handleSave}
-                        disabled={saving}
-                    >
-                        <Text style={styles.saveButtonText}>
-                            {saving ? 'Saving...' : 'Save'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </SafeAreaView>
-        </LinearGradient>
+                        <View style={styles.bottomContainer}>
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+                                onPress={handleSave}
+                                disabled={saving}
+                            >
+                                <Text style={styles.saveButtonText}>
+                                    {saving ? 'Saving...' : 'Save'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </SafeAreaView>
+                </LinearGradient>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
 

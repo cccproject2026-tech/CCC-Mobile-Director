@@ -1,6 +1,6 @@
 // app/(director)/(tabs)/revitalization-roadmaps/(creation)/roadmap-form.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,8 @@ import {
     ActivityIndicator,
     StyleSheet,
     Dimensions,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -24,19 +26,19 @@ import {
     useUpdateRoadmap,
 } from '@/hooks/roadmap/useRoadmaps';
 import { RoadmapExtra, CreateNestedRoadmapRequest } from '@/types/roadmap.types';
+import { AddFieldSheetContext } from '@/contexts/AddFieldSheetContext';
 import CustomMenu, { MenuItem } from '@/components/Menu/CustomMenu';
-import { AssessmentRenderer, ButtonRenderer, CheckboxRenderer, DatePickerRenderer, SectionRenderer, TextAreaRenderer, TextDisplayRenderer, TextFieldRenderer, UploadButtonRenderer } from '@/components/Forms/field-renders';
+import { AssessmentRenderer, ButtonRenderer, CheckboxRenderer, DatePickerRenderer, DigitalSignatureRenderer, SectionRenderer, TextAreaRenderer, TextDisplayRenderer, TextFieldRenderer, UploadButtonRenderer } from '@/components/Forms/field-renders';
 import RoadMapFormHeader from '@/components/Header/RoadMapFormHeader';
-import AddFieldSheet from '@/components/Sheets/AddFieldSheet';
 import TopBar from '@/components/Header/TopBar';
 
-export type FieldType = 'text' | 'textarea' | 'upload' | 'datepicker' | 'assessment' | 'section' | 'checkbox_item' | 'text_display' | 'button';
+export type FieldType = 'text' | 'textarea' | 'upload' | 'datepicker' | 'assessment' | 'section' | 'checkbox_item' | 'text_display' | 'button' | 'digital_signature';
 
 export default function RoadmapFormScreen() {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams();
-    const addFieldSheetRef = useRef<any>(null);
+    const addFieldSheet = useContext(AddFieldSheetContext);
 
     // ✅ Parse params
     const isEditMode = params.isEditMode === 'true';
@@ -174,6 +176,17 @@ export default function RoadmapFormScreen() {
                         type: 'button',
                         name: extra.name || 'Action Button',
                         linkUrl: extra.linkUrl || '',
+                    });
+                    break;
+                case 'SIGNATURE':
+                    fields.push({
+                        id: fieldId,
+                        type: 'digital_signature',
+                        fieldName: extra.name,
+                        placeholderText: extra.placeHolder || 'Sign here using your finger',
+                        clearButtonLabel: extra.buttonName || 'Clear',
+                        required: extra.required ?? false,
+                        showOnInfoCard: extra.showOnCard ?? false,
                     });
                     break;
                 case 'SECTION':
@@ -365,6 +378,15 @@ export default function RoadmapFormScreen() {
                             name: field.name || field.label || 'Action Button',
                             linkUrl: field.linkUrl || '',
                         };
+                    case 'digital_signature':
+                        return {
+                            type: 'SIGNATURE' as const,
+                            name: field.fieldName || 'Digital Signature',
+                            placeHolder: field.placeholderText || 'Sign here using your finger',
+                            buttonName: field.clearButtonLabel || 'Clear',
+                            required: !!field.required,
+                            showOnCard: !!field.showOnInfoCard,
+                        };
                     case 'section':
                         const sectionCheckboxes = [
                             field.showDuplicateButton && {
@@ -480,24 +502,21 @@ export default function RoadmapFormScreen() {
             .filter(Boolean) as RoadmapExtra[];
     };
 
-    // ✅ Load form data when editing
+    // ✅ Load form data when editing (extras live on nested roadmap: roadmap.roadmaps[n].extras)
     useEffect(() => {
         if (isEditMode && parentRoadmap) {
-            let roadmapToEdit = null;
+            const selectedRoadmap =
+                roadmapType === 'phase' && nestedRoadmapId
+                    ? parentRoadmap.roadmaps?.find((r) => r._id === nestedRoadmapId)
+                    : parentRoadmap.roadmaps?.[0];
 
-            if (roadmapType === 'phase' && nestedRoadmapId) {
-                roadmapToEdit = parentRoadmap.roadmaps?.find((r) => r._id === nestedRoadmapId);
-            } else if (roadmapType === 'single') {
-                roadmapToEdit = parentRoadmap.roadmaps?.[0];
-            }
+            const extras = selectedRoadmap?.extras ?? [];
 
-            if (roadmapToEdit) {
+            if (selectedRoadmap) {
                 setFormData({
-                    churchVerbiage: roadmapToEdit.roadMapDetails || '',
-                    descriptionVerbiage: roadmapToEdit.description || '',
-                    customFields: roadmapToEdit.extras
-                        ? transformExtrasToFields(roadmapToEdit.extras)
-                        : [],
+                    churchVerbiage: selectedRoadmap.roadMapDetails || '',
+                    descriptionVerbiage: selectedRoadmap.description || '',
+                    customFields: transformExtrasToFields(extras),
                 });
             }
         }
@@ -553,12 +572,18 @@ export default function RoadmapFormScreen() {
             icon: 'text-outline',
             onPress: () => handleFieldTypeSelect('text_display'),
         },
-        // {
-        //     id: 'button',
-        //     label: 'Action Button',
-        //     icon: 'radio-button-on-outline',
-        //     onPress: () => handleFieldTypeSelect('button'),
-        // },
+        {
+            id: 'button',
+            label: 'Action Button',
+            icon: 'radio-button-on-outline',
+            onPress: () => handleFieldTypeSelect('button'),
+        },
+        {
+            id: 'digital_signature',
+            label: 'Digital Signature',
+            icon: 'pencil-outline',
+            onPress: () => handleFieldTypeSelect('digital_signature'),
+        },
     ];
 
     // ✅ Field handlers
@@ -588,7 +613,7 @@ export default function RoadmapFormScreen() {
     const handleFieldTypeSelect = (fieldType: FieldType) => {
         setMenuVisible(false);
         setTimeout(() => {
-            addFieldSheetRef.current?.open(fieldType);
+            addFieldSheet?.open(fieldType);
         }, 300);
     };
 
@@ -596,9 +621,18 @@ export default function RoadmapFormScreen() {
         const field = formData.customFields.find((f) => f.id === fieldId);
         if (field) {
             setEditingFieldId(fieldId);
-            addFieldSheetRef.current?.open(field.type, field);
+            addFieldSheet?.open(field.type, field);
         }
     };
+
+    useEffect(() => {
+        if (!addFieldSheet) return;
+        addFieldSheet.registerHandlers({
+            onInsert: handleFieldInsert,
+            onClose: () => setEditingFieldId(null),
+        });
+        return () => addFieldSheet.registerHandlers(null);
+    }, [addFieldSheet, handleFieldInsert]);
 
     const handleDeleteField = (fieldId: string) => {
         const hasNestedFields = formData.customFields.some((f) => f.parentSectionId === fieldId);
@@ -897,6 +931,15 @@ export default function RoadmapFormScreen() {
                         onDelete={handleDeleteField}
                     />
                 );
+            case 'digital_signature':
+                return (
+                    <DigitalSignatureRenderer
+                        key={field.id}
+                        field={field}
+                        onEdit={handleEditField}
+                        onDelete={handleDeleteField}
+                    />
+                );
             case 'section':
                 const nestedFields = formData.customFields.filter(
                     (f) => f.parentSectionId === field.id
@@ -934,23 +977,29 @@ export default function RoadmapFormScreen() {
     };
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
-            <TopBar showUserName />
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={0}
+        >
+            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+                <TopBar showUserName />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#fff" />
-                    <Text style={styles.headerTitle}>{
-                        isEditMode ? 'Edit Roadmap' : 'Create Roadmap'}</Text>
-                </TouchableOpacity>
-            </View>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#fff" />
+                        <Text style={styles.headerTitle}>{
+                            isEditMode ? 'Edit Roadmap' : 'Create Roadmap'}</Text>
+                    </TouchableOpacity>
+                </View>
 
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={[styles.content, { paddingBottom: bottom + 40 }]}
-                showsVerticalScrollIndicator={false}
-            >
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={[styles.content, { paddingBottom: bottom + 40, flexGrow: 1 }]}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                 <RoadMapFormHeader
                     name={roadmapData.name}
                     subheading={roadmapData.subheading}
@@ -1027,33 +1076,24 @@ export default function RoadmapFormScreen() {
                         )}
                     </TouchableOpacity>
                 </View>
-            </ScrollView>
+                </ScrollView>
 
-            {/* Fixed Action Buttons */}
+                {/* Fixed Action Buttons */}
 
-            {/* ✅ Custom Menu for Field Types */}
-            <CustomMenu
-                visible={menuVisible}
-                items={fieldTypeMenuItems}
-                onClose={() => setMenuVisible(false)}
-                position={menuPosition}
-                backgroundColor="#fff"
-                borderRadius={12}
-                iconSize={22}
-                itemPadding={{ horizontal: 16, vertical: 14 }}
-                itemTextStyle={{ fontSize: 15, fontWeight: '600', color: '#1A4882' }}
-            />
-
-            {/* ✅ AddFieldSheet for configuring fields */}
-            <AddFieldSheet
-                ref={addFieldSheetRef}
-                onInsert={handleFieldInsert}
-                onClose={() => {
-                    setEditingFieldId(null);
-                    setCurrentSectionId(null);
-                }}
-            />
-        </LinearGradient>
+                {/* ✅ Custom Menu for Field Types */}
+                <CustomMenu
+                    visible={menuVisible}
+                    items={fieldTypeMenuItems}
+                    onClose={() => setMenuVisible(false)}
+                    position={menuPosition}
+                    backgroundColor="#fff"
+                    borderRadius={12}
+                    iconSize={22}
+                    itemPadding={{ horizontal: 16, vertical: 14 }}
+                    itemTextStyle={{ fontSize: 15, fontWeight: '600', color: '#1A4882' }}
+                />
+            </LinearGradient>
+        </KeyboardAvoidingView>
     );
 }
 

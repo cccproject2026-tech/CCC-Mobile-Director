@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
   Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
+  Text,
   TextInput,
   View,
-  ScrollView,
-  Text,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
@@ -176,37 +177,46 @@ export default function SearchScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <TopBar showBackButton={true} showDrawer={false} showSearch={false} />
-      <View style={styles.container}>
-        <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={Platform.OS === 'android' ? 18 : 20} color="rgba(255,255,255,0.6)" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search CCC"
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              value={query}
-              onChangeText={setQuery}
-              returnKeyType="search"
-            />
-            {query.length > 0 && (
-              <Pressable onPress={clear} hitSlop={8} style={styles.clearButton}>
-                <Ionicons name="close-circle" size={20} color="rgba(255,255,255,0.9)" />
-              </Pressable>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.emptyArea}>
-          {loading && (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator size="small" color="#fff" />
-              <Text style={styles.loadingText}>Searching...</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
+      <SafeAreaView style={styles.safe}>
+        <TopBar showBackButton={true} showDrawer={false} showSearch={false} />
+        <View style={styles.container}>
+          <View style={styles.searchRow}>
+            <View style={styles.searchBox}>
+              <Ionicons name="search" size={Platform.OS === 'android' ? 18 : 20} color="rgba(255,255,255,0.6)" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search CCC"
+                placeholderTextColor="rgba(255,255,255,0.7)"
+                value={query}
+                onChangeText={setQuery}
+                returnKeyType="search"
+              />
+              {query.length > 0 && (
+                <Pressable onPress={clear} hitSlop={8} style={styles.clearButton}>
+                  <Ionicons name="close-circle" size={20} color="rgba(255,255,255,0.9)" />
+                </Pressable>
+              )}
             </View>
-          )}
+          </View>
 
-          <ScrollView contentContainerStyle={styles.resultsContainer}>
+          <View style={styles.emptyArea}>
+            {loading && (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.loadingText}>Searching...</Text>
+              </View>
+            )}
+
+            <ScrollView
+              contentContainerStyle={[styles.resultsContainer, { flexGrow: 1 }]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
             {!loading && roadmaps.length === 0 && interests.length === 0 && query.trim().length >= 2 ? (
               <View style={styles.noResults}>
                 <Text style={styles.noResultsText}>No results found. Try a different keyword.</Text>
@@ -306,10 +316,11 @@ export default function SearchScreen() {
                 })}
               </View>
             )}
-          </ScrollView>
+            </ScrollView>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
