@@ -12,6 +12,7 @@ import { useWeeklyAvailability, useSetAvailability } from "@/hooks/useMentorsAva
 import { useAuthStore } from "@/stores/auth.store";
 import {
     Image,
+    Modal,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -20,6 +21,22 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { icons } from "@/constants";
+import { Colors } from "@/constants/Colors";
+ const timeOptions = [
+    "08:00 AM",
+    "09:00 AM",
+    "10:00 AM",
+    "11:00 AM",
+    "12:00 PM",
+    "01:00 PM",
+    "02:00 PM",
+    "03:00 PM",
+    "04:00 PM",
+    "05:00 PM",
+    "06:00 PM",
+    "07:00 PM",
+    "08:00 PM",
+  ];
 
 interface TimeSlot {
     id: string;
@@ -52,6 +69,14 @@ const AvailabilityScreen = () => {
     const [activeTab, setActiveTab] = React.useState<
         "appointments" | "availability"
     >("availability");
+
+    // Time picker states
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
+    day: keyof WeeklyAvailability;
+    slotId: string;
+    field: "start" | "end";
+  } | null>(null);
 
     // Reset active tab when screen comes into focus
     useFocusEffect(
@@ -152,6 +177,12 @@ const AvailabilityScreen = () => {
     };
 
     const addTimeSlot = (day: keyof WeeklyAvailability) => {
+        const timeSlots = [
+      "09:00 am - 10:00 am",
+      "11:00 am - 12:00 pm",
+      "01:00 pm - 02:00 pm",
+      "03:00 pm - 04:00 pm",
+    ]
         const newSlot: TimeSlot = {
             id: Date.now().toString(),
             start: "10:00 AM",
@@ -179,16 +210,7 @@ const AvailabilityScreen = () => {
 
     const [dateSearchQuery, setDateSearchQuery] = useState("");
 
-    const handleDateSearch = (value: string) => {
-        setDateSearchQuery(value);
-        // If it's a valid dd-mm-yyyy format, update selectedDate
-        const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-        if (match) {
-            const [_, day, month, year] = match;
-            const newDate = `${year}-${month}-${day}`;
-            setSelectedDate(newDate);
-        }
-    };
+    
 
     const parseDuration = (durationStr: string): number => {
         const num = parseInt(durationStr);
@@ -274,16 +296,67 @@ const AvailabilityScreen = () => {
         { key: "sunday" as keyof WeeklyAvailability, label: "Sun" },
     ];
 
+    //Time Picker functions
+     const openTimePicker = (
+    day: keyof WeeklyAvailability,
+    slotId: string,
+    field: "start" | "end",
+  ) => {
+    setSelectedTimeSlot({ day, slotId, field });
+    setShowTimePicker(true);
+  };
+
+const updateTimeSlot = (
+    day: keyof WeeklyAvailability,
+    slotId: string,
+    field: "start" | "end",
+    value: string,
+  ) => {
+    setWeeklyAvailability((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        slots: prev[day].slots.map((slot) =>
+          slot.id === slotId ? { ...slot, [field]: value } : slot,
+        ),
+      },
+    }));
+  };
+
+     const selectTime = (time: string) => {
+    if (selectedTimeSlot) {
+      updateTimeSlot(
+        selectedTimeSlot.day,
+        selectedTimeSlot.slotId,
+        selectedTimeSlot.field,
+        time,
+      );
+    }
+    setShowTimePicker(false);
+    setSelectedTimeSlot(null);
+  };
+  const handleDateSearch = (value: string) => {
+        setDateSearchQuery(value);
+       
+        // If it's a valid dd-mm-yyyy format, update selectedDate
+        const match = value.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (match) {
+            const [_, day, month, year] = match;
+            const newDate = `${year}-${month}-${day}`;
+            setSelectedDate(newDate);
+        }
+    };
+
     return (
         <LinearGradient
             colors={['#1E3A6F', '#176192']}
             style={{ flex: 1 }}
         >
             <View style={{ flex: 1 }}>
-                {/* <Header
+                <Header
                     title="Schedule"
                     showBackButton={true}
-                /> */}
+                />
 
                 <TopBar role="director" />
 
@@ -365,7 +438,7 @@ const AvailabilityScreen = () => {
                         </View>
 
                         {/* Available Hours */}
-                        <View style={styles.sectionContainer}>
+                        {/* <View style={styles.sectionContainer}>
                             <View style={styles.sectionHeader}>
                                 <Text style={styles.sectionTitle}>Available Hours</Text>
                                 <Ionicons name="refresh" size={20} color="#FFFFFF" />
@@ -377,7 +450,95 @@ const AvailabilityScreen = () => {
                                 onAddSlot={addTimeSlot}
                                 onRemoveSlot={removeTimeSlot}
                             />
+                        </View> */}
+                         {/* Available Hours */}
+                <View style={styles.sectionContainer}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Available Hours</Text>
+                  </View>
+
+                  <View style={styles.hoursContainer}>
+                    {dayNames.map(({ key, label }) => (
+                      <View key={key} style={styles.dayContainer}>
+                        <View style={styles.dayHeader}>
+                          <Pressable
+                            style={styles.checkbox}
+                            onPress={() => toggleDayEnabled(key)}
+                          >
+                            {weeklyAvailability[key].enabled && (
+                              <Ionicons
+                                name="checkmark"
+                                size={16}
+                                color="#1E3A6F"
+                              />
+                            )}
+                          </Pressable>
+                          <Text style={styles.dayLabel}>{label}</Text>
                         </View>
+
+                        {weeklyAvailability[key].enabled && (
+                          <View style={styles.timeSlotsContainer}>
+                            {weeklyAvailability[key].slots.map((slot) => (
+                              <View key={slot.id} style={styles.timeSlotRow}>
+                                <View style={styles.timeSlotInputs}>
+                                  <Pressable
+                                    style={styles.timeInput}
+                                    onPress={() =>
+                                      openTimePicker(key, slot.id, "start")
+                                    }
+                                  >
+                                    <Text style={styles.timeInputText}>
+                                      {slot.start}
+                                    </Text>
+                                    <Ionicons
+                                      name="chevron-down"
+                                      size={16}
+                                      color="#FFFFFF"
+                                    />
+                                  </Pressable>
+                                  <Text style={styles.timeSeparator}>to</Text>
+                                  <Pressable
+                                    style={styles.timeInput}
+                                    onPress={() =>
+                                      openTimePicker(key, slot.id, "end")
+                                    }
+                                  >
+                                    <Text style={styles.timeInputText}>
+                                      {slot.end}
+                                    </Text>
+                                    <Ionicons
+                                      name="chevron-down"
+                                      size={16}
+                                      color="#FFFFFF"
+                                    />
+                                  </Pressable>
+                                </View>
+                                {weeklyAvailability[key].slots.length > 1 && (
+                                  <Pressable
+                                    style={styles.removeSlotButton}
+                                    onPress={() => removeTimeSlot(key, slot.id)}
+                                  >
+                                    <Ionicons
+                                      name="close"
+                                      size={16}
+                                      color="#FF6B6B"
+                                    />
+                                  </Pressable>
+                                )}
+                              </View>
+                            ))}
+                            <Pressable
+                              style={styles.addSlotButton}
+                              onPress={() => addTimeSlot(key)}
+                            >
+                              <Text style={styles.addSlotText}>+ Add</Text>
+                            </Pressable>
+                          </View>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                </View>
 
                         {/* Meeting Settings */}
                         <View style={styles.sectionContainer}>
@@ -481,6 +642,43 @@ const AvailabilityScreen = () => {
                     </View>
                 </ScrollView>
             </View>
+             {/* Time Picker Modal */}
+      <Modal
+        visible={showTimePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowTimePicker(false);
+          setSelectedTimeSlot(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Times</Text>
+              <Pressable
+                onPress={() => {
+                  setShowTimePicker(false);
+                  setSelectedTimeSlot(null);
+                }}
+              >
+                <Ionicons name="close" size={24} color="#FFFFFF" />
+              </Pressable>
+            </View>
+            <ScrollView style={styles.timePickerList}>
+              {timeOptions.map((time) => (
+                <Pressable
+                  key={time}
+                  style={styles.timePickerOption}
+                  onPress={() => selectTime(time)}
+                >
+                  <Text style={styles.timePickerOptionText}>{time}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
             <SimpleSuccessModal
                 visible={showSuccessModal}
@@ -601,6 +799,117 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "700",
     },
+    modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: 
+    Colors.darkBlueGradientOne,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "50%",
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  timePickerList: {
+    maxHeight: 300,
+  },
+    timePickerOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+  },
+  timePickerOptionText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+    hoursContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+  },
+  dayContainer: {
+    marginBottom: 16,
+  },
+   dayHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  dayLabel: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: "500",
+  },
+  timeSlotsContainer: {
+    marginLeft: 32,
+  },
+  timeSlotRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  timeSlotInputs: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  timeInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+  },
+  timeInputText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginRight: 4,
+  },
+  timeSeparator: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginHorizontal: 8,
+  },
+  removeSlotButton: {
+    padding: 4,
+  },
+  addSlotButton: {
+    marginTop: 8,
+  },
+  addSlotText: {
+    color: "#FFC107",
+    fontSize: 12,
+    fontWeight: "500",
+  },
 });
 
 export default AvailabilityScreen;

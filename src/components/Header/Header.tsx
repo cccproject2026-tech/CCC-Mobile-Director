@@ -34,7 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
             {showNewMeeting && (
                 <Pressable onPress={onNewMeetingPress} style={styles.newMeetingButton}>
                     <Ionicons name="add" size={20} color="#FFFFFF" style={styles.newMeetingIcon} />
-                    <Text style={styles.newMeetingText}>New Meeting</Text>
+                    <Text style={styles.newMeetingText}>New Meetings</Text>
                 </Pressable>
             )}
         </View>
