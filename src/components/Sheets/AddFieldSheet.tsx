@@ -33,7 +33,8 @@ export type FieldType =
     | "assessment"
     | "checkbox_item"
     | "text_display"
-    | "button";
+    | "button"
+    | "digital_signature";
 
 export interface AddFieldSheetRef {
     present: () => void;
@@ -269,6 +270,41 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                             },
                         ],
                     };
+                case "digital_signature":
+                    return {
+                        title: "Add Digital Signature",
+                        snapPoint: "90%",
+                        fields: [
+                            {
+                                key: "fieldName",
+                                label: "Field Name",
+                                placeholder: "Enter the label for this signature",
+                                type: "input",
+                            },
+                            {
+                                key: "placeholderText",
+                                label: "Placeholder Text",
+                                placeholder: "Sign here using your finger",
+                                type: "input",
+                            },
+                            {
+                                key: "required",
+                                label: "Required",
+                                type: "checkbox",
+                            },
+                            {
+                                key: "clearButtonLabel",
+                                label: "Clear Button Label",
+                                placeholder: "Clear",
+                                type: "input",
+                            },
+                            {
+                                key: "showOnInfoCard",
+                                label: "Show on Info Card",
+                                type: "checkbox",
+                            },
+                        ],
+                    };
                 default:
                     return null;
             }
@@ -344,6 +380,8 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                 isValid = !!formData.name?.trim();
             } else if (fieldType === "button") {
                 isValid = !!formData.name?.trim();
+            } else if (fieldType === "digital_signature") {
+                isValid = !!formData.fieldName?.trim();
             }
 
             if (isValid) {

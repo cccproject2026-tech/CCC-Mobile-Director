@@ -28,11 +28,11 @@ import {
 import { RoadmapExtra, CreateNestedRoadmapRequest } from '@/types/roadmap.types';
 import { AddFieldSheetContext } from '@/contexts/AddFieldSheetContext';
 import CustomMenu, { MenuItem } from '@/components/Menu/CustomMenu';
-import { AssessmentRenderer, ButtonRenderer, CheckboxRenderer, DatePickerRenderer, SectionRenderer, TextAreaRenderer, TextDisplayRenderer, TextFieldRenderer, UploadButtonRenderer } from '@/components/Forms/field-renders';
+import { AssessmentRenderer, ButtonRenderer, CheckboxRenderer, DatePickerRenderer, DigitalSignatureRenderer, SectionRenderer, TextAreaRenderer, TextDisplayRenderer, TextFieldRenderer, UploadButtonRenderer } from '@/components/Forms/field-renders';
 import RoadMapFormHeader from '@/components/Header/RoadMapFormHeader';
 import TopBar from '@/components/Header/TopBar';
 
-export type FieldType = 'text' | 'textarea' | 'upload' | 'datepicker' | 'assessment' | 'section' | 'checkbox_item' | 'text_display' | 'button';
+export type FieldType = 'text' | 'textarea' | 'upload' | 'datepicker' | 'assessment' | 'section' | 'checkbox_item' | 'text_display' | 'button' | 'digital_signature';
 
 export default function RoadmapFormScreen() {
     const router = useRouter();
@@ -177,6 +177,17 @@ export default function RoadmapFormScreen() {
                         name: extra.name,
                     });
                     break;
+                case 'SIGNATURE':
+                    fields.push({
+                        id: fieldId,
+                        type: 'digital_signature',
+                        fieldName: extra.name,
+                        placeholderText: extra.placeHolder || 'Sign here using your finger',
+                        clearButtonLabel: extra.buttonName || 'Clear',
+                        required: extra.required ?? false,
+                        showOnInfoCard: extra.showOnCard ?? false,
+                    });
+                    break;
                 case 'SECTION':
                     const sectionField = {
                         id: fieldId,
@@ -300,6 +311,15 @@ export default function RoadmapFormScreen() {
                             type: 'BUTTON' as const,
                             name: field.name || 'Action Button',
                         };
+                    case 'digital_signature':
+                        return {
+                            type: 'SIGNATURE' as const,
+                            name: field.fieldName || 'Digital Signature',
+                            placeHolder: field.placeholderText || 'Sign here using your finger',
+                            buttonName: field.clearButtonLabel || 'Clear',
+                            required: !!field.required,
+                            showOnCard: !!field.showOnInfoCard,
+                        };
                     case 'section':
                         const sectionCheckboxes = [
                             field.showDuplicateButton && {
@@ -414,24 +434,21 @@ export default function RoadmapFormScreen() {
             .filter(Boolean) as RoadmapExtra[];
     };
 
-    // ✅ Load form data when editing
+    // ✅ Load form data when editing (extras live on nested roadmap: roadmap.roadmaps[n].extras)
     useEffect(() => {
         if (isEditMode && parentRoadmap) {
-            let roadmapToEdit = null;
+            const selectedRoadmap =
+                roadmapType === 'phase' && nestedRoadmapId
+                    ? parentRoadmap.roadmaps?.find((r) => r._id === nestedRoadmapId)
+                    : parentRoadmap.roadmaps?.[0];
 
-            if (roadmapType === 'phase' && nestedRoadmapId) {
-                roadmapToEdit = parentRoadmap.roadmaps?.find((r) => r._id === nestedRoadmapId);
-            } else if (roadmapType === 'single') {
-                roadmapToEdit = parentRoadmap.roadmaps?.[0];
-            }
+            const extras = selectedRoadmap?.extras ?? [];
 
-            if (roadmapToEdit) {
+            if (selectedRoadmap) {
                 setFormData({
-                    churchVerbiage: roadmapToEdit.roadMapDetails || '',
-                    descriptionVerbiage: roadmapToEdit.description || '',
-                    customFields: roadmapToEdit.extras
-                        ? transformExtrasToFields(roadmapToEdit.extras)
-                        : [],
+                    churchVerbiage: selectedRoadmap.roadMapDetails || '',
+                    descriptionVerbiage: selectedRoadmap.description || '',
+                    customFields: transformExtrasToFields(extras),
                 });
             }
         }
@@ -492,6 +509,12 @@ export default function RoadmapFormScreen() {
             label: 'Action Button',
             icon: 'radio-button-on-outline',
             onPress: () => handleFieldTypeSelect('button'),
+        },
+        {
+            id: 'digital_signature',
+            label: 'Digital Signature',
+            icon: 'pencil-outline',
+            onPress: () => handleFieldTypeSelect('digital_signature'),
         },
     ];
 
@@ -840,6 +863,15 @@ export default function RoadmapFormScreen() {
             case 'button':
                 return (
                     <ButtonRenderer
+                        key={field.id}
+                        field={field}
+                        onEdit={handleEditField}
+                        onDelete={handleDeleteField}
+                    />
+                );
+            case 'digital_signature':
+                return (
+                    <DigitalSignatureRenderer
                         key={field.id}
                         field={field}
                         onEdit={handleEditField}
