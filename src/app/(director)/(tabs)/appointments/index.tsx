@@ -1,32 +1,29 @@
 import GradientCalendar from "@/components/Appointments/calendar";
 import SimpleSuccessModal from "@/components/Appointments/SimpleSuccessModal";
-import { Header } from "@/components/Header/Header";
-import AppointmentCard, { MenuItem } from "@/components/Cards/AppointmentCard";
+import {Header} from "@/components/Header/Header";
+import AppointmentCard, {MenuItem} from "@/components/Cards/AppointmentCard";
 import ScheduleMeetingBottomSheet from "@/components/Sheets/ScheduleMeetingBottomSheet";
 import SearchBar from "@/components/Header/SearchBar";
 import TopBar from "@/components/Header/TopBar";
-import { Colors } from "@/constants/Colors";
-import { icons } from "@/constants";
-import { useAuthStore } from "@/stores/auth.store";
+import {Colors} from "@/constants/Colors";
+import {icons} from "@/constants";
+import {useAuthStore} from "@/stores/auth.store";
 import {
   useUserAppointments,
   useCreateAppointment,
 } from "@/hooks/useAppointments";
-import { appointmentService } from "@/services/appointments.service";
-import { Appointment } from "@/types/appointment.types";
-import { Mentor } from "@/types/user.types";
-import {
-  BottomSheetModal,
-  BottomSheetModalProvider,
-} from "@gorhom/bottom-sheet";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useMentors } from "@/hooks/useMentors";
-import { useMentees } from "@/hooks/useMentees";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import {appointmentService} from "@/services/appointments.service";
+import {Appointment} from "@/types/appointment.types";
+import {Mentor} from "@/types/user.types";
+import {BottomSheetModal, BottomSheetModalProvider} from "@gorhom/bottom-sheet";
+import {useFocusEffect, useLocalSearchParams, useRouter} from "expo-router";
+import {useMentors} from "@/hooks/useMentors";
+import {useMentees} from "@/hooks/useMentees";
+import {Ionicons} from "@expo/vector-icons";
+import {LinearGradient} from "expo-linear-gradient";
 import MeetingOptionModal from "@/components/Modals/MeetingOptionModal";
 import CancelConfirmationModal from "@/components/Modals/CancelConfirmationModal";
-import React, { useCallback, useMemo, useState } from "react";
+import React, {useCallback, useMemo, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -38,7 +35,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {useSafeAreaInsets} from "react-native-safe-area-context";
 
 type ResponseModalState = {
   visible: boolean;
@@ -59,7 +56,7 @@ const Appointments: React.FC = () => {
     message: "",
     buttonText: "",
   });
-  const { bottom } = useSafeAreaInsets();
+  const {bottom} = useSafeAreaInsets();
 
   // // Reset active tab when screen comes into focus
   // useFocusEffect(
@@ -70,7 +67,7 @@ const Appointments: React.FC = () => {
 
   // Bottom sheet ref
   const scheduleMeetingBottomSheetRef = React.useRef<BottomSheetModal>(null);
-  const { openSheet } = useLocalSearchParams();
+  const {openSheet} = useLocalSearchParams();
 
   React.useEffect(() => {
     if (openSheet === "true" && scheduleMeetingBottomSheetRef.current) {
@@ -81,8 +78,8 @@ const Appointments: React.FC = () => {
   }, [openSheet]);
 
   // Fetch real data
-  const { data: mentorsData } = useMentors(100);
-  const { data: menteesData } = useMentees(100);
+  const {data: mentorsData} = useMentors(100);
+  const {data: menteesData} = useMentees(100);
 
   const allUsers = useMemo(() => {
     const mentors = mentorsData?.pages.flatMap((page) => page.mentors) || [];
@@ -91,9 +88,9 @@ const Appointments: React.FC = () => {
   }, [mentorsData, menteesData]);
 
   const user = useAuthStore((state) => state.user);
-  const { data: appointments = [], isLoading: isLoadingAppointments } =
+  const {data: appointments = [], isLoading: isLoadingAppointments} =
     useUserAppointments(user?.id || null);
-  const { mutate: createAppointment } = useCreateAppointment();
+  const {mutate: createAppointment} = useCreateAppointment();
 
   const filteredAppointments = appointments.filter(
     (app) =>
@@ -174,7 +171,7 @@ const Appointments: React.FC = () => {
     }
   };
 
-  const renderAppointment = ({ item }: { item: Appointment }) => {
+  const renderAppointment = ({item}: {item: Appointment}) => {
     const mentor = allUsers.find((m: any) => m.id === item.mentorId);
     const date = new Date(item.meetingDate);
     const timeStr = date.toLocaleTimeString([], {
@@ -188,14 +185,14 @@ const Appointments: React.FC = () => {
         key: "reschedule",
         title: "Reschedule",
         onSelect: () => handleReschedule(item),
-        icon: { ios: "calendar", android: "ic_menu_today" },
+        icon: {ios: "calendar", android: "ic_menu_today"},
       },
       {
         key: "cancel",
         title: "Cancel Meeting",
         destructive: true,
         onSelect: () => handleCancelPress(item),
-        icon: { ios: "trash", android: "ic_menu_delete" },
+        icon: {ios: "trash", android: "ic_menu_delete"},
       },
     ];
 
@@ -227,18 +224,19 @@ const Appointments: React.FC = () => {
 
   return (
     <BottomSheetModalProvider>
-      <LinearGradient colors={["#1E3A6F", "#176192"]} style={{ flex: 1 }}>
+      <LinearGradient colors={["#1E3A6F", "#176192"]} style={{flex: 1}}>
         <View style={styles.topBarContainer}>
           <TopBar notifications={3} showUserName showNotifications />
         </View>
 
-        <TouchableOpacity>
-          <Header
-            title="Schedule"
-            showBackButton={true}
-            showNewMeeting={false}
-          />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerRow}
+        >
+          <Ionicons name="chevron-back" size={28} color="#fff" />
+          <Text style={styles.headerTitle}>Schedule</Text>
         </TouchableOpacity>
+
         {/* Tab Switcher */}
         <View style={styles.tabContainer}>
           <Pressable
@@ -296,7 +294,7 @@ const Appointments: React.FC = () => {
 
         <ScrollView
           style={styles.content}
-          contentContainerStyle={{ paddingBottom: bottom + 20 }}
+          contentContainerStyle={{paddingBottom: bottom + 20}}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.searchContainer}>
@@ -314,7 +312,7 @@ const Appointments: React.FC = () => {
                 name="calendar-outline"
                 size={20}
                 color="#FFFFFF"
-                style={{ marginRight: 8 }}
+                style={{marginRight: 8}}
               />
               <Text style={styles.sectionTitle}>Monthly Meeting Calendar</Text>
             </View>
@@ -348,13 +346,13 @@ const Appointments: React.FC = () => {
                   {filteredAppointments.length}{" "}
                 </Text>
                 Appointments on{" "}
-                {`${new Date(selectedDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" })}`}
+                {`${new Date(selectedDate).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "2-digit"})}`}
               </Text>
             )}
             {selectedDate !== today && filteredAppointments.length > 0 && (
               <Text
                 style={styles.summaryText}
-              >{`No appointments on ${new Date(selectedDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" })}`}</Text>
+              >{`No appointments on ${new Date(selectedDate).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "2-digit"})}`}</Text>
             )}
           </View>
 
@@ -368,10 +366,7 @@ const Appointments: React.FC = () => {
 
           <View style={styles.appointmentsList}>
             {isLoadingAppointments ? (
-              <ActivityIndicator
-                color="#FFFFFF"
-                style={{ marginVertical: 20 }}
-              />
+              <ActivityIndicator color="#FFFFFF" style={{marginVertical: 20}} />
             ) : (
               <FlatList
                 data={filteredAppointments}
@@ -393,7 +388,7 @@ const Appointments: React.FC = () => {
           {appointments.length > 0 && (
             <View style={styles.nextAppointmentSection}>
               <Text style={styles.nextAppointmentTitle}>Next Appointment</Text>
-              {renderAppointment({ item: appointments[0] })}
+              {renderAppointment({item: appointments[0]})}
             </View>
           )}
 
@@ -421,7 +416,7 @@ const Appointments: React.FC = () => {
         <SimpleSuccessModal
           visible={responseModal.visible}
           onClose={() =>
-            setResponseModal((prev) => ({ ...prev, visible: false }))
+            setResponseModal((prev) => ({...prev, visible: false}))
           }
           title={responseModal.message}
         />
@@ -480,7 +475,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 10,
     alignItems: "center",
     backgroundColor: "rgba(20, 81, 125, 1)",
@@ -576,6 +571,13 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: "100%",
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  headerTitle: {fontSize: 20, color: "#fff", fontWeight: "700"},
 });
 
 export default Appointments;
