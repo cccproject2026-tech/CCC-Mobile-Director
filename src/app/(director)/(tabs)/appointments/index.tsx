@@ -229,33 +229,16 @@ const Appointments: React.FC = () => {
     <BottomSheetModalProvider>
       <LinearGradient colors={["#1E3A6F", "#176192"]} style={{ flex: 1 }}>
         <View style={styles.topBarContainer}>
-            
-                    <TopBar notifications={3} showUserName showNotifications />
-                </View>
-
-        {/* <View
-          style={{
-            marginBottom: 12,
-            borderBottomWidth: 1,
-            borderColor: "rgba(255,255,255,0.3)",
-          }}
-        >
           <TopBar notifications={3} showUserName showNotifications />
-        </View> */}
+        </View>
 
-        {/* <View style={{ flex: 1, paddingTop: 24 }}>
-                  <TouchableOpacity
-                                         onPress={() => router.back()}
-                                         style={styles.backRow}
-                                     >
-                                         <Ionicons name="chevron-back" size={28} color="#fff" />
-                                         <Text style={styles.backText}>Interest Received</Text>
-                                     </TouchableOpacity>
-                                     </View> */}
-
-        {/* Header */}
-        <Header title="Schedule" showBackButton={true} showNewMeeting={false} />
-
+        <TouchableOpacity>
+          <Header
+            title="Schedule"
+            showBackButton={true}
+            showNewMeeting={false}
+          />
+        </TouchableOpacity>
         {/* Tab Switcher */}
         <View style={styles.tabContainer}>
           <Pressable
@@ -485,7 +468,7 @@ const styles = StyleSheet.create({
   },
   topBarContainer: {
     width: "100%",
-    marginBottom:16,
+    marginBottom: 16,
   },
   tabContainer: {
     flexDirection: "row",

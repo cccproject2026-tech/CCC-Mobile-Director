@@ -722,7 +722,8 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 4,
         marginBottom: getSpacing(12),
-        gap:20
+        gap:20,
+        paddingHorizontal:25
     },
     roleTab: {
         flex: 1,
@@ -744,6 +745,7 @@ const styles = StyleSheet.create({
     },
     searchBarContainer: {
         marginBottom: getSpacing(isSmallDevice ? 10 : 12),
+        paddingHorizontal:30
     },
     mentorItemStep1: {
         flexDirection: 'row',

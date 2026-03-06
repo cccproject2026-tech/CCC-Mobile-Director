@@ -367,9 +367,13 @@ const AvailabilityScreen = () => {
   return (
     <LinearGradient colors={["#1E3A6F", "#176192"]} style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        <Header title="Schedule" showBackButton={true} />
+        {/* <Header title="Schedule" showBackButton={true} /> */}
 
-        <TopBar role="director" />
+        {/* <TopBar role="director" /> */}
+        <View style={styles.topBarContainer}>
+          <TopBar notifications={3} showUserName showNotifications />
+        </View>
+        <Header title="Schedule" showBackButton={true} showNewMeeting={false} />
 
         <View style={styles.tabContainer}>
           <Pressable
@@ -458,12 +462,12 @@ const AvailabilityScreen = () => {
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Available Hours</Text>
-                <TouchableOpacity >
-                                    <Image
-                                        source={require('@/assets/images/app/AvailableHoursIcon.png')}
-                                        style={styles.logoImage}
-                                    />
-                                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Image
+                    source={require("@/assets/images/app/AvailableHoursIcon.png")}
+                    style={styles.logoImage}
+                  />
+                </TouchableOpacity>
               </View>
 
               <View style={styles.hoursContainer}>
@@ -823,7 +827,7 @@ const styles = StyleSheet.create({
     maxHeight: "50%",
     paddingBottom: 20,
   },
-   logoImage: { width: 20, height: 20 },
+  logoImage: { width: 20, height: 20 },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -831,6 +835,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255, 255, 255, 0.1)",
+  },
+  topBarContainer: {
+    width: "100%",
+    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 18,
