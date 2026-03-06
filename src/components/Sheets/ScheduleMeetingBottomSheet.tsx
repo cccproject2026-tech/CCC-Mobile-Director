@@ -365,11 +365,11 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                             {showMentorSelection ? (
                                 <View style={{ flex: 1 }}>
                                     <View style={styles.stepContentNoScroll}>
-                                        <View style={[styles.titleContainer, { borderColor: 'rgba(255, 255, 255, 0.3)' }]}>
+                                        {/* <View style={[styles.titleContainer, { borderColor: 'rgba(255, 255, 255, 0.3)' }]}>
                                             <Text style={[styles.stepTitleLarge, { color: colorScheme.text }]}>
                                                 Select for the Meeting
                                             </Text>
-                                        </View>
+                                        </View> */}
 
                                         <View style={styles.roleSelectorContainer}>
                                             <Pressable
@@ -388,7 +388,8 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
 
                                         <View style={styles.searchBarContainer}>
                                             <SearchBar
-                                                backgroundColor='transparent'
+                                                backgroundColor='rgba(251, 243, 243, 0.75)'
+                                                placeholderTextColor='background: rgba(0, 31, 193, 1)' 
                                                 placeholder='Search'
                                                 value={searchQuery}
                                                 onChangeValue={setSearchQuery}
@@ -510,7 +511,7 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                         )}
 
                                         <Text style={[styles.stepTitle, { color: colorScheme.text }]}>
-                                            Select Available Date
+                                           Schedule New Meeting
                                         </Text>
 
                                         <View style={styles.calendarContainer}>
@@ -522,16 +523,16 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                                     daysOfWeek: availableDaysOfWeek,
                                                 }}
                                                 availableDates={availableDates}
-                                                showHeader={true}
+                                                showHeader={false}
                                                 disablePastDates={true}
-                                                markToday={true}
+                                                markToday={false}
                                             />
                                         </View>
 
                                         {selectedDate && (
                                             <>
                                                 <Text style={[styles.sectionTitle, { color: colorScheme.text }]}>
-                                                    Select a Time
+                                                    Choose a Time 
                                                 </Text>
 
                                                 {isLoadingAvailability ? (
@@ -718,16 +719,17 @@ const styles = StyleSheet.create({
     },
     roleSelectorContainer: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(255, 255, 255, 0.12)',
         borderRadius: 12,
         padding: 4,
         marginBottom: getSpacing(12),
+        gap:20
     },
     roleTab: {
         flex: 1,
         paddingVertical: 10,
         alignItems: 'center',
         borderRadius: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
     },
     activeRoleTab: {
         backgroundColor: '#FFFFFF',
@@ -796,7 +798,8 @@ const styles = StyleSheet.create({
     },
     step1Footer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        // justifyContent: 'space-between',
+        justifyContent:"center",
         alignItems: 'center',
         gap: getSpacing(isSmallDevice ? 8 : 12),
         marginTop: getSpacing(isSmallDevice ? 16 : 18),
@@ -806,8 +809,7 @@ const styles = StyleSheet.create({
     },
     cancelButton: {
         minWidth: 110,
-        flexGrow: 1,
-        paddingVertical: 14,
+        paddingVertical: 12,
         borderRadius: 10,
         borderWidth: 1,
         borderColor: '#fff',
@@ -816,7 +818,6 @@ const styles = StyleSheet.create({
     },
     nextButton: {
         minWidth: 110,
-        flexGrow: 1,
         paddingVertical: 14,
         backgroundColor: 'rgba(30, 54, 111, 1)',
         borderWidth: 2,
@@ -826,7 +827,6 @@ const styles = StyleSheet.create({
     },
     scheduleButton: {
         minWidth: 110,
-        flexGrow: 1,
         paddingVertical: 14,
         backgroundColor: 'rgba(30, 54, 111, 1)',
         borderWidth: 2,
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
     },
     step2Footer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'center',
         gap: getSpacing(isSmallDevice ? 8 : 12),
         marginTop: getSpacing(isSmallDevice ? 18 : 20),
