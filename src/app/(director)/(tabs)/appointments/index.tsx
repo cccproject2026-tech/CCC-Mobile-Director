@@ -121,7 +121,7 @@ const Appointments: React.FC = () => {
       setSelectedAppointment(null);
       setResponseModal({
         visible: true,
-        message: "Meeting Cancelled Successfully",
+        message: "Meeting has been Canceled",
         buttonText: "OK",
       });
     }

@@ -344,6 +344,37 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
         const showMentorSelection = mode === 'schedule' && currentStep === 1;
         const showDateTimeSelection = mode === 'reschedule' || currentStep === 2;
 
+        const renderTimeSlot = ({item}: any) => {
+            return (
+                <Pressable
+                    key={item.id}
+                    style={[
+                        styles.timeSlotGridItem,
+                        {
+                            backgroundColor: selectedTime?.id === item.id
+                                ? '#FFFFFF'
+                                : 'transparent',
+                            borderColor: selectedTime?.id === item.id
+                                ? '#FFFFFF'
+                                : 'rgba(255, 255, 255, 0.6)',
+                        }
+                    ]}
+                    onPress={() => setSelectedTime(item)}
+                >
+                    <Text style={[
+                        styles.timeSlotText,
+                        {
+                            color: selectedTime?.id === item.id
+                                ? colorScheme.background
+                                : colorScheme.text
+                        }
+                    ]}>
+                        {item.label}
+                    </Text>
+                </Pressable>
+            )
+        }
+
         return (
             <>
                 <BottomSheetModal
@@ -540,36 +571,14 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                                                         <ActivityIndicator color={colorScheme.text} />
                                                     </View>
                                                 ) : timeSlots.length > 0 ? (
-                                                    <View style={styles.timeSlotGrid}>
-                                                        {timeSlots.map((slot) => (
-                                                            <Pressable
-                                                                key={slot.id}
-                                                                style={[
-                                                                    styles.timeSlotGridItem,
-                                                                    {
-                                                                        backgroundColor: selectedTime?.id === slot.id
-                                                                            ? '#FFFFFF'
-                                                                            : 'transparent',
-                                                                        borderColor: selectedTime?.id === slot.id
-                                                                            ? '#FFFFFF'
-                                                                            : `${colorScheme.text}50`,
-                                                                    }
-                                                                ]}
-                                                                onPress={() => setSelectedTime(slot)}
-                                                            >
-                                                                <Text style={[
-                                                                    styles.timeSlotText,
-                                                                    {
-                                                                        color: selectedTime?.id === slot.id
-                                                                            ? colorScheme.background
-                                                                            : colorScheme.text
-                                                                    }
-                                                                ]}>
-                                                                    {slot.label}
-                                                                </Text>
-                                                            </Pressable>
-                                                        ))}
-                                                    </View>
+                                                    <FlatList 
+                                                        keyExtractor={(item) => item?.id}
+                                                        data={timeSlots}
+                                                        renderItem={renderTimeSlot}
+                                                        horizontal
+                                                        contentContainerStyle={{gap: 10}}
+                                                        showsHorizontalScrollIndicator={false}
+                                                    />
                                                 ) : (
                                                     <View style={styles.noTimeSlotsContainer}>
                                                         <Text style={[styles.noTimeSlotsText, { color: `${colorScheme.text}80` }]}>
@@ -877,7 +886,6 @@ const styles = StyleSheet.create({
         marginBottom: getSpacing(8),
     },
     timeSlotGridItem: {
-        width: '48.5%',
         paddingVertical: getSpacing(12),
         paddingHorizontal: getSpacing(8),
         borderRadius: getSpacing(10),
