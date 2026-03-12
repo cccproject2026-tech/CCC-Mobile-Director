@@ -18,6 +18,16 @@ export interface UpdateAppointmentPayload {
     status?: AppointmentStatus;
 }
 
+export interface UserMentorRespose {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    profilePicture: string;
+    role: string;
+    roleId: string;
+    status: string
+}
 export interface Appointment {
     id: string;
     userId: string;
@@ -30,6 +40,8 @@ export interface Appointment {
     status: AppointmentStatus;
     createdAt?: string;
     updatedAt?: string;
+    user?: UserMentorRespose;
+    mentor?: UserMentorRespose;
 }
 
 export interface AppointmentResponse {
@@ -63,6 +75,12 @@ export interface TimeSlot {
     endTime: string;
     endPeriod: 'AM' | 'PM';
     _id: string;
+}
+
+export interface UpcomingAppointmentsResponse {
+   success: boolean;
+    message: string;
+    data: Appointment[];
 }
 
 export interface MonthlyAvailabilityDay {

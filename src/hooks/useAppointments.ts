@@ -62,3 +62,11 @@ export const useRescheduleAppointment = () => {
         },
     });
 };
+
+export const useUpcomingAppointment = (userId: string | null) => {
+    return useQuery({
+        queryKey: appointmentKeys.user(userId || ''),
+        queryFn: () => appointmentService.getUpcomingAppointment(),
+        enabled: !!userId,
+    });
+};

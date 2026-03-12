@@ -11,6 +11,7 @@ import {
     SetAvailabilityResponse,
     UpdateAppointmentPayload,
     WeeklyAvailability,
+    UpcomingAppointmentsResponse
 } from '../types/appointment.types';
 import { apiClient } from './api/client';
 import { ENDPOINTS } from './api/endpoints';
@@ -159,6 +160,17 @@ export const appointmentService = {
         }
     },
 
+    getUpcomingAppointment: async (): Promise<Appointment[]> => {
+        try {
+            const response = await apiClient.get<UpcomingAppointmentsResponse>(
+                ENDPOINTS.APPOINTMENTS.UPCOMING(),
+            );
+            return response.data.data;
+        } catch (error) {
+            console.error('Error upcoming appointment:', error);
+            throw error;
+        }
+    },
 
     /**
      * Build appointment payload with validation
