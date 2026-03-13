@@ -23,8 +23,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-type AssessmentType = 'PMP' | 'CMA';
-
 interface Instruction {
     id: string;
     text: string;
@@ -35,15 +33,15 @@ interface Choice {
     text: string;
 }
 
-interface Recommendation {
-    id: string;
-    text: string;
-}
-
 interface Layer {
     id: string;
     title: string;
     choices: Choice[];
+}
+
+interface SectionRecommendationLevel {
+    level: 1 | 2 | 3 | 4;
+    plans: Plan[];
 }
 
 interface Section {
@@ -51,8 +49,15 @@ interface Section {
     name: string;
     guidelines: string;
     layers: Layer[];
-    layerRecommendations: { [layerId: string]: Recommendation[] };
+    recommendations: SectionRecommendationLevel[];
 }
+
+interface Plan {
+    id: string;
+    text: string;
+}
+
+type AssessmentType = 'PMP' | 'CMA';
 
 interface PreSurveyQuestion {
     id: string;
@@ -60,6 +65,23 @@ interface PreSurveyQuestion {
     type: 'text' | 'number';
     placeholder: string;
 }
+
+const emptySectionRecommendations = (): SectionRecommendationLevel[] => [
+    { level: 1, plans: [{ id: '1', text: '' }] },
+    { level: 2, plans: [{ id: '1', text: '' }] },
+    { level: 3, plans: [{ id: '1', text: '' }] },
+    { level: 4, plans: [{ id: '1', text: '' }] },
+];
+
+const newSectionRecommendations = (): SectionRecommendationLevel[] => {
+    const ts = Date.now();
+    return [
+        { level: 1, plans: [{ id: `${ts}-1-1`, text: '' }] },
+        { level: 2, plans: [{ id: `${ts}-2-1`, text: '' }] },
+        { level: 3, plans: [{ id: `${ts}-3-1`, text: '' }] },
+        { level: 4, plans: [{ id: `${ts}-4-1`, text: '' }] },
+    ];
+};
 
 export default function CreateAssessmentPage() {
     const { bottom } = useSafeAreaInsets();
@@ -82,28 +104,17 @@ export default function CreateAssessmentPage() {
         { id: '1', text: '', type: 'number', placeholder: 'Enter number' },
     ]);
 
-    // Sections
+    // Sections (each section has its own recommendations for Level 1–4 CDP)
     const [sections, setSections] = useState<Section[]>([
         {
             id: '1',
             name: '',
             guidelines: '',
             layers: [
-                {
-                    id: '1',
-                    title: 'Assessment Layer',
-                    choices: [{ id: '1', text: '' }],
-                },
-                {
-                    id: '2',
-                    title: 'Assessment Layer',
-                    choices: [{ id: '1', text: '' }],
-                },
+                { id: '1', title: '', choices: [{ id: '1', text: '' }] },
+                { id: '2', title: '', choices: [{ id: '1', text: '' }] },
             ],
-            layerRecommendations: {
-                '1': [{ id: '1', text: '' }],
-                '2': [{ id: '1', text: '' }],
-            },
+            recommendations: emptySectionRecommendations(),
         },
     ]);
 
@@ -146,6 +157,11 @@ export default function CreateAssessmentPage() {
         ]);
     };
 
+    const removeInstruction = (id: string) => {
+        if (instructions.length <= 1) return;
+        setInstructions(instructions.filter((inst) => inst.id !== id));
+    };
+
     const updateInstruction = (id: string, text: string) => {
         setInstructions(
             instructions.map((inst) => (inst.id === id ? { ...inst, text } : inst))
@@ -159,6 +175,11 @@ export default function CreateAssessmentPage() {
         ]);
     };
 
+    const removePreSurveyQuestion = (id: string) => {
+        if (preSurveyQuestions.length <= 1) return;
+        setPreSurveyQuestions(preSurveyQuestions.filter((q) => q.id !== id));
+    };
+
     const updatePreSurveyQuestion = (id: string, text: string) => {
         setPreSurveyQuestions(
             preSurveyQuestions.map((q) => (q.id === id ? { ...q, text } : q))
@@ -166,27 +187,21 @@ export default function CreateAssessmentPage() {
     };
 
     const addSection = () => {
-        const newSectionId = Date.now().toString();
-        const layer1Id = '1';
-
         setSections([
             ...sections,
             {
-                id: newSectionId,
+                id: Date.now().toString(),
                 name: '',
                 guidelines: '',
-                layers: [
-                    {
-                        id: layer1Id,
-                        title: 'Assessment Layer',
-                        choices: [{ id: '1', text: '' }],
-                    },
-                ],
-                layerRecommendations: {
-                    [layer1Id]: [{ id: '1', text: '' }],
-                },
+                layers: [{ id: '1', title: '', choices: [{ id: '1', text: '' }] }],
+                recommendations: newSectionRecommendations(),
             },
         ]);
+    };
+
+    const removeSection = (sectionId: string) => {
+        if (sections.length <= 1) return;
+        setSections(sections.filter((s) => s.id !== sectionId));
     };
 
     const updateSectionName = (sectionId: string, name: string) => {
@@ -205,28 +220,18 @@ export default function CreateAssessmentPage() {
         setSections(
             sections.map((s) => {
                 if (s.id !== sectionId) return s;
-
                 const newLayers: Layer[] = [];
-                const newRecommendations: { [key: string]: Recommendation[] } = {};
-
                 for (let i = 0; i < count; i++) {
                     const existingLayer = s.layers[i];
-                    const layerId = existingLayer?.id || `${Date.now()}-${i}`;
-
                     newLayers.push(
                         existingLayer || {
-                            id: layerId,
-                            title: 'Assessment Layer',
+                            id: `${Date.now()}-${i}`,
+                            title: '',
                             choices: [{ id: `${Date.now()}-choice-${i}`, text: '' }],
                         }
                     );
-
-                    newRecommendations[layerId] = s.layerRecommendations[layerId] || [
-                        { id: `${Date.now()}-rec-${i}`, text: '' },
-                    ];
                 }
-
-                return { ...s, layers: newLayers, layerRecommendations: newRecommendations };
+                return { ...s, layers: newLayers };
             })
         );
         setOpenDropdowns((prev) => {
@@ -269,6 +274,25 @@ export default function CreateAssessmentPage() {
         );
     };
 
+    const removeChoice = (sectionId: string, layerId: string, choiceId: string) => {
+        setSections(
+            sections.map((s) => {
+                if (s.id !== sectionId) return s;
+                return {
+                    ...s,
+                    layers: s.layers.map((l) => {
+                        if (l.id !== layerId) return l;
+                        if (l.choices.length <= 1) return l;
+                        return {
+                            ...l,
+                            choices: l.choices.filter((c) => c.id !== choiceId),
+                        };
+                    }),
+                };
+            })
+        );
+    };
+
     const updateChoice = (
         sectionId: string,
         layerId: string,
@@ -294,28 +318,46 @@ export default function CreateAssessmentPage() {
         );
     };
 
-    const addRecommendation = (sectionId: string, layerId: string) => {
+    const addSectionPlan = (sectionId: string, level: 1 | 2 | 3 | 4) => {
+        const newPlan = { id: Date.now().toString(), text: '' };
         setSections(
             sections.map((s) => {
                 if (s.id !== sectionId) return s;
                 return {
                     ...s,
-                    layerRecommendations: {
-                        ...s.layerRecommendations,
-                        [layerId]: [
-                            ...(s.layerRecommendations[layerId] || []),
-                            { id: Date.now().toString(), text: '' },
-                        ],
-                    },
+                    recommendations: s.recommendations.map((rec) =>
+                        rec.level === level
+                            ? { ...rec, plans: [...rec.plans, newPlan] }
+                            : rec
+                    ),
                 };
             })
         );
     };
 
-    const updateRecommendation = (
+    const removeSectionPlan = (sectionId: string, level: 1 | 2 | 3 | 4, planId: string) => {
+        setSections(
+            sections.map((s) => {
+                if (s.id !== sectionId) return s;
+                return {
+                    ...s,
+                    recommendations: s.recommendations.map((rec) => {
+                        if (rec.level !== level) return rec;
+                        if (rec.plans.length <= 1) return rec;
+                        return {
+                            ...rec,
+                            plans: rec.plans.filter((p) => p.id !== planId),
+                        };
+                    }),
+                };
+            })
+        );
+    };
+
+    const updateSectionPlan = (
         sectionId: string,
-        layerId: string,
-        recId: string,
+        level: 1 | 2 | 3 | 4,
+        planId: string,
         text: string
     ) => {
         setSections(
@@ -323,12 +365,16 @@ export default function CreateAssessmentPage() {
                 if (s.id !== sectionId) return s;
                 return {
                     ...s,
-                    layerRecommendations: {
-                        ...s.layerRecommendations,
-                        [layerId]: (s.layerRecommendations[layerId] || []).map((r) =>
-                            r.id === recId ? { ...r, text } : r
-                        ),
-                    },
+                    recommendations: s.recommendations.map((rec) =>
+                        rec.level === level
+                            ? {
+                                  ...rec,
+                                  plans: rec.plans.map((p) =>
+                                      p.id === planId ? { ...p, text } : p
+                                  ),
+                              }
+                            : rec
+                    ),
                 };
             })
         );
@@ -374,35 +420,28 @@ export default function CreateAssessmentPage() {
             }
         }
 
-        // Validate sections
+        // Validate sections (each section includes its own recommendations for Level 1–4 CDP)
         const validSections = sections
             .map((section) => {
                 const validLayers = section.layers
-                    .map((layer) => {
+                    .map((layer, layerIndex) => {
                         const validChoices = layer.choices
                             .map((choice) => choice.text.trim())
                             .filter((text) => text.length > 0);
 
-                        if (validChoices.length === 0 || !layer.title.trim()) {
+                        if (validChoices.length === 0) {
                             return null;
                         }
 
-                        // Get recommendations for this layer
-                        const validRecs = (section.layerRecommendations[layer.id] || [])
-                            .map((rec) => rec.text.trim())
-                            .filter((text) => text.length > 0);
-
                         return {
-                            title: layer.title.trim(),
+                            title: layer.title.trim() || `Layer ${layerIndex + 1}`,
                             choices: validChoices.map((text) => ({ text })),
-                            recommendations: validRecs, // Include recommendations as array of strings
                         };
                     })
                     .filter(
                         (layer): layer is {
                             title: string;
                             choices: { text: string }[];
-                            recommendations: string[];
                         } => layer !== null
                     );
 
@@ -410,21 +449,28 @@ export default function CreateAssessmentPage() {
                     return null;
                 }
 
+                const recommendations = (section.recommendations ?? []).map(
+                    (rec) => ({
+                        level: rec.level,
+                        items: rec.plans
+                            .map((p) => p.text.trim())
+                            .filter((text) => text.length > 0),
+                    })
+                );
+
                 return {
                     title: section.name.trim(),
-                    description: section.guidelines.trim(),
+                    description: section.guidelines.trim() || 'No guidelines provided',
                     layers: validLayers,
+                    recommendations,
                 };
             })
             .filter(
                 (section): section is {
                     title: string;
                     description: string;
-                    layers: {
-                        title: string;
-                        choices: { text: string }[];
-                        recommendations: string[];
-                    }[];
+                    layers: { title: string; choices: { text: string }[] }[];
+                    recommendations: { level: 1 | 2 | 3 | 4; items: string[] }[];
                 } => section !== null
             );
 
@@ -581,14 +627,23 @@ export default function CreateAssessmentPage() {
                         General Instructions for the Assessment
                     </Text>
                     {instructions.map((inst, index) => (
-                        <TextInput
-                            key={inst.id}
-                            style={styles.inputBox}
-                            placeholder={`Instruction ${index + 1}`}
-                            placeholderTextColor="rgba(255,255,255,0.5)"
-                            value={inst.text}
-                            onChangeText={(text) => updateInstruction(inst.id, text)}
-                        />
+                        <View key={inst.id} style={styles.instructionRow}>
+                            <TextInput
+                                style={[styles.inputBox, { flex: 1, marginBottom: 0 }]}
+                                placeholder={`Instruction ${index + 1}`}
+                                placeholderTextColor="rgba(255,255,255,0.5)"
+                                value={inst.text}
+                                onChangeText={(text) => updateInstruction(inst.id, text)}
+                            />
+                            {instructions.length > 1 && (
+                                <TouchableOpacity
+                                    style={styles.removeButton}
+                                    onPress={() => removeInstruction(inst.id)}
+                                >
+                                    <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+                                </TouchableOpacity>
+                            )}
+                        </View>
                     ))}
                     <TouchableOpacity style={styles.addBtn} onPress={addInstruction}>
                         <Ionicons name="add" size={16} color="#FFF" />
@@ -604,16 +659,25 @@ export default function CreateAssessmentPage() {
                             These questions will be shown before the main assessment
                         </Text>
                         {preSurveyQuestions.map((q, index) => (
-                            <TextInput
-                                key={q.id}
-                                style={styles.inputBox}
-                                placeholder={`${index + 1}. What is your current church membership?`}
-                                placeholderTextColor="rgba(255,255,255,0.5)"
-                                value={q.text}
-                                onChangeText={(text) =>
-                                    updatePreSurveyQuestion(q.id, text)
-                                }
-                            />
+                            <View key={q.id} style={styles.preSurveyRow}>
+                                <TextInput
+                                    style={[styles.inputBox, { flex: 1, marginBottom: 0 }]}
+                                    placeholder={`${index + 1}. What is your current church membership?`}
+                                    placeholderTextColor="rgba(255,255,255,0.5)"
+                                    value={q.text}
+                                    onChangeText={(text) =>
+                                        updatePreSurveyQuestion(q.id, text)
+                                    }
+                                />
+                                {preSurveyQuestions.length > 1 && (
+                                    <TouchableOpacity
+                                        style={styles.removeButton}
+                                        onPress={() => removePreSurveyQuestion(q.id)}
+                                    >
+                                        <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
                         ))}
                         <TouchableOpacity
                             style={styles.addBtn}
@@ -637,9 +701,19 @@ export default function CreateAssessmentPage() {
 
                     {sections.map((section, sectionIndex) => (
                         <View key={section.id} style={styles.sectionBox}>
-                            <Text style={styles.sectionTitle}>
-                                Section {sectionIndex + 1}
-                            </Text>
+                            <View style={styles.sectionTitleRow}>
+                                <Text style={styles.sectionTitle}>
+                                    Section {sectionIndex + 1}
+                                </Text>
+                                {sections.length > 1 && (
+                                    <TouchableOpacity
+                                        style={styles.removeSectionButton}
+                                        onPress={() => removeSection(section.id)}
+                                    >
+                                        <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
 
                             <TextInput
                                 style={styles.inputBox}
@@ -661,136 +735,123 @@ export default function CreateAssessmentPage() {
                                 numberOfLines={3}
                             />
 
-                            {/* Layers Dropdown */}
-                            <View style={styles.layersDropdown}>
-                                <Text style={styles.layersLabel}>Number of Layers : </Text>
-                                <Pressable
-                                    style={styles.dropdownBtn}
-                                    onPress={() => toggleDropdown(section.id)}
-                                >
-                                    <Text style={styles.dropdownValue}>
-                                        {section.layers.length}
-                                    </Text>
-                                    <Ionicons
-                                        name={
-                                            openDropdowns.has(section.id)
-                                                ? 'chevron-up'
-                                                : 'chevron-down'
-                                        }
-                                        size={20}
-                                        color="#E2E8F0"
-                                    />
-                                </Pressable>
+                            {/* Number of Layers with +/- buttons */}
+                            <View style={styles.layerCountContainer}>
+                                <Text style={styles.layerCountLabel}>Number of Layers:</Text>
+                                <View style={styles.layerCountControls}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.layerCountButton,
+                                            section.layers.length <= 1 && styles.layerCountButtonDisabled,
+                                        ]}
+                                        onPress={() => {
+                                            if (section.layers.length > 1) {
+                                                updateLayerCount(section.id, section.layers.length - 1);
+                                            }
+                                        }}
+                                        disabled={section.layers.length <= 1}
+                                    >
+                                        <Ionicons
+                                            name="remove"
+                                            size={20}
+                                            color={section.layers.length <= 1 ? 'rgba(255,255,255,0.3)' : '#FFFFFF'}
+                                        />
+                                    </TouchableOpacity>
 
-                                {openDropdowns.has(section.id) && (
-                                    <View style={styles.dropdownMenu}>
-                                        <ScrollView
-                                            style={styles.dropdownScroll}
-                                            nestedScrollEnabled
-                                            showsVerticalScrollIndicator={false}
-                                        >
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                                                <Pressable
-                                                    key={num}
-                                                    style={[
-                                                        styles.dropdownItem,
-                                                        section.layers.length === num &&
-                                                        styles.dropdownItemSelected,
-                                                    ]}
-                                                    onPress={() =>
-                                                        updateLayerCount(section.id, num)
-                                                    }
-                                                >
-                                                    <Text
-                                                        style={[
-                                                            styles.dropdownItemText,
-                                                            section.layers.length === num &&
-                                                            styles.dropdownItemTextSelected,
-                                                        ]}
-                                                    >
-                                                        {num}
-                                                    </Text>
-                                                </Pressable>
-                                            ))}
-                                        </ScrollView>
+                                    <View style={styles.layerCountDisplay}>
+                                        <Text style={styles.layerCountText}>{section.layers.length}</Text>
                                     </View>
-                                )}
+
+                                    <TouchableOpacity
+                                        style={styles.layerCountButton}
+                                        onPress={() => updateLayerCount(section.id, section.layers.length + 1)}
+                                    >
+                                        <Ionicons name="add" size={20} color="#FFFFFF" />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
 
                             {/* Layers */}
                             {section.layers.map((layer, layerIndex) => (
                                 <View key={layer.id} style={styles.layerBox}>
-                                    <Text style={styles.layerTitle}>
-                                        Layer {layerIndex + 1}
-                                    </Text>
+                                    <Text style={styles.layerTitle}>Layer {layerIndex + 1}</Text>
 
-                                    {/* Choice inputs */}
+                                    {/* Choices */}
+                                    <Text style={styles.layerFieldLabel}>Choices</Text>
                                     {layer.choices.map((choice, choiceIndex) => (
-                                        <TextInput
-                                            key={choice.id}
-                                            style={styles.inputBox}
-                                            placeholder={`Choice ${choiceIndex + 1}`}
-                                            placeholderTextColor="rgba(255,255,255,0.5)"
-                                            value={choice.text}
-                                            onChangeText={(text) =>
-                                                updateChoice(
-                                                    section.id,
-                                                    layer.id,
-                                                    choice.id,
-                                                    text
-                                                )
-                                            }
-                                        />
+                                        <View key={choice.id} style={styles.choiceRow}>
+                                            <TextInput
+                                                style={[styles.inputBox, { flex: 1, marginBottom: 0 }]}
+                                                placeholder={`Choice ${choiceIndex + 1}`}
+                                                placeholderTextColor="rgba(255,255,255,0.5)"
+                                                value={choice.text}
+                                                onChangeText={(text) =>
+                                                    updateChoice(section.id, layer.id, choice.id, text)
+                                                }
+                                            />
+                                            {layer.choices.length > 1 && (
+                                                <TouchableOpacity
+                                                    style={styles.removeButton}
+                                                    onPress={() => removeChoice(section.id, layer.id, choice.id)}
+                                                >
+                                                    <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+                                                </TouchableOpacity>
+                                            )}
+                                        </View>
                                     ))}
-
                                     <TouchableOpacity
                                         style={styles.addBtn}
                                         onPress={() => addChoice(section.id, layer.id)}
                                     >
                                         <Ionicons name="add" size={16} color="#FFF" />
-                                        <Text style={styles.addBtnText}>Choice</Text>
+                                        <Text style={styles.addBtnText}>Add Choice</Text>
                                     </TouchableOpacity>
                                 </View>
                             ))}
 
-                            {/* Recommendations - AFTER all layers */}
-                            {section.layers.map((layer, layerIndex) => (
-                                <View key={`rec-${layer.id}`} style={styles.recommendationBox}>
-                                    <Text style={styles.recommendationTitle}>
-                                        Layer {layerIndex + 1} - Customized Development Plans
-                                    </Text>
-
-                                    {(section.layerRecommendations[layer.id] || []).map(
-                                        (rec, recIndex) => (
-                                            <TextInput
-                                                key={rec.id}
-                                                style={styles.inputBox}
-                                                placeholder={`Recommendation ${recIndex + 1}`}
-                                                placeholderTextColor="rgba(255,255,255,0.5)"
-                                                value={rec.text}
-                                                onChangeText={(text) =>
-                                                    updateRecommendation(
-                                                        section.id,
-                                                        layer.id,
-                                                        rec.id,
-                                                        text
-                                                    )
-                                                }
-                                            />
-                                        )
-                                    )}
-
-                                    <TouchableOpacity
-                                        style={styles.addBtn}
-                                        onPress={() =>
-                                            addRecommendation(section.id, layer.id)
-                                        }
-                                    >
-                                        <Ionicons name="add" size={16} color="#FFF" />
-                                        <Text style={styles.addBtnText}>Recommendation</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ))}
+                            {/* Per-section CDP: Level 1–4 Customized Development Plans */}
+                            <View style={styles.cdpSection}>
+                                <Text style={styles.cdpSectionTitle}>
+                                    Customized Development Plans (this section)
+                                </Text>
+                                {(section.recommendations ?? []).map((rec) => (
+                                    <View key={rec.level} style={styles.cdpLevelContainer}>
+                                        <Text style={styles.cdpLevelTitle}>
+                                            Level {rec.level} - Customized Development Plans
+                                        </Text>
+                                        {rec.plans.map((plan, index) => (
+                                            <View key={plan.id} style={styles.planRow}>
+                                                <TextInput
+                                                    style={[styles.inputBox, { flex: 1, marginBottom: 0 }]}
+                                                    placeholder={`Plan ${index + 1}`}
+                                                    placeholderTextColor="rgba(255,255,255,0.5)"
+                                                    value={plan.text}
+                                                    onChangeText={(text) =>
+                                                        updateSectionPlan(section.id, rec.level, plan.id, text)
+                                                    }
+                                                />
+                                                {rec.plans.length > 1 && (
+                                                    <TouchableOpacity
+                                                        style={styles.removeButton}
+                                                        onPress={() => removeSectionPlan(section.id, rec.level, plan.id)}
+                                                    >
+                                                        <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                        ))}
+                                        {rec.plans.length < 8 && (
+                                            <TouchableOpacity
+                                                style={styles.addBtn}
+                                                onPress={() => addSectionPlan(section.id, rec.level)}
+                                            >
+                                                <Ionicons name="add" size={16} color="#FFF" />
+                                                <Text style={styles.addBtnText}>Plan</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                ))}
+                            </View>
                         </View>
                     ))}
                 </View>
@@ -997,74 +1058,63 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: 14,
         fontWeight: '600',
-        marginBottom: 12,
     },
-
-    // Layers Dropdown
-    layersDropdown: {
+    sectionTitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'transparent',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    removeSectionButton: {
+        padding: 8,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255, 107, 107, 0.15)',
+    },
+
+    // Layer Count Controls
+    layerCountContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.45)',
         borderRadius: 12,
         paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginBottom: 16,
-        position: 'relative',
+        paddingVertical: 12,
     },
-    layersLabel: {
+    layerCountLabel: {
         color: '#E2E8F0',
         fontSize: 14,
-        flex: 1,
+        fontWeight: '500',
     },
-    dropdownBtn: {
+    layerCountControls: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingVertical: 4,
+        gap: 12,
     },
-    dropdownValue: {
-        color: '#FFFFFF',
-        fontSize: 14,
-    },
-    dropdownMenu: {
-        position: 'absolute',
-        top: '100%',
-        right: 0,
-        backgroundColor: '#1B2B60',
+    layerCountButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 12,
-        marginTop: 4,
-        maxHeight: 200,
-        width: 100,
-        zIndex: 1000,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
+        borderColor: 'rgba(255,255,255,0.3)',
     },
-    dropdownScroll: {
-        maxHeight: 200,
+    layerCountButtonDisabled: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'rgba(255,255,255,0.1)',
     },
-    dropdownItem: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.1)',
+    layerCountDisplay: {
+        minWidth: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    dropdownItemSelected: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    dropdownItemText: {
+    layerCountText: {
         color: '#FFFFFF',
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    dropdownItemTextSelected: {
-        color: '#5EB3D1',
+        fontSize: 16,
         fontWeight: '600',
     },
 
@@ -1083,21 +1133,67 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginBottom: 12,
     },
+    layerFieldLabel: {
+        color: '#E2E8F0',
+        fontSize: 13,
+        fontWeight: '500',
+        marginBottom: 8,
+    },
+    choiceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 12,
+    },
 
-    // Recommendations
-    recommendationBox: {
-        backgroundColor: 'transparent',
+    // CDP Section
+    cdpSection: {
+        marginTop: 20,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.2)',
+    },
+    cdpSectionTitle: {
+        color: '#E2E8F0',
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 12,
+    },
+    cdpLevelContainer: {
+        marginBottom: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)',
         borderRadius: 12,
         padding: 12,
-        marginTop: 12,
     },
-    recommendationTitle: {
-        color: '#E2E8F0',
+    cdpLevelTitle: {
+        color: '#FFFFFF',
         fontSize: 13,
         fontWeight: '600',
-        marginBottom: 8,
+        marginBottom: 12,
+    },
+    planRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 12,
+    },
+
+    // Remove Button
+    removeButton: {
+        padding: 4,
+    },
+    instructionRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 12,
+    },
+    preSurveyRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 12,
     },
 
     // Upload
