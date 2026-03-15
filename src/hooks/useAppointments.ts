@@ -34,6 +34,7 @@ export const useCreateAppointment = () => {
             queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
             queryClient.invalidateQueries({ queryKey: ['monthly-availability'] });
             queryClient.invalidateQueries({ queryKey: ['weekly-availability'] });
+            queryClient.invalidateQueries({ queryKey: ['upcoming'] });
         },
     });
 };
@@ -63,10 +64,33 @@ export const useRescheduleAppointment = () => {
     });
 };
 
-export const useUpcomingAppointment = (userId: string | null) => {
+export const useUpcomingAppointment = () => {
     return useQuery({
-        queryKey: appointmentKeys.user(userId || ''),
+        queryKey: ['upcoming'],
         queryFn: () => appointmentService.getUpcomingAppointment(),
-        enabled: !!userId,
+        staleTime: 30 * 1000,
+        retry: 2,
     });
 };
+
+export const useCancelAppointment = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ meetingId }: { meetingId: string; }) =>
+            appointmentService.cancelAppointment(meetingId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['upcoming'] });
+        },
+    });
+};
+
+export const useSearchAvailabilityByDate = (userId: string, date: string) => {
+    return useQuery({
+      queryKey: appointmentKeys.user(userId || ""),
+      queryFn: () => appointmentService.searchAvailabilityWithDate(userId, date),
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+      staleTime: 0,
+    });
+}

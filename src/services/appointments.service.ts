@@ -10,8 +10,7 @@ import {
     SetAvailabilityPayload,
     SetAvailabilityResponse,
     UpdateAppointmentPayload,
-    WeeklyAvailability,
-    UpcomingAppointmentsResponse
+    WeeklyAvailability
 } from '../types/appointment.types';
 import { apiClient } from './api/client';
 import { ENDPOINTS } from './api/endpoints';
@@ -22,9 +21,10 @@ export const appointmentService = {
      */
     getUserAppointments: async (userId: string): Promise<Appointment[]> => {
         try {
-            const response = await apiClient.get<AppointmentResponse>(
-                ENDPOINTS.APPOINTMENTS.GET(userId)
-            );
+            if (!userId) return [];
+              const response = await apiClient.get<AppointmentResponse>(
+                ENDPOINTS.APPOINTMENTS.GET(userId),
+              );
             return Array.isArray(response.data.data)
                 ? response.data.data
                 : [response.data.data];
@@ -162,10 +162,45 @@ export const appointmentService = {
 
     getUpcomingAppointment: async (): Promise<Appointment[]> => {
         try {
-            const response = await apiClient.get<UpcomingAppointmentsResponse>(
+            const response = await apiClient.get<AppointmentResponse>(
                 ENDPOINTS.APPOINTMENTS.UPCOMING(),
             );
-            return response.data.data;
+            return Array.isArray(response.data.data)
+                ? response.data.data
+                : [response.data.data];
+        } catch (error) {
+            console.error('Error upcoming appointment:', error);
+            throw error;
+        }
+    },
+
+    cancelAppointment: async (
+        meetingId: string | null,
+    ): Promise<Appointment> => {
+        try {
+            const response = await apiClient.patch<AppointmentResponse>(
+                ENDPOINTS.APPOINTMENTS.CANCEL_MEETING(meetingId),
+            );
+            return Array.isArray(response.data.data)
+                ? response.data.data[0]
+                : response.data.data;
+        } catch (error) {
+            console.error('Error updating appointment:', error);
+            throw error;
+        }
+    },
+
+    searchAvailabilityWithDate: async (
+        userId: string | null,
+        date: string | null
+    ): Promise<Appointment[]> => {
+        try {
+            const response = await apiClient.get<AppointmentResponse>(
+                ENDPOINTS.APPOINTMENTS.SEARCH_WITH_DATE(date, userId),
+            );
+            return Array.isArray(response.data.data)
+                ? response.data.data
+                : [response.data.data];
         } catch (error) {
             console.error('Error upcoming appointment:', error);
             throw error;

@@ -1,16 +1,18 @@
 import React from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 interface Props {
   visible: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  loading: boolean
 }
 
 const CancelConfirmationModal: React.FC<Props> = ({
   visible,
   onClose,
   onConfirm,
+  loading
 }) => {
   return (
     <Modal
@@ -35,17 +37,22 @@ const CancelConfirmationModal: React.FC<Props> = ({
           <Text style={styles.message}>
             Are you sure you want to cancel the meeting ?
           </Text>
-          <View style={styles.footer}>
-            <Pressable style={styles.button} onPress={onClose}>
-              <Text style={styles.buttonText}>No</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.button, styles.cancelButton]}
-              onPress={onConfirm}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable>
-          </View>
+          {loading && (
+            <ActivityIndicator color="rgba(23, 97, 146, 1)" style={{marginVertical: 20}} size={25}/>
+          )}
+          {!loading && (
+            <View style={styles.footer}>
+              <Pressable style={styles.button} onPress={onClose}>
+                <Text style={styles.buttonText}>No</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.button, styles.cancelButton]}
+                onPress={onConfirm}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </View>
     </Modal>

@@ -77,12 +77,6 @@ export interface TimeSlot {
     _id: string;
 }
 
-export interface UpcomingAppointmentsResponse {
-   success: boolean;
-    message: string;
-    data: Appointment[];
-}
-
 export interface MonthlyAvailabilityDay {
     date: string; // Format: "2025-11-01"
     day: number; // Day of week: 0 (Sunday) - 6 (Saturday)

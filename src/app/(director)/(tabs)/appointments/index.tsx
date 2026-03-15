@@ -11,6 +11,8 @@ import {useAuthStore} from "@/stores/auth.store";
 import {
   useUserAppointments,
   useCreateAppointment,
+  useUpcomingAppointment,
+  useCancelAppointment
 } from "@/hooks/useAppointments";
 import {appointmentService} from "@/services/appointments.service";
 import {Appointment} from "@/types/appointment.types";
@@ -88,9 +90,14 @@ const Appointments: React.FC = () => {
   }, [mentorsData, menteesData]);
 
   const user = useAuthStore((state) => state.user);
-  const {data: appointments = [], isLoading: isLoadingAppointments} =
-    useUserAppointments(user?.id || null);
+  // const {data: appointments = [], isLoading: isLoadingAppointments} =
+  //   useUserAppointments(user?.id || null);
+  
+
   const {mutate: createAppointment} = useCreateAppointment();
+  const {mutate: cancelAppointment, isPending: cancelLoading} = useCancelAppointment();
+
+  const {data: appointments = [], isLoading: isLoadingAppointments} = useUpcomingAppointment();
 
   const filteredAppointments = appointments.filter(
     (app) =>
@@ -102,6 +109,7 @@ const Appointments: React.FC = () => {
     useState<Appointment | null>(null);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
+  // const [cancelLoading, setCancelLoading] = useState(false);
 
   const handleReschedule = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
@@ -117,13 +125,33 @@ const Appointments: React.FC = () => {
     if (selectedAppointment) {
       // TODO: Implement actual cancel API call if needed, currently it just filters local state which is now driven by react-query
       // For now, we'll just show success. Ideally useDeleteAppointment hook.
-      setShowCancelConfirmModal(false);
-      setSelectedAppointment(null);
-      setResponseModal({
-        visible: true,
-        message: "Meeting has been Canceled",
-        buttonText: "OK",
-      });
+      cancelAppointment(
+        {
+          meetingId: selectedAppointment?.id || "undefined"
+        },
+        {
+          onSuccess: () => {
+            setShowCancelConfirmModal(false);
+            setSelectedAppointment(null);
+            setResponseModal({
+              visible: true,
+              message: "Meeting has been Canceled",
+              buttonText: "OK",
+            });
+          },
+          onError: (error: any) => {
+            console.error("Error cancel meeting:", error);
+            Alert.alert("Error", "Failed to cancel meeting. Please try again.");
+          },
+        }
+      )
+      // setShowCancelConfirmModal(false);
+      // setSelectedAppointment(null);
+      // setResponseModal({
+      //   visible: true,
+      //   message: "Meeting has been Canceled",
+      //   buttonText: "OK",
+      // });
     }
   };
 
@@ -337,7 +365,7 @@ const Appointments: React.FC = () => {
                 Appointments Today
               </Text>
             )}
-            {selectedDate !== today && filteredAppointments.length == 0 && (
+            {selectedDate !== today && filteredAppointments.length > 0 && (
               <Text style={styles.summaryText}>
                 You{" "}
                 {`${new Date(selectedDate) < new Date(today) ? "had" : "have"}`}
@@ -349,7 +377,7 @@ const Appointments: React.FC = () => {
                 {`${new Date(selectedDate).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "2-digit"})}`}
               </Text>
             )}
-            {selectedDate !== today && filteredAppointments.length > 0 && (
+            {selectedDate !== today && filteredAppointments.length == 0 && (
               <Text
                 style={styles.summaryText}
               >{`No appointments on ${new Date(selectedDate).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "2-digit"})}`}</Text>
@@ -385,12 +413,27 @@ const Appointments: React.FC = () => {
           </View>
 
           {/* Next Appointment Section */}
-          {appointments.length > 0 && (
-            <View style={styles.nextAppointmentSection}>
-              <Text style={styles.nextAppointmentTitle}>Next Appointment</Text>
-              {renderAppointment({item: appointments[0]})}
-            </View>
-          )}
+          <View style={styles.nextAppointmentSection}>
+            <Text style={[styles.summaryText, {marginBottom: 15}]}>Next Appointment</Text>
+            {/* {renderAppointment({item: appointments[0]})} */}
+            {isLoadingAppointments ? (
+              <ActivityIndicator color="#FFFFFF" style={{marginVertical: 20}} />
+            ) : (
+              <FlatList
+                data={appointments}
+                renderItem={renderAppointment}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                ListEmptyComponent={
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>
+                      No next meeting scheduled
+                    </Text>
+                  </View>
+                }
+              />
+            )}
+          </View>
 
           {/* <View style={styles.footer}>
                         <Text style={styles.footerInfo}>
@@ -436,6 +479,7 @@ const Appointments: React.FC = () => {
           visible={showCancelConfirmModal}
           onClose={() => setShowCancelConfirmModal(false)}
           onConfirm={handleConfirmCancel}
+          loading={cancelLoading}
         />
       </LinearGradient>
     </BottomSheetModalProvider>
@@ -549,7 +593,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyState: {
-    padding: 40,
+    padding: 20,
     alignItems: "center",
   },
   emptyStateText: {
