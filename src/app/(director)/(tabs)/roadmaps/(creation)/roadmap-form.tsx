@@ -739,11 +739,12 @@ export default function RoadmapFormScreen() {
                 const hasNested = parentRoadmap?.roadmaps && parentRoadmap.roadmaps.length > 0;
 
                 if (!hasNested && !isEditMode) {
+                    const safeDuration = roadmapData.completionTime || parentRoadmap?.duration || '1 month';
                     const payload: CreateNestedRoadmapRequest = {
                         name: roadmapData.name,
                         roadMapDetails: roadmapData.subheading,
                         description: formData.descriptionVerbiage,
-                        duration: roadmapData.completionTime || parentRoadmap?.duration || '',
+                        duration: safeDuration,
                         ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
                         ...(roadmapData.selectedDivision && {
                             phase: roadmapData.selectedDivision,
@@ -758,12 +759,13 @@ export default function RoadmapFormScreen() {
                     ]);
                 } else {
                     const nested = parentRoadmap?.roadmaps?.[0];
+                    const safeDuration = roadmapData.completionTime || nested?.duration || parentRoadmap?.duration || '1 month';
                     const updatedNested = {
                         _id: nested?._id,
                         name: roadmapData.name,
                         roadMapDetails: roadmapData.subheading,
                         description: formData.descriptionVerbiage,
-                        duration: roadmapData.completionTime,
+                        duration: safeDuration,
                         ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
                         phase: roadmapData.selectedDivision || nested?.phase || '',
                         extras,
@@ -789,11 +791,12 @@ export default function RoadmapFormScreen() {
             else if (roadmapType === 'phase') {
               
                 if (!isEditMode) {
+                    const safeDuration = roadmapData.completionTime || parentRoadmap?.duration || '1 month';
                     const payload: CreateNestedRoadmapRequest = {
                         name: roadmapData.name,
                         roadMapDetails: roadmapData.subheading,
                         description: formData.descriptionVerbiage,
-                        duration: roadmapData.completionTime,
+                        duration: safeDuration,
                         ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
                         ...(roadmapData.selectedDivision && {
                             phase: roadmapData.selectedDivision,
@@ -811,12 +814,13 @@ export default function RoadmapFormScreen() {
                     const updatedRoadmaps =
                         parentRoadmap?.roadmaps?.map((nested: any) => {
                             if (nested._id === nestedRoadmapId) {
+                                const safeDuration = roadmapData.completionTime || nested.duration || parentRoadmap?.duration || '1 month';
                                 return {
                                     _id: nested._id,
                                     name: roadmapData.name,
                                     roadMapDetails: roadmapData.subheading,
                                     description: formData.descriptionVerbiage,
-                                    duration: roadmapData.completionTime,
+                                    duration: safeDuration,
                                     ...(roadmapData.bannerImage && {
                                         imageUrl: roadmapData.bannerImage,
                                     }),
