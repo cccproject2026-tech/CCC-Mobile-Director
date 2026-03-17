@@ -192,7 +192,7 @@ export const RoadmapCard: React.FC<Props> = ({
                         </Text>
                     )}
 
-                    {statusConfig && (
+                    {/* {statusConfig && (
                         <View
                             style={[
                                 styles.statusRow,
@@ -210,7 +210,7 @@ export const RoadmapCard: React.FC<Props> = ({
                                 </Text>
                             </View>
                         </View>
-                    )}
+                    )} */}
 
                     {renderProgressSection()}
 

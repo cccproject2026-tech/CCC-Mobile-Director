@@ -42,21 +42,23 @@ export default function MenteeCard(props: MenteeCardProps) {
                 style={[styles.listContainer, isSelected && styles.selectedCard, disabled && { opacity: 0.5 }]}
                 onPress={disabled ? undefined : (isSelectionMode ? onToggleSelect : onPress)}
             >
-                <ProfileImage size={42} uri={data.profilePicture} />
-
-                <View style={styles.listNameSection}>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <ProfileImage size={42} uri={data.profilePicture} />
                     <Text numberOfLines={1} style={styles.listName}>
                         {data.username || `${data.firstName} ${data.lastName ?? ""}`}
                     </Text>
                 </View>
 
-                <ContactActions small {...props} />
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <ContactActions small {...props} />
+                    {props.onMenuPress && (
+                        <TouchableOpacity onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
+                            <Ionicons size={18} color="#fff" name="ellipsis-vertical" style={{marginLeft: 4}} />
+                        </TouchableOpacity>
+                    )}
+                </View>
 
-                {props.onMenuPress && (
-                    <TouchableOpacity onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
-                        <Ionicons size={18} color="#fff" name="ellipsis-vertical" />
-                    </TouchableOpacity>
-                )}
+                
             </Pressable>
         );
 
@@ -93,7 +95,7 @@ export default function MenteeCard(props: MenteeCardProps) {
                     </View>
                 </View>
 
-                <ContactActions {...props} />
+                <ContactActions {...props} small rowStyles={{gap: 2}} btnStyles={{marginTop: 7, marginBottom: 10}}/>
             </TouchableOpacity>
         );
 
@@ -112,7 +114,10 @@ export default function MenteeCard(props: MenteeCardProps) {
             )}
 
             <View style={styles.topSection}>
-                <ProfileImage uri={data.profilePicture} size={90} />
+                <View>
+                    <ProfileImage uri={data.profilePicture} size={95} />
+                    <ContactActions {...props} small rowStyles={{gap: 2}} btnStyles={{marginTop: 7, marginBottom: 10}}/>
+                </View>
 
                 <View style={styles.contentSection}>
                     <Text style={styles.name} numberOfLines={1}>
@@ -125,7 +130,6 @@ export default function MenteeCard(props: MenteeCardProps) {
             </View>
 
             {/* Contact Row */}
-            <ContactActions {...props} />
 
             {/* Progress / Phase / Status */}
             <MenteeProgress data={data} />

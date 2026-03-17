@@ -37,8 +37,6 @@ export default memo(ContextMenu);
 
 const styles = StyleSheet.create({
     triggerBtn: {
-        padding: 6,
-        marginLeft: 4,
         alignItems: "center",
         justifyContent: "center",
     },

@@ -354,14 +354,14 @@ export default function Mentees() {
                             showsVerticalScrollIndicator={false}
                             removeClippedSubviews
                             maxToRenderPerBatch={10}
-                            updateCellsBatchingPeriod={50}
-                            initialNumToRender={5}
-                            windowSize={10}
-                            getItemLayout={(data, index) => ({
-                                length: viewMode === 'list' ? 68 : 280,
-                                offset: (viewMode === 'list' ? 68 : 280) * index,
-                                index,
-                            })}
+                            // updateCellsBatchingPeriod={50}
+                            // initialNumToRender={5}
+                            // windowSize={10}
+                            // getItemLayout={(data, index) => ({
+                            //     length: viewMode === 'list' ? 68 : 280,
+                            //     offset: (viewMode === 'list' ? 68 : 280) * index,
+                            //     index,
+                            // })}
                             onEndReached={() => {
                                 if (hasNextPage && !isFetchingNextPage) {
                                     fetchNextPage();
