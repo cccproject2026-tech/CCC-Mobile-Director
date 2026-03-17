@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-    listContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 14, padding: 10, marginBottom: 10 },
+    listContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 14, padding: 10, marginBottom: 10, justifyContent: 'space-between' },
     selectedCard: { borderColor: "#38BDF8", borderWidth: 2 },
 
     listNameSection: { flex: 1 }, listName: { color: "#fff", fontWeight: "600", fontSize: 14 },
@@ -12,14 +12,14 @@ export const styles = StyleSheet.create({
     container: { backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 14, marginBottom: 14 },
     menuButton: { position: "absolute", top: 14, right: 14, zIndex: 10 },
 
-    topSection: { flexDirection: "row", marginBottom: 10 },
+    topSection: { flexDirection: "row" },
     contentSection: { flex: 1 },
-    name: { color: "#fff", fontSize: 16, fontWeight: "600", marginBottom: 4 },
+    name: { color: "#fff", fontSize: 14, fontWeight: "600", marginBottom: 7 },
     description: { color: "rgba(255,255,255,0.8)", fontSize: 12, lineHeight: 16 },
 
     // contact
-    contactRow: { flexDirection: "row", gap: 6, marginBottom: 10 },
-    iconBtn: { width: 30, height: 30, alignItems: "center", justifyContent: "center" },
+    contactRow: { flexDirection: "row", gap: 6 },
+    iconBtn: { width: 23, height: 23, alignItems: "center", justifyContent: "center" },
 
     // selection card
     selectionCard: { backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 14, marginBottom: 14 },
