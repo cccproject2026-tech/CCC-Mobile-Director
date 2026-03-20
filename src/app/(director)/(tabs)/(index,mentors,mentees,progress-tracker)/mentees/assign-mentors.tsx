@@ -34,7 +34,7 @@ console.log(menteeId,"------")
     const [selectedFilter, setSelectedFilter] = useState('Latest Join');
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
-    const { data: mentorsData, isLoading } = useMentors();
+    const { data: mentorsData, isLoading } = useMentors(10);
     const mentors = useMemo(() => {
         return mentorsData?.pages.flatMap(page => page.mentors) || [];
     }, [mentorsData]);

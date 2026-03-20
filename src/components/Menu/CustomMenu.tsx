@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export interface MenuItem {
     id: string;
@@ -81,7 +81,8 @@ export const CustomMenu: React.FC<CustomMenuProps> = ({
     return (
         <View style={[styles.overlay, { zIndex: 10000 }]}>
             <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
-            <View
+            <ScrollView
+                showsVerticalScrollIndicator={true}
                 style={[
                     styles.menuContainer,
                     {
@@ -108,6 +109,7 @@ export const CustomMenu: React.FC<CustomMenuProps> = ({
                                     backgroundColor: item.backgroundColor || 'transparent',
                                     opacity: item.disabled ? 0.5 : 1,
                                 },
+                                {marginBottom: (items.length - 1 ) === index ? 15 : 0},
                                 !showIcons && styles.menuItemWithoutIcon,
                             ]}
                             onPress={() => handleItemPress(item)}
@@ -155,7 +157,7 @@ export const CustomMenu: React.FC<CustomMenuProps> = ({
                         )}
                     </React.Fragment>
                 ))}
-            </View>
+            </ScrollView>
         </View>
     );
 };
@@ -184,6 +186,7 @@ const styles = StyleSheet.create({
         bottom: 0,
     },
     menuContainer: {
+        maxHeight: 300,
         position: 'absolute',
         paddingVertical: 8,
         shadowOffset: { width: 0, height: 2 },

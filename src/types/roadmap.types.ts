@@ -15,6 +15,7 @@ export interface RoadmapExtra {
     assessmentId?: string;
     required?: boolean;
     showOnCard?: boolean;
+    linkUrl?: string
 }
 
 export interface NestedRoadmap {

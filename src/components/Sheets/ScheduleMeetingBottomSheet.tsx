@@ -385,6 +385,7 @@ const ScheduleMeetingBottomSheet = forwardRef<BottomSheetModal, ScheduleMeetingB
                     backdropComponent={renderBackdrop}
                     handleIndicatorStyle={styles.handleIndicator}
                     onDismiss={handleClose}
+                    enableDynamicSizing={false}
                 >
                     <LinearGradient
                         colors={['#264387', '#1D548D', '#176192']}

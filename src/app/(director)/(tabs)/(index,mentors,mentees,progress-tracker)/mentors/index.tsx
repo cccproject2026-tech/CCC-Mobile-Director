@@ -43,7 +43,7 @@ export default function Mentors() {
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage
-    } = useMentors();
+    } = useMentors(10);
 
     const mentorList = useMemo(() => {
         return mentorsData?.pages.flatMap(page => page.mentors) || [];
@@ -94,6 +94,15 @@ export default function Mentors() {
         {
             icon: "checkmark-done-outline",
             label: "Assessments of Mentees",
+            // onPress: () => {
+            //     console.log("selectedMentor", selectedMentor)
+            //     if (selectedMentor?.id) {
+            //         router.push({
+            //             pathname: "/(director)/(tabs)/assessments",
+            //             params: { id: selectedMentor.id },
+            //         });
+            //     }
+            // },
             onPress: () => router.push("/(director)/(tabs)/assessments"),
         },
         {

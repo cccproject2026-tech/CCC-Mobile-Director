@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
+import { useNavigation } from '@react-navigation/native';
 
 import {
     useRoadmap,
@@ -39,6 +39,8 @@ export default function RoadmapFormScreen() {
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams();
     const addFieldSheet = useContext(AddFieldSheetContext);
+
+    const navigation = useNavigation();
 
     // ✅ Parse params
     const isEditMode = params.isEditMode === 'true';
@@ -625,15 +627,6 @@ export default function RoadmapFormScreen() {
         }
     };
 
-    useEffect(() => {
-        if (!addFieldSheet) return;
-        addFieldSheet.registerHandlers({
-            onInsert: handleFieldInsert,
-            onClose: () => setEditingFieldId(null),
-        });
-        return () => addFieldSheet.registerHandlers(null);
-    }, [addFieldSheet, handleFieldInsert]);
-
     const handleDeleteField = (fieldId: string) => {
         const hasNestedFields = formData.customFields.some((f) => f.parentSectionId === fieldId);
 
@@ -718,6 +711,15 @@ export default function RoadmapFormScreen() {
 
         setCurrentSectionId(null);
     };
+
+    useEffect(() => {
+        if (!addFieldSheet) return;
+        addFieldSheet.registerHandlers({
+            onInsert: handleFieldInsert,
+            onClose: () => setEditingFieldId(null),
+        });
+        return () => addFieldSheet.registerHandlers(null);
+    }, [addFieldSheet, handleFieldInsert]);
 
     // ✅ SUBMIT HANDLER
     const handleSubmit = async () => {
@@ -808,7 +810,7 @@ export default function RoadmapFormScreen() {
 
                     await createNestedMutation.mutateAsync({ roadmapId, payload });
                     Alert.alert('Success', 'Phase created successfully!', [
-                        { text: 'OK', onPress: () => router.back() },
+                        { text: 'OK', onPress: () => navigation.pop(2) },
                     ]);
                 } else {
                     const updatedRoadmaps =
@@ -843,7 +845,7 @@ export default function RoadmapFormScreen() {
                     });
 
                     Alert.alert('Success', 'Phase updated successfully!', [
-                        { text: 'OK', onPress: () => router.back() },
+                        { text: 'OK', onPress: () => navigation.pop(2) },
                     ]);
                 }
             }

@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from 'expo-router';
 import React, { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface CreateRoadmapSheetProps {
@@ -201,24 +201,24 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                 resetForm();
                 onCancel();
 
-                if (formData.type === 'phase') {
-                    router.push({
-                        pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
-                        params: {
-                            roadmapId: createdRoadmapId,
-                            type: 'phase',
-                            isEditMode
-                        }
-                    } as any);
-                } else {
-                    router.push({
-                        pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                        params: {
-                            roadmapId: createdRoadmapId,
-                            name: formData.name
-                        }
-                    } as any);
-                }
+                // if (formData.type === 'phase') {
+                //     router.push({
+                //         pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
+                //         params: {
+                //             roadmapId: createdRoadmapId,
+                //             type: 'phase',
+                //             isEditMode
+                //         }
+                //     } as any);
+                // } else {
+                //     router.push({
+                //         pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+                //         params: {
+                //             roadmapId: createdRoadmapId,
+                //             name: formData.name
+                //         }
+                //     } as any);
+                // }
 
                 Alert.alert('Success', 'Roadmap created successfully!');
 
@@ -247,6 +247,7 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
             <BottomSheetModal
                 ref={ref}
                 snapPoints={snapPoints}
+                keyboardBehavior="interactive"
                 enablePanDownToClose={!isLoading}
                 backdropComponent={renderBackdrop}
                 backgroundStyle={styles.bottomSheetBackground}
@@ -291,246 +292,253 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                     </View>
 
                     {/* Scrollable Form Content */}
-                    <BottomSheetScrollView
-                        style={styles.scrollView}
-                        contentContainerStyle={styles.scrollContent}
-                        showsVerticalScrollIndicator={false}
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        style={{ flex: 1 }}
                     >
-                        <View style={styles.formContainer}>
-                            {/* Type Dropdown */}
-                            <View style={styles.fieldContainer}>
-                                <Text style={styles.fieldLabel}>Type</Text>
-                                <Pressable
-                                    style={[
-                                        styles.dropdown,
-                                        (isEditMode || isLoading) && styles.dropdownDisabled
-                                    ]}
-                                    onPress={() => !isEditMode && !isLoading && setShowTypeDropdown(!showTypeDropdown)}
-                                    disabled={isEditMode || isLoading}
-                                >
-                                    <Text style={styles.dropdownText}>
-                                        {getTypeDisplayText(formData.type)}
-                                    </Text>
-                                    <Ionicons
-                                        name={showTypeDropdown ? "chevron-up" : "chevron-down"}
-                                        size={20}
-                                        color="#fff"
-                                    />
-                                </Pressable>
-
-                                {showTypeDropdown && !isEditMode && !isLoading && (
-                                    <View style={styles.dropdownOptions}>
-                                        <TouchableOpacity
-                                            style={styles.dropdownOption}
-                                            onPress={() => handleTypeSelect("single")}
-                                        >
-                                            <Text style={styles.dropdownOptionText}>
-                                                Single
-                                            </Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={styles.dropdownOption}
-                                            onPress={() => handleTypeSelect("phase")}
-                                        >
-                                            <Text style={styles.dropdownOptionText}>Phase</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
-                            </View>
-
-                            {/* Dynamic Name Field */}
-                            <View style={styles.fieldContainer}>
-                                <Text style={styles.fieldLabel}>
-                                    {formData.type === "phase" ? "Name of Phase" : "Roadmap Name"}
-                                </Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder={
-                                        formData.type === "phase"
-                                            ? "Enter Name of Phase"
-                                            : "Enter Name"
-                                    }
-                                    placeholderTextColor="rgba(255,255,255,0.5)"
-                                    value={formData.name}
-                                    onChangeText={(text) =>
-                                        setFormData((prev) => ({ ...prev, name: text }))
-                                    }
-                                    editable={!isLoading}
-                                />
-                            </View>
-
-                            {/* Dynamic Subheading Field */}
-                            <View style={styles.fieldContainer}>
-                                <Text style={styles.fieldLabel}>
-                                    {formData.type === "phase"
-                                        ? "Name of Subtitle for Phase"
-                                        : "Roadmap Subheading"}
-                                </Text>
-                                <TextInput
-                                    style={[styles.textInput, styles.textArea]}
-                                    placeholder={
-                                        formData.type === "phase"
-                                            ? "Enter Subtitle"
-                                            : "Enter Subheading"
-                                    }
-                                    placeholderTextColor="rgba(255,255,255,0.5)"
-                                    value={formData.subheading}
-                                    onChangeText={(text) =>
-                                        setFormData((prev) => ({ ...prev, subheading: text }))
-                                    }
-                                    multiline
-                                    numberOfLines={4}
-                                    textAlignVertical="top"
-                                    editable={!isLoading}
-                                />
-                            </View>
-
-                            {/* Dynamic Completion Time Field */}
-                            <View style={styles.fieldContainer}>
-                                <Text style={styles.fieldLabel}>
-                                    {formData.type === "phase"
-                                        ? "Completion Time for the Phase"
-                                        : "Completion Time for the Roadmap"}
-                                </Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="1-2 Months"
-                                    placeholderTextColor="rgba(255,255,255,0.5)"
-                                    value={formData.completionTime}
-                                    onChangeText={(text) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            completionTime: text,
-                                        }))
-                                    }
-                                    editable={!isLoading}
-                                />
-                            </View>
-
-                            {/* Division of Phase */}
-                            {formData.type === "phase" && (
+                        <BottomSheetScrollView
+                            keyboardShouldPersistTaps="handled"
+                            style={styles.scrollView}
+                            contentContainerStyle={styles.scrollContent}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            <View style={styles.formContainer}>
+                                {/* Type Dropdown */}
                                 <View style={styles.fieldContainer}>
-                                    <Text style={styles.fieldLabel}>Division of Phase</Text>
-
-                                    <View style={styles.divisionInputContainer}>
-                                        <TextInput
-                                            key={`division-input-${formData.divisions.length}`}
-                                            style={[styles.textInput, styles.divisionInput]}
-                                            placeholder="None"
-                                            placeholderTextColor="rgba(255,255,255,0.5)"
-                                            value={newDivision}
-                                            onChangeText={setNewDivision}
-                                            editable={!isLoading}
+                                    <Text style={styles.fieldLabel}>Type</Text>
+                                    <Pressable
+                                        style={[
+                                            styles.dropdown,
+                                            (isEditMode || isLoading) && styles.dropdownDisabled
+                                        ]}
+                                        onPress={() => !isEditMode && !isLoading && setShowTypeDropdown(!showTypeDropdown)}
+                                        disabled={isEditMode || isLoading}
+                                    >
+                                        <Text style={styles.dropdownText}>
+                                            {getTypeDisplayText(formData.type)}
+                                        </Text>
+                                        <Ionicons
+                                            name={showTypeDropdown ? "chevron-up" : "chevron-down"}
+                                            size={20}
+                                            color="#fff"
                                         />
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.addButton,
-                                                isLoading && styles.buttonDisabled
-                                            ]}
-                                            onPress={handleAddDivision}
-                                            disabled={isLoading}
-                                        >
-                                            <Ionicons name="add" size={20} color="#fff" />
-                                            <Text style={styles.addButtonText}>Add</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                    </Pressable>
 
-                                    {formData.divisions.length > 0 && (
-                                        <View style={styles.tagsContainer}>
-                                            {formData.divisions.map((division, index) => (
-                                                <View key={index} style={styles.tag}>
-                                                    <Text style={styles.tagText}>{division}</Text>
-                                                    <TouchableOpacity
-                                                        onPress={() => handleRemoveDivision(index)}
-                                                        style={styles.tagRemove}
-                                                        disabled={isLoading}
-                                                    >
-                                                        <Ionicons
-                                                            name="close"
-                                                            size={16}
-                                                            color="#fff"
-                                                        />
-                                                    </TouchableOpacity>
-                                                </View>
-                                            ))}
+                                    {showTypeDropdown && !isEditMode && !isLoading && (
+                                        <View style={styles.dropdownOptions}>
+                                            <TouchableOpacity
+                                                style={styles.dropdownOption}
+                                                onPress={() => handleTypeSelect("single")}
+                                            >
+                                                <Text style={styles.dropdownOptionText}>
+                                                    Single
+                                                </Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.dropdownOption}
+                                                onPress={() => handleTypeSelect("phase")}
+                                            >
+                                                <Text style={styles.dropdownOptionText}>Phase</Text>
+                                            </TouchableOpacity>
                                         </View>
                                     )}
                                 </View>
-                            )}
 
-                            {/* Upload Banner */}
-                            {formData.bannerImage ? (
-                                <View style={styles.imagePreviewContainer}>
-                                    <Image
-                                        source={{ uri: formData.bannerImage }}
-                                        style={styles.imagePreview}
+                                {/* Dynamic Name Field */}
+                                <View style={styles.fieldContainer}>
+                                    <Text style={styles.fieldLabel}>
+                                        {formData.type === "phase" ? "Name of Phase" : "Roadmap Name"}
+                                    </Text>
+                                    <TextInput
+                                        style={styles.textInput}
+                                        placeholder={
+                                            formData.type === "phase"
+                                                ? "Enter Name of Phase"
+                                                : "Enter Name"
+                                        }
+                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        value={formData.name}
+                                        onChangeText={(text) =>
+                                            setFormData((prev) => ({ ...prev, name: text }))
+                                        }
+                                        editable={!isLoading}
                                     />
+                                </View>
+
+                                {/* Dynamic Subheading Field */}
+                                <View style={styles.fieldContainer}>
+                                    <Text style={styles.fieldLabel}>
+                                        {formData.type === "phase"
+                                            ? "Name of Subtitle for Phase"
+                                            : "Roadmap Subheading"}
+                                    </Text>
+                                    <TextInput
+                                        style={[styles.textInput, styles.textArea]}
+                                        placeholder={
+                                            formData.type === "phase"
+                                                ? "Enter Subtitle"
+                                                : "Enter Subheading"
+                                        }
+                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        value={formData.subheading}
+                                        onChangeText={(text) =>
+                                            setFormData((prev) => ({ ...prev, subheading: text }))
+                                        }
+                                        multiline
+                                        numberOfLines={4}
+                                        textAlignVertical="top"
+                                        editable={!isLoading}
+                                    />
+                                </View>
+
+                                {/* Dynamic Completion Time Field */}
+                                <View style={styles.fieldContainer}>
+                                    <Text style={styles.fieldLabel}>
+                                        {formData.type === "phase"
+                                            ? "Completion Time for the Phase"
+                                            : "Completion Time for the Roadmap"}
+                                    </Text>
+                                    <TextInput
+                                        style={styles.textInput}
+                                        placeholder="1-2 Months"
+                                        placeholderTextColor="rgba(255,255,255,0.5)"
+                                        value={formData.completionTime}
+                                        onChangeText={(text) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                completionTime: text,
+                                            }))
+                                        }
+                                        editable={!isLoading}
+                                    />
+                                </View>
+
+                                {/* Division of Phase */}
+                                {formData.type === "phase" && (
+                                    <View style={styles.fieldContainer}>
+                                        <Text style={styles.fieldLabel}>Division of Phase</Text>
+
+                                        <View style={styles.divisionInputContainer}>
+                                            <TextInput
+                                                key={`division-input-${formData.divisions.length}`}
+                                                style={[styles.textInput, styles.divisionInput]}
+                                                placeholder="None"
+                                                placeholderTextColor="rgba(255,255,255,0.5)"
+                                                value={newDivision}
+                                                onChangeText={setNewDivision}
+                                                editable={!isLoading}
+                                            />
+                                            <TouchableOpacity
+                                                style={[
+                                                    styles.addButton,
+                                                    isLoading && styles.buttonDisabled
+                                                ]}
+                                                onPress={handleAddDivision}
+                                                disabled={isLoading}
+                                            >
+                                                <Ionicons name="add" size={20} color="#fff" />
+                                                <Text style={styles.addButtonText}>Add</Text>
+                                            </TouchableOpacity>
+                                        </View>
+
+                                        {formData.divisions.length > 0 && (
+                                            <View style={styles.tagsContainer}>
+                                                {formData.divisions.map((division, index) => (
+                                                    <View key={index} style={styles.tag}>
+                                                        <Text style={styles.tagText}>{division}</Text>
+                                                        <TouchableOpacity
+                                                            onPress={() => handleRemoveDivision(index)}
+                                                            style={styles.tagRemove}
+                                                            disabled={isLoading}
+                                                        >
+                                                            <Ionicons
+                                                                name="close"
+                                                                size={16}
+                                                                color="#fff"
+                                                            />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        )}
+                                    </View>
+                                )}
+
+                                {/* Upload Banner */}
+                                {formData.bannerImage ? (
+                                    <View style={styles.imagePreviewContainer}>
+                                        <Image
+                                            source={{ uri: formData.bannerImage }}
+                                            style={styles.imagePreview}
+                                        />
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.changeImageButton,
+                                                isLoading && styles.buttonDisabled
+                                            ]}
+                                            onPress={handleImagePicker}
+                                            disabled={isLoading}
+                                        >
+                                            <Text style={styles.changeImageText}>Change Image</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                ) : (
                                     <TouchableOpacity
                                         style={[
-                                            styles.changeImageButton,
+                                            styles.uploadButton,
                                             isLoading && styles.buttonDisabled
                                         ]}
                                         onPress={handleImagePicker}
                                         disabled={isLoading}
                                     >
-                                        <Text style={styles.changeImageText}>Change Image</Text>
+                                        <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+                                        <Text style={styles.uploadButtonText}>
+                                            {formData.type === "phase"
+                                                ? "Upload Banner Image for the Phase"
+                                                : "Upload Banner Image for the Roadmap"}
+                                        </Text>
                                     </TouchableOpacity>
-                                </View>
-                            ) : (
-                                <TouchableOpacity
-                                    style={[
-                                        styles.uploadButton,
-                                        isLoading && styles.buttonDisabled
-                                    ]}
-                                    onPress={handleImagePicker}
-                                    disabled={isLoading}
-                                >
-                                    <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
-                                    <Text style={styles.uploadButtonText}>
-                                        {formData.type === "phase"
-                                            ? "Upload Banner Image for the Phase"
-                                            : "Upload Banner Image for the Roadmap"}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    </BottomSheetScrollView>
+                                )}
+                            </View>
+                        </BottomSheetScrollView>
 
                     {/* Action Buttons - Fixed at bottom */}
-                    <View style={[styles.actionButtons, { paddingBottom: bottom + 20 }]}>
-                        <TouchableOpacity
-                            style={[
-                                styles.cancelButton,
-                                isLoading && styles.buttonDisabled
-                            ]}
-                            onPress={handleCancel}
-                            disabled={isLoading}
-                        >
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                        </TouchableOpacity>
+                        <View style={[styles.actionButtons, { paddingBottom: bottom + 20 }]}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.cancelButton,
+                                    isLoading && styles.buttonDisabled
+                                ]}
+                                onPress={handleCancel}
+                                disabled={isLoading}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity
-                            style={[
-                                styles.nextButton,
-                                (!isFormValid() || isLoading) && styles.nextButtonDisabled,
-                            ]}
-                            onPress={handleCreate}
-                            disabled={!isFormValid() || isLoading}
-                        >
-                            {isLoading ? (
-                                <ActivityIndicator color="#fff" size="small" />
-                            ) : (
-                                <Text
-                                    style={[
-                                        styles.nextButtonText,
-                                        !isFormValid() && styles.nextButtonTextDisabled,
-                                    ]}
-                                >
-                                    Create
-                                </Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
+                            <TouchableOpacity
+                                style={[
+                                    styles.nextButton,
+                                    (!isFormValid() || isLoading) && styles.nextButtonDisabled,
+                                ]}
+                                onPress={handleCreate}
+                                disabled={!isFormValid() || isLoading}
+                            >
+                                {isLoading ? (
+                                    <ActivityIndicator color="#fff" size="small" />
+                                ) : (
+                                    <Text
+                                        style={[
+                                            styles.nextButtonText,
+                                            !isFormValid() && styles.nextButtonTextDisabled,
+                                        ]}
+                                    >
+                                        Create
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </KeyboardAvoidingView>
+
                 </LinearGradient>
             </BottomSheetModal>
         );

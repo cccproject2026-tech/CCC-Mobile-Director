@@ -14,8 +14,8 @@ const MentorMenteeSection: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'mentors' | 'mentees'>('mentors');
 
     // Fetch mentors and mentees from API
-    const { data: allMentors, isLoading: isLoadingMentors, error: isErrorMentors } = useMentors(5);
-    const { data: menteesData, isLoading: isLoadingMentees, isError: isErrorMentees } = useMentees(5);
+    const { data: allMentors, isLoading: isLoadingMentors, error: isErrorMentors } = useMentors(10);
+    const { data: menteesData, isLoading: isLoadingMentees, isError: isErrorMentees } = useMentees(10);
     console.log(menteesData, 'menteesData');
     console.log(allMentors, 'allMentors');
     // Limit to first 3 items
