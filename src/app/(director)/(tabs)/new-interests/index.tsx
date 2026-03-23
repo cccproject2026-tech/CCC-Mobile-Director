@@ -4,14 +4,16 @@ import { InterestCardSkeleton } from '@/components/Cards/InterestCard/InterestCa
 import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
+import AssignInterestChoiceModal from '@/components/Modals/AssignInterestChoiceModal';
 import FilterModal from '@/components/Modals/FilterModal';
 import { useInterests } from '@/hooks/useInterest';
-import { InterestStatus } from '@/types/interest.types';
+import { InterestItem, InterestStatus } from '@/types/interest.types';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
+    Alert,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -28,6 +30,7 @@ export default function InterestReceivedScreen() {
     const [search, setSearch] = useState('');
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState('All');
+    const [assignPickerItem, setAssignPickerItem] = useState<InterestItem | null>(null);
 
     const router = useRouter();
     const { data: interestsData, isLoading, error, isRefetching, refetch } = useInterests();
@@ -91,6 +94,36 @@ export default function InterestReceivedScreen() {
 
         return list;
     }, [search, activeTab, selectedFilter, groupedInterests]);
+
+    const onAcceptedAssignPress = useCallback((item: InterestItem) => {
+        if (!item.user?._id) {
+            Alert.alert('Unable to assign', 'User ID is missing for this interest.');
+            return;
+        }
+        setAssignPickerItem(item);
+    }, []);
+
+    const closeAssignPicker = useCallback(() => setAssignPickerItem(null), []);
+
+    const navigateAssignMentorForPastor = useCallback(() => {
+        const id = assignPickerItem?.user?._id;
+        setAssignPickerItem(null);
+        if (!id) return;
+        router.push({
+            pathname: '/(director)/(tabs)/mentees/assign-mentors' as any,
+            params: { id: String(id) },
+        });
+    }, [assignPickerItem, router]);
+
+    const navigateAssignMenteesForMentor = useCallback(() => {
+        const id = assignPickerItem?.user?._id;
+        setAssignPickerItem(null);
+        if (!id) return;
+        router.push({
+            pathname: '/(director)/(tabs)/mentors/assign-mentees' as any,
+            params: { id: String(id) },
+        });
+    }, [assignPickerItem, router]);
 
     /** ------------------------------------
      * Tabs
@@ -179,7 +212,13 @@ export default function InterestReceivedScreen() {
                                 {filteredInterests.length > 0 ? (
                                     filteredInterests.map(item =>
                                         activeTab === 'accepted'
-                                            ? <AcceptedUserCard key={item.id} data={item} />
+                                            ? (
+                                                <AcceptedUserCard
+                                                    key={item.id}
+                                                    data={item}
+                                                    onAssignPress={() => onAcceptedAssignPress(item)}
+                                                />
+                                            )
                                             : <InterestCard key={item.id} data={item} />
                                     )
                                 ) : (
@@ -206,6 +245,13 @@ export default function InterestReceivedScreen() {
                         options: countryOptions,
                         isExpandable: true
                     }]}
+                />
+
+                <AssignInterestChoiceModal
+                    visible={!!assignPickerItem}
+                    onClose={closeAssignPicker}
+                    onAssignMentor={navigateAssignMentorForPastor}
+                    onAssignMentees={navigateAssignMenteesForMentor}
                 />
 
             </View>

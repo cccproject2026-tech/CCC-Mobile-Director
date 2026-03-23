@@ -31,11 +31,15 @@ const SCHOLARSHIP_TYPE_MAP: Record<ScholarshipTypeKey, string> = {
 
 export default function AssignScholarshipScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams<{ menteeId?: string; applicantRole?: string }>();
-    const menteeId = params.menteeId || '';
-    const applicantRoleParam = Array.isArray(params.applicantRole)
-        ? params.applicantRole[0]
-        : params.applicantRole;
+    const params = useLocalSearchParams<{ menteeId?: string | string[]; applicantRole?: string | string[] }>();
+    const menteeIdRaw = params.menteeId;
+    const menteeId = (
+        Array.isArray(menteeIdRaw) ? menteeIdRaw[0] : menteeIdRaw
+    )?.trim() ?? '';
+    const applicantRoleRaw = params.applicantRole;
+    const applicantRoleParam = (
+        Array.isArray(applicantRoleRaw) ? applicantRoleRaw[0] : applicantRoleRaw
+    )?.trim();
     const { data: mentee } = useGetUserById(menteeId);
     const { top, bottom } = useSafeAreaInsets();
     const [isRural, setIsRural] = useState(true);

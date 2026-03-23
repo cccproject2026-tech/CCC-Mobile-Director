@@ -99,9 +99,14 @@ console.log("Interest ID:--------", interestId);
                         {
                             text: "OK",
                             onPress: () =>
-                                router.push(
-                                    `/(director)/(tabs)/new-interests/assign-scholorship?menteeId=${interest.user?._id}&applicantRole=${encodeURIComponent(interest.user?.role ?? '')}`
-                                ),
+                                router.push({
+                                    pathname:
+                                        '/(director)/(tabs)/new-interests/assign-scholorship',
+                                    params: {
+                                        menteeId: String(interest.user?._id ?? ''),
+                                        applicantRole: interest.user?.role ?? '',
+                                    },
+                                }),
                         },
                     ]);
                 },
