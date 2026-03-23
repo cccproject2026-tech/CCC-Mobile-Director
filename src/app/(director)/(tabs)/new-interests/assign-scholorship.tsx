@@ -31,8 +31,11 @@ const SCHOLARSHIP_TYPE_MAP: Record<ScholarshipTypeKey, string> = {
 
 export default function AssignScholarshipScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams<{ menteeId?: string }>();
+    const params = useLocalSearchParams<{ menteeId?: string; applicantRole?: string }>();
     const menteeId = params.menteeId || '';
+    const applicantRoleParam = Array.isArray(params.applicantRole)
+        ? params.applicantRole[0]
+        : params.applicantRole;
     const { data: mentee } = useGetUserById(menteeId);
     const { top, bottom } = useSafeAreaInsets();
     const [isRural, setIsRural] = useState(true);
@@ -52,6 +55,9 @@ export default function AssignScholarshipScreen() {
         const typeLabel = SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey].toLowerCase();
         return scholarships.find((s) => s.type.toLowerCase() === typeLabel);
     }, [scholarships, selectedScholarshipKey]);
+
+    const resolvedApplicantRole = (mentee?.role ?? applicantRoleParam ?? '').trim();
+    const isPastorApplicant = resolvedApplicantRole.toLowerCase() === 'pastor';
 
     const effectiveAmount = selectedScholarship?.amount ?? 0;
 
@@ -128,10 +134,17 @@ export default function AssignScholarshipScreen() {
         router.push('/(director)/(tabs)/new-interests');
     };
 
-    const handleAssignMentor = () => {
+    const handleAcceptFollowUpAssign = () => {
         setShowAcceptModal(false);
+        if (isPastorApplicant) {
+            router.push({
+                pathname: '/(director)/(tabs)/mentees/assign-mentors' as any,
+                params: { id: menteeId },
+            });
+            return;
+        }
         router.push({
-            pathname: '/(director)/(tabs)/mentees/assign-mentors' as any,
+            pathname: '/(director)/(tabs)/mentors/assign-mentees' as any,
             params: { id: menteeId },
         });
     };
@@ -281,7 +294,10 @@ export default function AssignScholarshipScreen() {
             <AcceptInterestModal
                 visible={showAcceptModal}
                 onLater={handleAcceptLater}
-                onAssignMentor={handleAssignMentor}
+                onAssign={handleAcceptFollowUpAssign}
+                assignButtonText={
+                    isPastorApplicant ? 'Assign Mentor >>' : 'Assign Mentees >>'
+                }
             />
 
             <EditAmountBottomSheet

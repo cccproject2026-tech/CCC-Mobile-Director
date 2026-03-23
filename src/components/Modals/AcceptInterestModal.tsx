@@ -6,13 +6,16 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 interface AcceptInterestModalProps {
     visible: boolean;
     onLater: () => void;
-    onAssignMentor: () => void;
+    /** Primary follow-up after accept (e.g. assign mentor for pastors, assign mentees for mentors/directors). */
+    onAssign: () => void;
+    assignButtonText?: string;
 }
 
 export default function AcceptInterestModal({
     visible,
     onLater,
-    onAssignMentor,
+    onAssign,
+    assignButtonText = 'Assign Mentor >>',
 }: AcceptInterestModalProps) {
     return (
         <Modal
@@ -34,9 +37,9 @@ export default function AcceptInterestModal({
                             <Text style={styles.laterButtonText}>Later</Text>
                         </Pressable>
 
-                        <Pressable style={styles.assignButton} onPress={onAssignMentor}>
+                        <Pressable style={styles.assignButton} onPress={onAssign}>
                             <Text style={styles.assignButtonText} numberOfLines={1} adjustsFontSizeToFit>
-                                Assign Mentor {'>>'}
+                                {assignButtonText}
                             </Text>
                         </Pressable>
                     </View>
