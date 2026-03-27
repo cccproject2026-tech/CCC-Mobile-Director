@@ -201,24 +201,24 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                 resetForm();
                 onCancel();
 
-                // if (formData.type === 'phase') {
-                //     router.push({
-                //         pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
-                //         params: {
-                //             roadmapId: createdRoadmapId,
-                //             type: 'phase',
-                //             isEditMode
-                //         }
-                //     } as any);
-                // } else {
-                //     router.push({
-                //         pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                //         params: {
-                //             roadmapId: createdRoadmapId,
-                //             name: formData.name
-                //         }
-                //     } as any);
-                // }
+                if (formData.type === 'phase') {
+                    router.push({
+                        pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
+                        params: {
+                            roadmapId: createdRoadmapId,
+                            type: 'phase',
+                            isEditMode
+                        }
+                    } as any);
+                } else {
+                    router.push({
+                        pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+                        params: {
+                            roadmapId: createdRoadmapId,
+                            name: formData.name
+                        }
+                    } as any);
+                }
 
                 Alert.alert('Success', 'Roadmap created successfully!');
 

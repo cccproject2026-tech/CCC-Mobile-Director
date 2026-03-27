@@ -110,7 +110,22 @@ export default function Mentees() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/mentees/remove-mentors');
+                    router.push({
+                        pathname: '/mentees/remove-mentors',
+                        params: { id: selectedMentee?.id || '' },
+                    });
+                }, 300);
+            },
+        },
+        {
+            icon: "people-outline",
+            label: 'List of Mentors',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/(mentors)/mentors',
+                    });
                 }, 300);
             },
         },

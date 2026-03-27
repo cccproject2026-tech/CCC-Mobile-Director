@@ -1,5 +1,6 @@
 import MentorCard from '@/components/Cards/MentorCard';
 import SearchBar from '@/components/Header/SearchBar';
+import AppModal from '@/components/Modals/AppModal';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
 import { useAssignMentorsToMentee } from '@/hooks/useMentees';
 import { useMentors } from '@/hooks/useMentors';
@@ -33,6 +34,7 @@ console.log(menteeId,"------")
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState('Latest Join');
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
+    const [showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
 
     const { data: mentorsData, isLoading } = useMentors(10);
     const mentors = useMemo(() => {
@@ -112,9 +114,10 @@ console.log(menteeId,"------")
                             { menteeId, mentorIds: selectedMentors },
                             {
                                 onSuccess: () => {
-                                    router.back();
+                                    setShowSuccessModal(true);
                                 },
-                                onError: () => {
+                                onError: (error) => {
+                                    console.log("Error Assigning Mentor", error)
                                     Alert.alert('Error', 'Failed to assign mentors. Please try again.');
                                 },
                             },
@@ -137,137 +140,150 @@ console.log(menteeId,"------")
 
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={[styles.container, { paddingTop: Platform.OS === 'ios' ? top : top + 10 }]}
-        >
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={28} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Assign Mentors</Text>
-                <TouchableOpacity
-                    onPress={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
-                    style={styles.viewToggle}
-                >
-                    <Ionicons
-                        name={viewMode === 'card' ? 'list' : 'grid'}
-                        size={24}
-                        color="#fff"
-                    />
-                </TouchableOpacity>
-            </View>
-
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <SearchBar value={search} onChangeValue={setSearch} />
-            </View>
-
-            {/* Sort By */}
-            <View style={styles.sortContainer}>
-                <Text style={styles.sortLabel}>Sort by</Text>
-                <Pressable
-                    style={styles.sortButton}
-                    onPress={() => setFilterModalVisible(true)}
-                >
-                    <Text style={styles.sortText}>{getFilterDisplayText()}</Text>
-                    <Ionicons name="chevron-down" size={18} color="#fff" />
-                </Pressable>
-            </View>
-
-            {/* Mentors List */}
-            <FlatList
-                data={filteredMentors}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                    <View style={styles.mentorCardWrapper}>
-                        <TouchableOpacity
-                            style={styles.checkbox}
-                            onPress={() => toggleSelectMentor(item.id)}
-                        >
-                            <View
-                                style={[
-                                    styles.checkboxInner,
-                                    selectedMentors.includes(item.id) && styles.checkboxSelected,
-                                ]}
-                            >
-                                {selectedMentors.includes(item.id) && (
-                                    <Ionicons name="checkmark" size={16} color="#fff" />
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                        <View style={styles.mentorCardContent}>
-                            <MentorCard
-                                mentor={{
-                                    id: item.id,
-                                    name: `${item.firstName} ${item.lastName ?? ''}`,
-                                    role: item.role ?? 'Mentor',
-                                    menteesCount: item.assignedId ? item.assignedId.length : 0,
-                                    description: item.profileInfo ?? '',
-                                    profilePicture: item.profilePicture,
-                                }}
-                                layout={viewMode}
-                                onCall={() => console.log('Call', item.id)}
-                                onChat={() => console.log('Chat', item.id)}
-                                onMail={() => console.log('Mail', item.id)}
-                                onWhatsApp={() => console.log('WhatsApp', item.id)}
-                            />
-                        </View>
-                    </View>
-                )}
-                contentContainerStyle={[styles.listContent, { paddingBottom: 120 + bottom }]}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                    !isLoading ? (
-                        <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                            <Text style={{ color: '#fff' }}>No mentors available to assign.</Text>
-                        </View>
-                    ) : null
-                }
+        <>
+            <AppModal
+                visible={showSuccessModal}
+                type="success"
+                title="Assigned Mentor Successfully"
+                autoClose={3000}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    // setSelectedMentors([])
+                    router.back();
+                }}
             />
-
-            {/* Sticky Bottom Assign Container */}
-            <View style={[styles.bottomContainer, { paddingBottom: bottom + 16 }]}>
-                <View style={styles.selectedNamesContainer}>
-                    <Text style={styles.selectedNamesText} numberOfLines={1}>
-                        {getSelectedNamesText()}
-                    </Text>
+            <LinearGradient
+                colors={['#176192', '#1D548D', '#264387']}
+                style={[styles.container, { paddingTop: Platform.OS === 'ios' ? top : top + 10 }]}
+            >
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={28} color="#fff" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Assign Mentors</Text>
+                    <TouchableOpacity
+                        onPress={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
+                        style={styles.viewToggle}
+                    >
+                        <Ionicons
+                            name={viewMode === 'card' ? 'list' : 'grid'}
+                            size={24}
+                            color="#fff"
+                        />
+                    </TouchableOpacity>
                 </View>
 
-                <LinearGradient
-                    colors={['#7C3AED', '#38BDF8']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[
-                        styles.gradientBorder,
-                        (selectedMentors.length === 0 || assignMutation.isPending) &&
-                        styles.gradientBorderDisabled,
-                    ]}
-                >
-                    <TouchableOpacity
-                        style={styles.assignButtonInner}
-                        onPress={handleAssign}
-                        disabled={selectedMentors.length === 0 || assignMutation.isPending}
-                    >
-                        <Text style={styles.assignButtonText}>
-                            {assignMutation.isPending ? 'Assigning...' : 'Assign'}
-                        </Text>
-                    </TouchableOpacity>
-                </LinearGradient>
-            </View>
+                {/* Search Bar */}
+                <View style={styles.searchContainer}>
+                    <SearchBar value={search} onChangeValue={setSearch} />
+                </View>
 
-            <FilterModal
-                visible={filterModalVisible}
-                onClose={() => setFilterModalVisible(false)}
-                selectedFilter={selectedFilter}
-                onFilterSelect={filter => {
-                    setSelectedFilter(filter);
-                    setFilterModalVisible(false);
-                }}
-                filterOptions={filterOptions}
-            />
-        </LinearGradient>
+                {/* Sort By */}
+                <View style={styles.sortContainer}>
+                    <Text style={styles.sortLabel}>Sort by</Text>
+                    <Pressable
+                        style={styles.sortButton}
+                        onPress={() => setFilterModalVisible(true)}
+                    >
+                        <Text style={styles.sortText}>{getFilterDisplayText()}</Text>
+                        <Ionicons name="chevron-down" size={18} color="#fff" />
+                    </Pressable>
+                </View>
+
+                {/* Mentors List */}
+                <FlatList
+                    data={filteredMentors}
+                    keyExtractor={item => item.id}
+                    renderItem={({ item }) => (
+                        <View style={styles.mentorCardWrapper}>
+                            <TouchableOpacity
+                                style={styles.checkbox}
+                                onPress={() => toggleSelectMentor(item.id)}
+                            >
+                                <View
+                                    style={[
+                                        styles.checkboxInner,
+                                        selectedMentors.includes(item.id) && styles.checkboxSelected,
+                                    ]}
+                                >
+                                    {selectedMentors.includes(item.id) && (
+                                        <Ionicons name="checkmark" size={16} color="#fff" />
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+                            <View style={styles.mentorCardContent}>
+                                <MentorCard
+                                    mentor={{
+                                        id: item.id,
+                                        name: `${item.firstName} ${item.lastName ?? ''}`,
+                                        role: item.role ?? 'Mentor',
+                                        menteesCount: item.assignedId ? item.assignedId.length : 0,
+                                        description: item.profileInfo ?? '',
+                                        profilePicture: item.profilePicture,
+                                    }}
+                                    layout={viewMode}
+                                    onCall={() => console.log('Call', item.id)}
+                                    onChat={() => console.log('Chat', item.id)}
+                                    onMail={() => console.log('Mail', item.id)}
+                                    onWhatsApp={() => console.log('WhatsApp', item.id)}
+                                />
+                            </View>
+                        </View>
+                    )}
+                    contentContainerStyle={[styles.listContent, { paddingBottom: 120 + bottom }]}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={
+                        !isLoading ? (
+                            <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                                <Text style={{ color: '#fff' }}>No mentors available to assign.</Text>
+                            </View>
+                        ) : null
+                    }
+                />
+
+                {/* Sticky Bottom Assign Container */}
+                <View style={[styles.bottomContainer, { paddingBottom: bottom + 16 }]}>
+                    <View style={styles.selectedNamesContainer}>
+                        <Text style={styles.selectedNamesText} numberOfLines={1}>
+                            {getSelectedNamesText()}
+                        </Text>
+                    </View>
+
+                    <LinearGradient
+                        colors={['#7C3AED', '#38BDF8']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={[
+                            styles.gradientBorder,
+                            (selectedMentors.length === 0 || assignMutation.isPending) &&
+                            styles.gradientBorderDisabled,
+                        ]}
+                    >
+                        <TouchableOpacity
+                            style={styles.assignButtonInner}
+                            onPress={handleAssign}
+                            disabled={selectedMentors.length === 0 || assignMutation.isPending}
+                        >
+                            <Text style={styles.assignButtonText}>
+                                {assignMutation.isPending ? 'Assigning...' : 'Assign'}
+                            </Text>
+                        </TouchableOpacity>
+                    </LinearGradient>
+                </View>
+
+                <FilterModal
+                    visible={filterModalVisible}
+                    onClose={() => setFilterModalVisible(false)}
+                    selectedFilter={selectedFilter}
+                    onFilterSelect={filter => {
+                        setSelectedFilter(filter);
+                        setFilterModalVisible(false);
+                    }}
+                    filterOptions={filterOptions}
+                />
+            </LinearGradient>
+        </>
     );
 }
 

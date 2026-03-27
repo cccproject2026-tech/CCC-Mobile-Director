@@ -189,7 +189,7 @@ console.log("Interest ID:--------", interestId);
                 style={{ flex: 1 }}
             >
                 <View style={styles.header}>
-                    <TopBar showUserName showDrawer={false} showNotifications={false} customTitle='Interest Form' />
+                    <TopBar showBackButton showUserName showDrawer={false} showNotifications={false} customTitle='Interest Form' />
                 </View>
                 <ScrollView
                     style={{ flex: 1 }}

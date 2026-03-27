@@ -83,34 +83,6 @@ export const RoadmapCard: React.FC<Props> = ({
         </View>
     );
 
-    const renderActions = () => {
-        if (!hasActions) return null;
-
-        return (
-            <View style={styles.actionsContainer}>
-                {showMenu && onMenuPress && (
-                    <TouchableOpacity
-                        onPress={onMenuPress}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                        <Ionicons
-                            name="ellipsis-vertical"
-                            size={20}
-                            color="rgba(255,255,255,0.6)"
-                        />
-                    </TouchableOpacity>
-                )}
-                {showArrow && (
-                    <Ionicons
-                        name="chevron-forward"
-                        size={20}
-                        color="rgba(255,255,255,0.6)"
-                    />
-                )}
-            </View>
-        );
-    };
-
     const renderProgressSection = () => {
         if (!hasProgress || !data.taskProgress) return null;
 
@@ -153,9 +125,6 @@ export const RoadmapCard: React.FC<Props> = ({
             <View style={[styles.inner, !hasActions && styles.innerNoActions]}>
                 <View style={[styles.left, !hasActions && styles.leftNoActions]}>
                     {renderImage()}
-                    {showCompletionTimeOnLeft && (
-                        <Text style={styles.completionTime}>{data.completionTime}</Text>
-                    )}
                 </View>
 
                 <View style={[styles.right, !hasActions && styles.rightNoActions]}>
@@ -166,19 +135,44 @@ export const RoadmapCard: React.FC<Props> = ({
                         >
                             {data.title}
                         </Text>
-                        {renderActions()}
+                        {/* {renderActions()} */}
+                        {showMenu && onMenuPress && hasActions && (
+                            <TouchableOpacity
+                                onPress={onMenuPress}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Ionicons
+                                    name="ellipsis-vertical"
+                                    size={15}
+                                    color="rgba(255,255,255,0.6)"
+                                />
+                            </TouchableOpacity>
+                        )}
                     </View>
 
-                    {data.description && (
-                        <Text
-                            style={[
-                                styles.description,
-                                !hasActions && styles.descriptionNoActions,
-                            ]}
-                            numberOfLines={2}
-                        >
-                            {data.description}
-                        </Text>
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        {data.description && (
+                            <Text
+                                style={[
+                                    styles.description,
+                                    !hasActions && styles.descriptionNoActions,
+                                ]}
+                                // numberOfLines={2}
+                            >
+                                {data.description}
+                            </Text>
+                        )}
+                        {showArrow && hasActions &&(
+                            <Ionicons
+                                name="chevron-forward"
+                                size={20}
+                                color="rgba(255,255,255,0.6)"
+                            />
+                        )}
+                    </View>
+                    
+                    {showCompletionTimeOnLeft && (
+                        <Text style={styles.completionTime}>{data.completionTime?.replace('\n', '')}</Text>
                     )}
 
                     {data.completionTime && !data.status && (
@@ -322,10 +316,9 @@ const styles = StyleSheet.create({
     },
     completionTime: {
         color: 'rgba(255,255,255,0.8)',
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: '400',
         lineHeight: 16,
-        marginTop: 12,
     },
     right: {
         flex: 1,
@@ -344,7 +337,7 @@ const styles = StyleSheet.create({
     },
     title: {
         flex: 1,
-        fontSize: 17,
+        fontSize: 15,
         fontWeight: '700',
         color: '#FFFFFF',
         lineHeight: 23,
@@ -365,13 +358,14 @@ const styles = StyleSheet.create({
         width: 32,
     },
     description: {
-        fontSize: 13.5,
+        fontSize: 12,
         fontWeight: '400',
         color: 'rgba(255, 255, 255, 0.75)',
         marginBottom: 10,
         lineHeight: 18,
-        paddingRight: 40,
-        minWidth: 0,
+        width: '80%'
+        // paddingRight: 40,
+        // minWidth: 0,
     },
     descriptionNoActions: {
         paddingRight: 0,

@@ -810,6 +810,7 @@ export default function RoadmapFormScreen() {
 
                     await createNestedMutation.mutateAsync({ roadmapId, payload });
                     Alert.alert('Success', 'Phase created successfully!', [
+                        // @ts-ignore
                         { text: 'OK', onPress: () => navigation.pop(2) },
                     ]);
                 } else {
@@ -845,6 +846,7 @@ export default function RoadmapFormScreen() {
                     });
 
                     Alert.alert('Success', 'Phase updated successfully!', [
+                        // @ts-ignore
                         { text: 'OK', onPress: () => navigation.pop(2) },
                     ]);
                 }

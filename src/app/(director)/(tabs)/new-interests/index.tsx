@@ -212,13 +212,15 @@ export default function InterestReceivedScreen() {
                                 {filteredInterests.length > 0 ? (
                                     filteredInterests.map(item =>
                                         activeTab === 'accepted'
-                                            ? (
-                                                <AcceptedUserCard
-                                                    key={item.id}
-                                                    data={item}
-                                                    onAssignPress={() => onAcceptedAssignPress(item)}
-                                                />
-                                            )
+                                            ? <AcceptedUserCard 
+                                                key={item.id}
+                                                data={item} 
+                                                onAssignPress={() => {
+                                                    router.push({
+                                                        pathname: '/mentees/assign-mentors',
+                                                        params: { id: item?.user?._id || '' },
+                                                    });
+                                                }} />
                                             : <InterestCard key={item.id} data={item} />
                                     )
                                 ) : (

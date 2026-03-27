@@ -103,15 +103,15 @@ const styles = StyleSheet.create({
     title: {
         textAlign: "center",
         color: "#1a5b77",
-        fontSize: 20,
+        fontSize: 15,
         fontWeight: "600",
-        marginBottom: 24,
         marginTop: 6,
     },
     row: {
         flexDirection: "row",
         width: "100%",
         gap: 12,
+        marginTop: 24,
     },
     cancelBtn: {
         flex: 1,

@@ -1,4 +1,5 @@
 import AcceptInterestModal from '@/components/Modals/AcceptInterestModal';
+import AppModal from '@/components/Modals/AppModal';
 import EditAmountBottomSheet from '@/components/Sheets/EditAmountBottomSheet';
 import { useGetUserById } from '@/hooks/useProfile';
 import { useScholarships, useAddAwardedUser, useUpdateScholarship } from '@/hooks/useScholorships';
@@ -6,7 +7,7 @@ import { Scholarship } from '@/types/scholorship.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import {
     Pressable,
@@ -31,6 +32,7 @@ const SCHOLARSHIP_TYPE_MAP: Record<ScholarshipTypeKey, string> = {
 
 export default function AssignScholarshipScreen() {
     const router = useRouter();
+    const navigation = useNavigation();
     const params = useLocalSearchParams<{ menteeId?: string | string[]; applicantRole?: string | string[] }>();
     const menteeIdRaw = params.menteeId;
     const menteeId = (
@@ -50,6 +52,8 @@ export default function AssignScholarshipScreen() {
         useState<ScholarshipTypeKey>('full');
     const [isProductExpanded, setIsProductExpanded] = useState(true);
     const [showAcceptModal, setShowAcceptModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
+    const [errorMsg, setErrorMsg] = useState<string>('');
 
     const { data: scholarships = [], isLoading } = useScholarships();
     const addAwardedUser = useAddAwardedUser();
@@ -104,7 +108,6 @@ export default function AssignScholarshipScreen() {
 
         if (!menteeId || !selectedScholarship) {
             console.log('Blocking accept because of missing data');
-            setShowAcceptModal(true);
             return;
         }
 
@@ -124,9 +127,16 @@ export default function AssignScholarshipScreen() {
             },
             {
                 onSuccess: () => {
-                    setShowAcceptModal(true);
+                    if(isPastorApplicant) {
+                        setShowAcceptModal(true);
+                    } else {
+                        // @ts-ignore
+                        navigation.pop(2);
+                    }
                 },
                 onError: (error) => {
+                    setErrorMsg(error?.message);
+                    setShowErrorModal(true);
                     console.log('Award failed', error);
                 },
             }
@@ -147,10 +157,10 @@ export default function AssignScholarshipScreen() {
             });
             return;
         }
-        router.push({
-            pathname: '/(director)/(tabs)/mentors/assign-mentees' as any,
-            params: { id: menteeId },
-        });
+        // router.push({
+        //     pathname: '/(director)/(tabs)/mentors/assign-mentees' as any,
+        //     params: { id: menteeId },
+        // });
     };
 
     console.log('Current Selection:', {
@@ -160,159 +170,181 @@ export default function AssignScholarshipScreen() {
     });
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={[styles.container, { paddingTop: top + 10 }]}
-        >
-            <ScrollView
-                style={{ flex: 1 }}
-                contentContainerStyle={{ paddingBottom: bottom + 20 }}
-                showsVerticalScrollIndicator={false}
+        <>
+            <AppModal
+                visible={showErrorModal}
+                type="success"
+                title={errorMsg}
+                autoClose={3000}
+                onClose={() => {
+                    setShowErrorModal(false);
+                    setErrorMsg('')
+                }}
+            />
+            <AppModal
+                visible={showErrorModal}
+                type="success"
+                title={errorMsg}
+                autoClose={3000}
+                onClose={() => {
+                    setShowErrorModal(false);
+                    setErrorMsg('')
+                }}
+            />
+            <LinearGradient
+                colors={['#176192', '#1D548D', '#264387']}
+                style={[styles.container, { paddingTop: top + 10 }]}
             >
-                {/* Header */}
-                <TouchableOpacity onPress={() => router.back()} style={styles.header}>
-                    <Ionicons name="chevron-back" size={28} color="#fff" />
-                    <Text style={styles.headerTitle}>Interest Received</Text>
-                </TouchableOpacity>
-
-                {/* User Card */}
-                <View style={styles.userCard}>
-                    <View style={styles.userInfo}>
-                        <View style={styles.avatar}>
-                            <Ionicons name="person-outline" size={28} color="#fff" />
-                        </View>
-                        <View>
-                            <Text style={styles.userName}>
-                                {mentee?.firstName + ' ' + mentee?.lastName || 'Unknown User'}
-                            </Text>
-                            <Text style={styles.userRole}>
-                                {mentee?.role || 'Pastor'}
-                            </Text>
-                        </View>
-                    </View>
-
-                    {/* Contact Icons */}
-                    <View style={styles.contactIcons}>
-                        <TouchableOpacity style={styles.iconButton}>
-                            <Ionicons name="call-outline" size={20} color="#fff" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconButton}>
-                            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconButton}>
-                            <Ionicons name="mail-outline" size={20} color="#fff" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconButton}>
-                            <Ionicons name="logo-whatsapp" size={20} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Rural/Urban Toggle */}
-                <View style={styles.toggleCard}>
-                    <Text style={styles.toggleLabel}>Choose Rural or Urban :</Text>
-                    <View style={styles.toggleOptions}>
-                        <Text style={styles.toggleText}>Rural</Text>
-                        <Switch
-                            value={!isRural}
-                            onValueChange={() => setIsRural((prev) => !prev)}
-                            trackColor={{
-                                false: 'rgba(255,255,255,0.3)',
-                                true: 'rgba(255,255,255,0.3)',
-                            }}
-                            thumbColor="#fff"
-                        />
-                        <Text style={styles.toggleText}>Urban</Text>
-                    </View>
-                </View>
-
-                {/* Product and Services */}
-                <View style={styles.productCard}>
-                    <Pressable
-                        style={styles.productHeader}
-                        onPress={() => setIsProductExpanded(!isProductExpanded)}
-                    >
-                        <Text style={styles.productTitle}>Product and Services</Text>
-                        <Ionicons
-                            name={isProductExpanded ? 'chevron-up' : 'chevron-down'}
-                            size={24}
-                            color="#fff"
-                        />
-                    </Pressable>
-
-                    {isProductExpanded && (
-                        <View style={styles.scholarshipList}>
-                            {scholarshipOptions.map((option) => (
-                                <TouchableOpacity
-                                    key={option.id}
-                                    style={styles.scholarshipItem}
-                                    onPress={() => setSelectedScholarshipKey(option.id)}
-                                    disabled={isLoading}
-                                >
-                                    <View style={styles.radioOuter}>
-                                        {selectedScholarshipKey === option.id && (
-                                            <View style={styles.radioInner} />
-                                        )}
-                                    </View>
-                                    <Text style={styles.scholarshipLabel}>{option.label}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )}
-                </View>
-
-                {/* Amount Section */}
-                <View style={styles.amountSection}>
-                    <View style={styles.amountCard}>
-                        <View style={styles.amountTextContainer}>
-                            <Text style={styles.amountLabel}>
-                                Amount under{'\n'}
-                                {SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey]}:
-                            </Text>
-                            <Text style={styles.amountValue}>${effectiveAmount}</Text>
-                        </View>
-                    </View>
-                    <TouchableOpacity style={styles.editButton} onPress={handleOpenEdit}>
-                        <Ionicons name="create-outline" size={18} color="#fff" />
-                        <Text style={styles.editButtonText}>Edit</Text>
+                <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ paddingBottom: bottom + 20 }}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Header */}
+                    <TouchableOpacity onPress={() => router.back()} style={styles.header}>
+                        <Ionicons name="chevron-back" size={28} color="#fff" />
+                        <Text style={styles.headerTitle}>Interest Received</Text>
                     </TouchableOpacity>
-                </View>
 
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Text style={styles.backButtonText}>BACK</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.acceptButton}
-                        onPress={handleAccept}
-                        disabled={addAwardedUser.isPending || !selectedScholarship}
-                    >
-                        <Text style={styles.acceptButtonText}>
-                            {addAwardedUser.isPending ? 'AWARDING...' : 'ACCEPT'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                    {/* User Card */}
+                    <View style={styles.userCard}>
+                        <View style={styles.userInfo}>
+                            <View style={styles.avatar}>
+                                <Ionicons name="person-outline" size={28} color="#fff" />
+                            </View>
+                            <View>
+                                <Text style={styles.userName}>
+                                    {mentee?.firstName + ' ' + mentee?.lastName || 'Unknown User'}
+                                </Text>
+                                <Text style={styles.userRole}>
+                                    {mentee?.role || 'Pastor'}
+                                </Text>
+                            </View>
+                        </View>
 
-            <AcceptInterestModal
-                visible={showAcceptModal}
-                onLater={handleAcceptLater}
-                onAssign={handleAcceptFollowUpAssign}
-                assignButtonText={
-                    isPastorApplicant ? 'Assign Mentor >>' : 'Assign Mentees >>'
-                }
-            />
+                        {/* Contact Icons */}
+                        <View style={styles.contactIcons}>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <Ionicons name="call-outline" size={20} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <Ionicons name="chatbubble-outline" size={20} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <Ionicons name="mail-outline" size={20} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.iconButton}>
+                                <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
 
-            <EditAmountBottomSheet
-                ref={bottomSheetModalRef}
-                title={SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey]}
-                amount={editAmount}
-                onChangeAmount={setEditAmount}
-                onCancel={handleCloseEdit}
-                onSave={handleSaveEditAmount}
-            />
-        </LinearGradient>
+                    {/* Rural/Urban Toggle */}
+                    <View style={styles.toggleCard}>
+                        <Text style={styles.toggleLabel}>Choose Rural or Urban :</Text>
+                        <View style={styles.toggleOptions}>
+                            <Text style={styles.toggleText}>Rural</Text>
+                            <Switch
+                                value={!isRural}
+                                onValueChange={() => setIsRural((prev) => !prev)}
+                                trackColor={{
+                                    false: 'rgba(255,255,255,0.3)',
+                                    true: 'rgba(255,255,255,0.3)',
+                                }}
+                                thumbColor="#fff"
+                            />
+                            <Text style={styles.toggleText}>Urban</Text>
+                        </View>
+                    </View>
+
+                    {/* Product and Services */}
+                    <View style={styles.productCard}>
+                        <Pressable
+                            style={styles.productHeader}
+                            onPress={() => setIsProductExpanded(!isProductExpanded)}
+                        >
+                            <Text style={styles.productTitle}>Product and Services</Text>
+                            <Ionicons
+                                name={isProductExpanded ? 'chevron-up' : 'chevron-down'}
+                                size={24}
+                                color="#fff"
+                            />
+                        </Pressable>
+
+                        {isProductExpanded && (
+                            <View style={styles.scholarshipList}>
+                                {scholarshipOptions.map((option) => (
+                                    <TouchableOpacity
+                                        key={option.id}
+                                        style={styles.scholarshipItem}
+                                        onPress={() => setSelectedScholarshipKey(option.id)}
+                                        disabled={isLoading}
+                                    >
+                                        <View style={styles.radioOuter}>
+                                            {selectedScholarshipKey === option.id && (
+                                                <View style={styles.radioInner} />
+                                            )}
+                                        </View>
+                                        <Text style={styles.scholarshipLabel}>{option.label}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Amount Section */}
+                    <View style={styles.amountSection}>
+                        <View style={styles.amountCard}>
+                            <View style={styles.amountTextContainer}>
+                                <Text style={styles.amountLabel}>
+                                    Amount under{'\n'}
+                                    {SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey]}:
+                                </Text>
+                                <Text style={styles.amountValue}>${effectiveAmount}</Text>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={styles.editButton} onPress={handleOpenEdit}>
+                            <Ionicons name="create-outline" size={18} color="#fff" />
+                            <Text style={styles.editButtonText}>Edit</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.actionButtons}>
+                        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                            <Text style={styles.backButtonText}>BACK</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.acceptButton}
+                            onPress={handleAccept}
+                            disabled={addAwardedUser.isPending || !selectedScholarship}
+                        >
+                            <Text style={styles.acceptButtonText}>
+                                {addAwardedUser.isPending ? 'AWARDING...' : 'ACCEPT'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+
+                <AcceptInterestModal
+                    visible={showAcceptModal}
+                    onLater={handleAcceptLater}
+                    onAssign={handleAcceptFollowUpAssign}
+                    assignButtonText={
+                        isPastorApplicant ? 'Assign Mentor >>' : 'Assign Mentees >>'
+                    }
+                />
+
+                <EditAmountBottomSheet
+                    ref={bottomSheetModalRef}
+                    title={SCHOLARSHIP_TYPE_MAP[selectedScholarshipKey]}
+                    amount={editAmount}
+                    onChangeAmount={setEditAmount}
+                    onCancel={handleCloseEdit}
+                    onSave={handleSaveEditAmount}
+                />
+            </LinearGradient>
+        </>
     );
 }
 
