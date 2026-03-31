@@ -574,12 +574,12 @@ export default function RoadmapFormScreen() {
             icon: 'text-outline',
             onPress: () => handleFieldTypeSelect('text_display'),
         },
-        {
-            id: 'button',
-            label: 'Action Button',
-            icon: 'radio-button-on-outline',
-            onPress: () => handleFieldTypeSelect('button'),
-        },
+        // {
+        //     id: 'button',
+        //     label: 'Action Button',
+        //     icon: 'radio-button-on-outline',
+        //     onPress: () => handleFieldTypeSelect('button'),
+        // },
         {
             id: 'digital_signature',
             label: 'Digital Signature',

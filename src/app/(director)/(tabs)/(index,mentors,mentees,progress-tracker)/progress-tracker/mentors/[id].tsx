@@ -318,6 +318,7 @@ export default function MentorProgressTracker() {
                                     key={mentee.id}
                                     data={mentee as Mentee}
                                     layout={viewMode}
+                                    showMenu={true}
                                     onPress={() =>
                                         router.push(
                                             `/(director)/(tabs)/mentees/${mentee.id}/progress` as any,

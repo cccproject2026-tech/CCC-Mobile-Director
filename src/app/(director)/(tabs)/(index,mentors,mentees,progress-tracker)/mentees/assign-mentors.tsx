@@ -222,6 +222,7 @@ console.log(menteeId,"------")
                                         description: item.profileInfo ?? '',
                                         profilePicture: item.profilePicture,
                                     }}
+                                    showMenu={true}
                                     layout={viewMode}
                                     onCall={() => console.log('Call', item.id)}
                                     onChat={() => console.log('Chat', item.id)}

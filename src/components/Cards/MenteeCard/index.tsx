@@ -29,10 +29,11 @@ export interface MenteeCardProps {
     onInviteAsFieldMentor?: () => void;
     disabled?: boolean;
     disabledMessage?: string;
+    showMenu?: boolean
 }
 
 export default function MenteeCard(props: MenteeCardProps) {
-    const { data, layout = "full", isSelected, onToggleSelect, onPress, disabled, disabledMessage } = props;
+    const { data, layout = "full", isSelected, onToggleSelect, onPress, disabled, disabledMessage, showMenu } = props;
     const isSelectionMode = onToggleSelect !== undefined;
 
     // ▫ LIST MODE
@@ -103,7 +104,7 @@ export default function MenteeCard(props: MenteeCardProps) {
     return (
         <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
             {/* Menu or Chevron */}
-            {props.onMenuPress ? (
+            {props.onMenuPress && showMenu ? (
                 <TouchableOpacity style={styles.menuButton} onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
                     <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
                 </TouchableOpacity>

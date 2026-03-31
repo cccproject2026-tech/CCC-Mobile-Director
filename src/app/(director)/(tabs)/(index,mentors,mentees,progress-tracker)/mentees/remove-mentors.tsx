@@ -201,6 +201,7 @@ export default function RemoveMentorsFromMenteeScreen() {
                                     description: item.profileInfo ?? '',
                                     profilePicture: item.profilePicture,
                                 }}
+                                showMenu={true}
                                 layout={viewMode}
                                 onCall={() => console.log('Call', item.id)}
                                 onChat={() => console.log('Chat', item.id)}

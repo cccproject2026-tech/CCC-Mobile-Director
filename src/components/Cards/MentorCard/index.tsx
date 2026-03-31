@@ -23,6 +23,7 @@ interface MentorCardProps {
     menuItems?: MenuItem[];
     onPress?: () => void;
     onMenu?: () => void;
+    showMenu?: boolean
 }
 
 export default function MentorCard({
@@ -34,7 +35,8 @@ export default function MentorCard({
     onWhatsApp,
     menuItems,
     onPress,
-    onMenu
+    onMenu,
+    showMenu
 }: MentorCardProps) {
 
     /* LIST LAYOUT ------------------------------*/
@@ -57,7 +59,7 @@ export default function MentorCard({
                 </View>
 
                 <ContactIcons small onCall={onCall} onChat={onChat} onMail={onMail} onWhatsApp={onWhatsApp} btnStyles={{marginRight: 3}}/>
-                <ContextMenu menuItems={menuItems} fallbackPress={onMenu} />
+                {showMenu && <ContextMenu menuItems={menuItems} fallbackPress={onMenu} />}
             </Pressable>
         );
     }

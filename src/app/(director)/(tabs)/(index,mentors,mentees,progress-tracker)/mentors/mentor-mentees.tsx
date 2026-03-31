@@ -342,6 +342,7 @@ export default function MentorMentees() {
                         renderItem={({ item: mentee }) => (
                             <MenteeCard
                                 data={mentee}
+                                showMenu={true}
                                 layout={viewMode}
                                 onPress={() =>
                                     router.push(`/mentees/${mentee.id}`)

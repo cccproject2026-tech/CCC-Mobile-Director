@@ -237,6 +237,7 @@ export default function ProgressTrackerIndex() {
                                 ? mentors.map(item => (
                                     <MentorCard
                                         key={item.id}
+                                        showMenu={true}
                                         mentor={{
                                             id: item.id,
                                             name: `${item.firstName} ${item.lastName ?? ''}`,
@@ -266,6 +267,7 @@ export default function ProgressTrackerIndex() {
                                         key={mentee.id}
                                         data={mentee as Mentee}
                                         layout={viewMode}
+                                        showMenu={true}
                                         onPress={() =>
                                             router.push(
                                                 `/(director)/(tabs)/mentees/${mentee.id}/progress`,

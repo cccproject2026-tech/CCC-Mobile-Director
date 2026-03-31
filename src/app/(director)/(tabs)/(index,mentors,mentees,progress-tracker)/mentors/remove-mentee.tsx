@@ -180,6 +180,7 @@ console.log('Mentees:', mentees);
                     <MenteeCard
                         data={item as Mentee}
                         layout={viewMode}
+                        showMenu={true}
                         isSelected={selectedMentees.includes(item.id)}
                         onToggleSelect={() => toggleSelectMentee(item.id)}
                         onWhatsApp={() =>

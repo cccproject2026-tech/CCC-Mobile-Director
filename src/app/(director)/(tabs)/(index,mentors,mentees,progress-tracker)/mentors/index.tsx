@@ -215,6 +215,7 @@ export default function Mentors() {
             onPress={() =>
                 router.push(`/mentors/${item.id}`)
             }
+            showMenu={true}
             mentor={{
                 id: item.id,
                 name: `${item.firstName} ${item.lastName ?? ""}`,

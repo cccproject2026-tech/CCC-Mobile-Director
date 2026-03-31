@@ -227,6 +227,7 @@ const AssignRoadmaps = () => {
                         renderItem={({ item }) => (
                             <MenteeCard
                                 key={item.id}
+                                showMenu={true}
                                 data={item}
                                 layout="card"
                                 isSelected={selectedMentees.has(item.id)}
@@ -259,6 +260,7 @@ const AssignRoadmaps = () => {
                                             <View key={item.id} style={styles.assignedCard} pointerEvents="none">
                                                 <MenteeCard
                                                     data={item}
+                                                    showMenu={true}
                                                     layout="card"
                                                     isSelected={false}
                                                     onToggleSelect={() => {}}

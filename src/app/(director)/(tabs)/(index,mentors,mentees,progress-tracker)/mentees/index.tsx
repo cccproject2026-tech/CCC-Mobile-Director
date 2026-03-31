@@ -352,6 +352,7 @@ export default function Mentees() {
                                 <MenteeCard
                                     data={mentee}
                                     layout={viewMode}
+                                    showMenu={true}
                                     onPress={() =>
                                         router.push(`/mentees/${mentee.id}`)
                                     }

@@ -298,6 +298,7 @@ export default function ProductAndServices() {
                                 <MenteeCard
                                     key={mentee.id}
                                     data={mentee}
+                                    showMenu={true}
                                     layout={viewMode}
                                     onPress={() =>
                                         router.push(`/(director)/(tabs)/mentees/${mentee.id}`)

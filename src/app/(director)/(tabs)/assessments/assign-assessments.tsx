@@ -161,6 +161,7 @@ const AssignAssessments = () => {
         <MenteeCard
             key={mentee.id}
             data={mentee}
+            showMenu={true}
             layout="card"
             isSelected={selectedMentees.has(mentee.id)}
             onToggleSelect={() => handleToggleSelection(mentee.id)}
@@ -257,6 +258,7 @@ const AssignAssessments = () => {
                                             <View key={item.id} style={styles.assignedCard} pointerEvents="none">
                                                 <MenteeCard
                                                     data={item}
+                                                    showMenu={true}
                                                     layout="card"
                                                     isSelected={false}
                                                     onToggleSelect={() => {}}

@@ -97,8 +97,8 @@ export default function RevitalizationRoadmap() {
     const getFilterOptions = (): FilterOption[] => {
         return [
             {
-                label: 'Course Completion',
-                options: ['Latest', 'Oldest'],
+                label: 'Roadmap Completion Rate',
+                options: ['Lowest', 'Highest'],
                 isExpandable: true,
             },
             {
@@ -350,36 +350,36 @@ export default function RevitalizationRoadmap() {
                 if (!selectedRoadmap) return;
                 const roadmap = roadmaps.find(r => r.name === selectedRoadmap.title);
                 if (!roadmap) return;
+                deleteRoadmapMutation.mutate(roadmap._id, {});
+                // handleCloseModal();
 
-                handleCloseModal();
-
-                Alert.alert(
-                    'Delete Roadmap',
-                    `Are you sure you want to delete "${roadmap.name}"? This action cannot be undone.`,
-                    [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                            text: 'Delete',
-                            style: 'destructive',
-                            onPress: () => {
-                                // TODO: Implement delete mutation
-                                deleteRoadmapMutation.mutate(roadmap._id, {
-                                    onSuccess: () => {
-                                        console.log('✅ Roadmap deleted successfully');
-                                        refetchRoadmaps();
-                                    },
-                                    onError: (error) => {
-                                        console.error('❌ Error deleting roadmap:', error);
-                                        Alert.alert(
-                                            'Error',
-                                            'Failed to delete roadmap. Please try again later.'
-                                        );
-                                    },
-                                });
-                            }
-                        },
-                    ]
-                );
+                // Alert.alert(
+                //     'Delete Roadmap',
+                //     `Are you sure you want to delete "${roadmap.name}"? This action cannot be undone.`,
+                //     [
+                //         { text: 'Cancel', style: 'cancel' },
+                //         {
+                //             text: 'Delete',
+                //             style: 'destructive',
+                //             onPress: () => {
+                //                 // TODO: Implement delete mutation
+                //                 deleteRoadmapMutation.mutate(roadmap._id, {
+                //                     onSuccess: () => {
+                //                         console.log('✅ Roadmap deleted successfully');
+                //                         refetchRoadmaps();
+                //                     },
+                //                     onError: (error) => {
+                //                         console.error('❌ Error deleting roadmap:', error);
+                //                         Alert.alert(
+                //                             'Error',
+                //                             'Failed to delete roadmap. Please try again later.'
+                //                         );
+                //                     },
+                //                 });
+                //             }
+                //         },
+                //     ]
+                // );
             },
         },
     ];
@@ -506,7 +506,7 @@ export default function RevitalizationRoadmap() {
         if (STATES.includes(selectedFilter)) {
             return `State: ${selectedFilter}`;
         }
-        return selectedFilter || `Course Completion : ${selectedFilter}`;
+        return selectedFilter || `Roadmap Completion Rate : ${selectedFilter}`;
     };
 
     const filterOptions = useMemo(() => getFilterOptions(), []);
@@ -590,18 +590,20 @@ export default function RevitalizationRoadmap() {
             />
 
             {/* Sort By */}
-            <View style={styles.sortContainer}>
-                <Text style={styles.sortByText}>Sort by</Text>
-                <Pressable
-                    onPress={() => setFilterModalVisible(true)}
-                    style={styles.filterButton}
-                >
-                    <Text style={styles.filterButtonText} numberOfLines={1}>
-                        {getFilterDisplayText()}
-                    </Text>
-                    <Ionicons name="chevron-down" size={18} color="#fff" />
-                </Pressable>
-            </View>
+            {((activeTab === 'mentors') || (activeTab === 'mentees')) && (
+                <View style={styles.sortContainer}>
+                    <Text style={styles.sortByText}>Sort by</Text>
+                    <Pressable
+                        onPress={() => setFilterModalVisible(true)}
+                        style={styles.filterButton}
+                    >
+                        <Text style={styles.filterButtonText} numberOfLines={1}>
+                            {getFilterDisplayText()}
+                        </Text>
+                        <Ionicons name="chevron-down" size={18} color="#fff" />
+                    </Pressable>
+                </View>
+            )}
         </View>
     );
 
@@ -660,6 +662,7 @@ export default function RevitalizationRoadmap() {
                                 params: { email: mentor.email },
                             })
                         }}
+                        showMenu={false}
                         mentor={{
                             id: mentor.id,
                             name: `${mentor.firstName} ${mentor.lastName ?? ''}`,
@@ -684,6 +687,8 @@ export default function RevitalizationRoadmap() {
                     <MenteeCard
                         data={mentee}
                         layout={viewMode}
+                        showMenu={false}
+                        showMenu={true}
                         onPress={() =>
                             router.push({
                                 pathname: `/(director)/(tabs)/roadmaps/roadmap-paths` as any,
@@ -817,10 +822,12 @@ const styles = StyleSheet.create({
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        // backgroundColor: 'rgba(255,255,255,0.2)',
+        borderWidth:1,
+        borderColor:'rgba(255,255,255,0.6)',
         paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 8,
+        paddingVertical: 4,
+        borderRadius: 14,
         gap: 8,
     },
     filterButtonText: { color: '#fff', fontSize: 13, fontWeight: '500' },

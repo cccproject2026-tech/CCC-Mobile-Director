@@ -187,12 +187,12 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                 label: "Show Date on Info card",
                                 type: "checkbox",
                             },
-                            {
-                                key: "buttonName",
-                                label: "Button",
-                                placeholder: "Enter Button Name",
-                                type: "input",
-                            },
+                            // {
+                            //     key: "buttonName",
+                            //     label: "Button",
+                            //     placeholder: "Enter Button Name",
+                            //     type: "input",
+                            // },
                         ],
                     };
                 case "assessment":
