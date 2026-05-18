@@ -8,7 +8,7 @@ import {
     ScrollView,
     StyleSheet,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -76,11 +76,12 @@ export default function PhaseListScreen() {
 
     if (isLoading) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading phases...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
@@ -111,28 +112,28 @@ export default function PhaseListScreen() {
 
     console.log('Filtered Phases images :', filteredPhases.map(p => p.image));
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+        <GradientBackground>
             <TopBar showUserName />
 
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#fff" />
+                    <View style={styles.backIconWrap}>
+                        <Ionicons name="chevron-back" size={20} color="#fff" />
+                    </View>
                     <View style={styles.headerTitleContainer}>
-                        <Text style={styles.headerTitle}>
-                            {roadmap?.name || 'Self Revitalization Phase'}
-                        </Text>
+                        <Text style={styles.headerTitle}>{roadmap?.name || 'Self Revitalization Phase'}</Text>
                         <Text style={styles.headerSubtitle}>Revitalization Roadmap</Text>
                     </View>
                 </TouchableOpacity>
 
                 <View style={styles.headerRight}>
                     <TouchableOpacity onPress={handleAddTask} style={styles.addButton}>
-                        <Ionicons name="add" size={20} color="#fff" />
+                        <Ionicons name="add" size={18} color="#fff" />
                         <Text style={styles.addButtonText}>Task</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.moreButton}>
-                        <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
+                        <Ionicons name="ellipsis-vertical" size={18} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -182,70 +183,44 @@ export default function PhaseListScreen() {
                     ))
                 )}
             </ScrollView>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.2)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
+    backButton: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerTitleContainer: {
-        marginLeft: 8,
-        flex: 1,
-    },
-    headerTitle: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: '600',
-        lineHeight: 24,
-    },
-    headerSubtitle: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
-        fontWeight: '400',
-        marginTop: 2,
-    },
-    headerRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
+    headerTitleContainer: { flex: 1 },
+    headerTitle: { color: '#fff', fontSize: 18, fontWeight: '800', letterSpacing: -0.2 },
+    headerSubtitle: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginTop: 2 },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     addButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingVertical: 8,
-        paddingHorizontal: 14,
-        borderRadius: 10,
-        gap: 4,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        paddingVertical: 7, paddingHorizontal: 12,
+        borderRadius: 9, gap: 4,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
     },
-    addButtonText: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: '600',
-    },
+    addButtonText: { color: '#fff', fontSize: 13, fontWeight: '700' },
     moreButton: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+        justifyContent: 'center', alignItems: 'center',
     },
     searchContainer: {
         paddingHorizontal: 16,

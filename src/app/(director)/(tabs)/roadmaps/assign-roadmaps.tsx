@@ -1,7 +1,7 @@
 // app/(director)/(tabs)/roadmaps/assign-roadmaps.tsx
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -175,13 +175,15 @@ const AssignRoadmaps = () => {
     }, [selectedMentees, mentees]);
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+        <GradientBackground>
             <TopBar showUserName={true} showNotifications={true} />
 
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={28} color="#fff" />
+                    <View style={styles.backIconWrap}>
+                        <Ionicons name="chevron-back" size={20} color="#fff" />
+                    </View>
                     <Text style={styles.headerTitle}>Assign to</Text>
                 </TouchableOpacity>
             </View>
@@ -297,35 +299,29 @@ const AssignRoadmaps = () => {
                     </View>
                 </View>
             )}
-        </LinearGradient>
+        </GradientBackground>
     );
 };
 
 export default AssignRoadmaps;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    backButton: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerTitle: {
-        marginLeft: 8,
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#fff',
-    },
+    headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
     searchContainer: {
         paddingHorizontal: 16,
         paddingTop: 16,
@@ -349,11 +345,11 @@ const styles = StyleSheet.create({
         paddingTop: 8,
     },
     footer: {
-        backgroundColor: 'rgba(21, 35, 96, 0.95)',
+        backgroundColor: 'rgba(15,59,92,0.97)',
         paddingHorizontal: 16,
-        paddingTop: 16,
+        paddingTop: 14,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255, 255, 255, 0.2)',
+        borderTopColor: 'rgba(255,255,255,0.12)',
     },
     footerContent: {
         flexDirection: 'row',
@@ -368,21 +364,15 @@ const styles = StyleSheet.create({
         marginRight: 16,
     },
     assignButton: {
-        backgroundColor: '#7B3FF2',
-        paddingHorizontal: 32,
-        paddingVertical: 12,
-        borderRadius: 24,
-        borderWidth: 1.5,
-        borderColor: 'rgba(0, 255, 255, 0.4)',
-        minWidth: 100,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        paddingHorizontal: 28,
+        paddingVertical: 11,
+        borderRadius: 12,
+        minWidth: 90,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    assignButtonText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#fff',
-    },
+    assignButtonText: { fontSize: 14, fontWeight: '800', color: '#0E5A62' },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',

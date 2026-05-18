@@ -14,7 +14,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -971,12 +971,12 @@ export default function RoadmapFormScreen() {
     // ✅ Loading state
     if (isEditMode && isLoading) {
         return (
-            <LinearGradient colors={['#1E3A6F', '#2C5282', '#3182CE']} style={styles.container}>
+            <GradientBackground>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading roadmap...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
@@ -990,15 +990,16 @@ export default function RoadmapFormScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={0}
         >
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <TopBar showUserName />
 
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#fff" />
-                        <Text style={styles.headerTitle}>{
-                            isEditMode ? 'Edit Roadmap' : 'Create Roadmap'}</Text>
+                        <View style={styles.backIconWrap}>
+                            <Ionicons name="chevron-back" size={20} color="#fff" />
+                        </View>
+                        <Text style={styles.headerTitle}>{isEditMode ? 'Edit Roadmap' : 'Create Roadmap'}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -1100,7 +1101,7 @@ export default function RoadmapFormScreen() {
                     itemPadding={{ horizontal: 16, vertical: 14 }}
                     itemTextStyle={{ fontSize: 15, fontWeight: '600', color: '#1A4882' }}
                 />
-            </LinearGradient>
+            </GradientBackground>
         </KeyboardAvoidingView>
     );
 }
@@ -1112,23 +1113,20 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.2)'
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    backButton: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerTitle: {
-        color: '#fff',
-        fontSize: 20,
-        fontWeight: '600',
-        marginLeft: 8,
-    },
-    content: { paddingHorizontal: 16, paddingVertical: 16 },
+    headerTitle: { color: '#fff', fontSize: 18, fontWeight: '800', letterSpacing: -0.2 },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    loadingText: { color: '#fff', fontSize: 16, marginTop: 12 },
+    loadingText: { color: '#fff', fontSize: 15, marginTop: 12 },
     section: { marginBottom: 20 },
     label: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 8 },
     textInput: {

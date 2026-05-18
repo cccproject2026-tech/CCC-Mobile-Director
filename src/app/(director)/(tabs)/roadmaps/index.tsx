@@ -16,7 +16,7 @@ import { Mentee, Mentor } from '@/types/user.types';
 import { getRoadmapCard } from '@/utils/roadmapMapper';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -582,6 +582,7 @@ export default function RevitalizationRoadmap() {
 
             {/* Tabs */}
             <TabSwitcher
+                variant="frosted"
                 tabs={tabData}
                 activeTab={activeTab}
                 onChange={key =>
@@ -721,7 +722,7 @@ export default function RevitalizationRoadmap() {
 
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+        <GradientBackground>
             <View style={styles.flex1}>
                 <TopBar notifications={3} showUserName={true} showNotifications={true} />
                 <RoadmapHeader
@@ -802,12 +803,11 @@ export default function RevitalizationRoadmap() {
                     mode="create"
                 />
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
     flex1: { flex: 1 },
     searchContainer: { paddingHorizontal: 16, marginBottom: 8 },
     swiperContainer: { marginBottom: 16 },
@@ -818,19 +818,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginBottom: 16,
     },
-    sortByText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+    sortByText: { color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: '500' },
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        // backgroundColor: 'rgba(255,255,255,0.2)',
-        borderWidth:1,
-        borderColor:'rgba(255,255,255,0.6)',
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 14,
-        gap: 8,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        borderRadius: 20,
+        gap: 6,
     },
-    filterButtonText: { color: '#fff', fontSize: 13, fontWeight: '500' },
+    filterButtonText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '600' },
     contentList: {
         // paddingBottom: 100, // Moved to ListFooterComponent
     },

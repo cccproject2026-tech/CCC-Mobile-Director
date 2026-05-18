@@ -7,7 +7,7 @@ import {
     View,
     FlatList,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -100,30 +100,32 @@ export default function MenteeRoadmapPathsScreen() {
 
     if (isLoading) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading assigned roadmaps...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+        <GradientBackground>
             <TopBar showUserName />
 
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#fff" />
+                    <View style={styles.backIconWrap}>
+                        <Ionicons name="chevron-back" size={20} color="#fff" />
+                    </View>
                     <View style={styles.headerTitleContainer}>
                         <Text style={styles.headerTitle}>Revitalization Roadmap</Text>
                         <Text style={styles.headerSubtitle}>Mentee • {menteeName}</Text>
                     </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.moreButton}>
-                    <Ionicons name="ellipsis-vertical" size={24} color="#fff" />
+                    <Ionicons name="ellipsis-vertical" size={18} color="#fff" />
                 </TouchableOpacity>
             </View>
 
@@ -139,6 +141,7 @@ export default function MenteeRoadmapPathsScreen() {
 
             {/* Tabs */}
             <TabSwitcher
+                variant="frosted"
                 tabs={tabItems}
                 activeTab={activeTab}
                 onChange={(key) => setActiveTab(key as TabKey)}
@@ -171,51 +174,37 @@ export default function MenteeRoadmapPathsScreen() {
                     </View>
                 }
             />
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        color: '#fff',
-        marginTop: 12,
-        fontSize: 16,
-    },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingText: { color: '#fff', marginTop: 12, fontSize: 15 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
+    backButton: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerTitleContainer: {
-        marginLeft: 12,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#fff',
-    },
-    headerSubtitle: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.7)',
-        marginTop: 2,
-    },
+    headerTitleContainer: { marginLeft: 0 },
+    headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
+    headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 },
     moreButton: {
-        padding: 4,
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+        justifyContent: 'center', alignItems: 'center',
     },
     searchContainer: {
         paddingHorizontal: 16,

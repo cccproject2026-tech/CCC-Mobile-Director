@@ -1,7 +1,7 @@
 // app/(director)/(tabs)/roadmaps/select-roadmaps.tsx
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -95,32 +95,28 @@ const SelectRoadmaps = () => {
     };
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+        <GradientBackground>
             <TopBar showUserName={true} showNotifications={true} />
 
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="close" size={32} color="#fff" />
+                    <View style={styles.backIconWrap}>
+                        <Ionicons name="close" size={22} color="#fff" />
+                    </View>
                 </TouchableOpacity>
 
                 <View style={styles.headerCenter}>
                     <Text style={styles.headerTitle}>Select Roadmaps</Text>
-                    <Text style={styles.headerSubtitle}>
-                        {selectedRoadmaps.size} selected
-                    </Text>
+                    <Text style={styles.headerSubtitle}>{selectedRoadmaps.size} selected</Text>
                 </View>
 
                 <TouchableOpacity
                     onPress={handleConfirm}
-                    style={styles.confirmButton}
+                    style={[styles.confirmButton, selectedRoadmaps.size === 0 && { opacity: 0.35 }]}
                     disabled={selectedRoadmaps.size === 0}
                 >
-                    <Ionicons
-                        name="arrow-redo-outline"
-                        size={32}
-                        color={selectedRoadmaps.size === 0 ? 'rgba(255,255,255,0.3)' : '#fff'}
-                    />
+                    <Ionicons name="arrow-redo-outline" size={22} color="#fff" />
                 </TouchableOpacity>
             </View>
 
@@ -176,51 +172,37 @@ const SelectRoadmaps = () => {
                     </ScrollView>
                 )}
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 };
 
 export default SelectRoadmaps;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
     backButton: {
-        width: 44,
-        height: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerCenter: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    headerSubtitle: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginTop: 2,
-    },
+    backIconWrap: {},
+    headerCenter: { flex: 1, alignItems: 'center' },
+    headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
+    headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 },
     confirmButton: {
-        width: 44,
-        height: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+        alignItems: 'center', justifyContent: 'center',
     },
     searchContainer: {
         paddingHorizontal: 16,
