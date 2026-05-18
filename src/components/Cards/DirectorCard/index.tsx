@@ -17,19 +17,21 @@ export default function DirectorCard({ data, onEdit, onDelete }: DirectorCardPro
     return (
         <View style={styles.card}>
             <View style={styles.left}>
-                <Ionicons name="person-outline" size={26} color="#fff" />
-                <View style={{ marginLeft: 10 }}>
+                <View style={styles.avatar}>
+                    <Ionicons name="person-outline" size={20} color="rgba(255,255,255,0.85)" />
+                </View>
+                <View>
                     <Text style={styles.name}>{name}</Text>
                     <Text style={styles.email}>{data.email}</Text>
                 </View>
             </View>
 
             <View style={styles.actions}>
-                <TouchableOpacity onPress={onEdit}>
-                    <Ionicons name="create-outline" size={20} color="#fff" />
+                <TouchableOpacity style={styles.actionBtn} onPress={onEdit}>
+                    <Ionicons name="create-outline" size={18} color="rgba(255,255,255,0.85)" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={onDelete} style={{ marginLeft: 12 }}>
-                    <Ionicons name="trash-outline" size={20} color="#ff6b6b" />
+                <TouchableOpacity style={styles.actionBtn} onPress={onDelete}>
+                    <Ionicons name="trash-outline" size={18} color="#F87171" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -38,17 +40,38 @@ export default function DirectorCard({ data, onEdit, onDelete }: DirectorCardPro
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#1A4882",
+        backgroundColor: "rgba(255,255,255,0.08)",
         borderRadius: 14,
         padding: 14,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.3)",
+        borderColor: "rgba(255,255,255,0.12)",
     },
-    left: { flexDirection: "row", alignItems: "center" },
-    name: { color: "#fff", fontSize: 16, fontWeight: "600" },
-    email: { color: "rgba(255,255,255,0.8)", fontSize: 13 },
-    actions: { flexDirection: "row" },
+    left: { flexDirection: "row", alignItems: "center", flex: 1 },
+    avatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.18)",
+        alignItems: "center",
+        justifyContent: "center",
+        marginRight: 12,
+    },
+    name: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: -0.1 },
+    email: { color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 2 },
+    actions: { flexDirection: "row", gap: 4 },
+    actionBtn: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: "rgba(255,255,255,0.10)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.16)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
 });

@@ -6,12 +6,12 @@ import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
 import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useMentees } from '@/hooks/useMentees';
 import { useMentors } from '@/hooks/useMentors';
 import { Mentee, Mentor } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -40,174 +40,82 @@ export default function ProgressTrackerIndex() {
     const { data: mentorsData, isLoading: mentorsLoading } = useMentors(10);
     const mentors: Mentor[] = mentorsData?.pages.flatMap((page) => page.mentors) ?? [];
 
-    const getFilterOptions = (): FilterOption[] => {
-        return [
-            {
-                label: 'Course Completion',
-                options: ['Latest', 'Oldest'],
-                isExpandable: true,
-            },
-            {
-                label: 'Conference',
-                isExpandable: true,
-            },
-        ];
-    };
-
+    const getFilterOptions = (): FilterOption[] => [
+        { label: 'Course Completion', options: ['Latest', 'Oldest'], isExpandable: true },
+        { label: 'Conference', isExpandable: true },
+    ];
     const filterOptions = useMemo(() => getFilterOptions(), []);
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
     const handleMenuPress = useCallback((mentee: Mentee) => {
         setSelectedMentee(mentee);
-        setTimeout(() => {
-            bottomSheetModalRef.current?.present();
-        }, 0);
+        setTimeout(() => bottomSheetModalRef.current?.present(), 0);
     }, []);
 
     const handleCloseModal = useCallback(() => {
         bottomSheetModalRef.current?.dismiss();
-        setTimeout(() => {
-            setSelectedMentee(null);
-        }, 300);
+        setTimeout(() => setSelectedMentee(null), 300);
     }, []);
 
     const menuItems = [
-        {
-            icon: 'people-outline',
-            label: 'Revitalization Roadmaps',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentors/mentor-mentees');
-                }, 300);
-            },
-        },
-        {
-            icon: 'person-add-outline',
-            label: 'Assign Mentor',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/assign-mentors');
-                }, 300);
-            },
-        },
-        {
-            icon: 'person-remove-outline',
-            label: 'Remove Mentor',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/remove-mentors');
-                }, 300);
-            },
-        },
-        {
-            icon: 'person-add-outline',
-            label: 'Assessments',
-            onPress: () => router.push('/(director)/(tabs)/assessments'),
-        },
-        {
-            icon: 'person-remove-outline',
-            label: 'Assignments',
-            onPress: () => console.log('Assignments'),
-        },
-        {
-            icon: 'clipboard-outline',
-            label: 'Roadmaps of Mentees',
-            onPress: () => console.log('Roadmaps of Mentees'),
-        },
-        {
-            icon: 'checkmark-done-outline',
-            label: 'Mentor Notes',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/notes');
-                }, 300);
-            },
-        },
-        {
-            icon: 'book-outline',
-            label: 'View Progress Report',
-            onPress: () => console.log('Assignments of Mentees'),
-        },
-        {
-            icon: 'stats-chart-outline',
-            label: 'Micro Grant',
-            onPress: () => console.log('Progress of Mentees'),
-        },
-        {
-            icon: 'calendar-outline',
-            label: 'Product and Services',
-            onPress: () => console.log('Schedule a Meeting'),
-        },
+        { icon: 'people-outline', label: 'Revitalization Roadmaps', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentors/mentor-mentees'), 300); } },
+        { icon: 'person-add-outline', label: 'Assign Mentor', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/assign-mentors'), 300); } },
+        { icon: 'person-remove-outline', label: 'Remove Mentor', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/remove-mentors'), 300); } },
+        { icon: 'person-add-outline', label: 'Assessments', onPress: () => router.push('/(director)/(tabs)/assessments') },
+        { icon: 'person-remove-outline', label: 'Assignments', onPress: () => console.log('Assignments') },
+        { icon: 'clipboard-outline', label: 'Roadmaps of Mentees', onPress: () => console.log('Roadmaps of Mentees') },
+        { icon: 'checkmark-done-outline', label: 'Mentor Notes', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/notes'), 300); } },
+        { icon: 'book-outline', label: 'View Progress Report', onPress: () => console.log('View Progress Report') },
+        { icon: 'stats-chart-outline', label: 'Micro Grant', onPress: () => console.log('Micro Grant') },
+        { icon: 'calendar-outline', label: 'Product and Services', onPress: () => console.log('Product and Services') },
     ];
 
     const tabs = [
         { key: 'all', label: 'All Mentees' },
         { key: 'mentor-wise', label: 'Mentor Wise' },
-        { key: 'in-progress', label: 'In-progress' },
+        { key: 'in-progress', label: 'In Progress' },
     ];
 
     const isLoading = menteesLoading || mentorsLoading;
 
     const handleMentorPress = (mentor: Mentor) => {
-        // Navigate to dedicated mentor detail page
         router.push(`/(director)/(tabs)/progress-tracker/mentors/${mentor.id}`);
     };
 
     const filteredMentees: Mentee[] = useMemo(() => {
         let list = mentees;
-
         if (search) {
             const q = search.toLowerCase();
-            list = list.filter(m =>
-                `${m.firstName} ${m.lastName ?? ''}`.toLowerCase().includes(q),
-            );
+            list = list.filter(m => `${m.firstName} ${m.lastName ?? ''}`.toLowerCase().includes(q));
         }
-
         if (activeTab === 'in-progress') {
             list = list.filter(m => !m.hasCompleted && (m.progress ?? 0) < 100);
         }
-
         return list;
     }, [mentees, search, activeTab]);
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={styles.screen}
-        >
+        <GradientBackground>
             <View style={styles.pageRoot}>
                 <TopBar showUserName showNotifications />
 
                 <View style={styles.content}>
                     {/* Header */}
                     <View style={styles.header}>
-                        <TouchableOpacity
-                            onPress={() => router.back()}
-                            style={styles.headerLeft}
-                        >
-                            <Ionicons name="chevron-back" size={28} color="#fff" />
+                        <TouchableOpacity onPress={() => router.back()} style={styles.headerLeft}>
+                            <View style={styles.backIconWrap}>
+                                <Ionicons name="chevron-back" size={20} color="#fff" />
+                            </View>
                             <Text style={styles.headerTitle}>Progress Tracker</Text>
                         </TouchableOpacity>
 
-                        <View style={styles.headerActions}>
-                            <TouchableOpacity
-                                onPress={() =>
-                                    setViewMode(viewMode === 'card' ? 'list' : 'card')
-                                }
-                                style={styles.iconButton}
-                            >
-                                <Ionicons
-                                    name={viewMode === 'card' ? 'list' : 'grid'}
-                                    size={24}
-                                    color="#fff"
-                                />
-                            </TouchableOpacity>
-                        </View>
+                        <TouchableOpacity
+                            onPress={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
+                            style={styles.iconButton}
+                        >
+                            <Ionicons name={viewMode === 'card' ? 'list' : 'grid'} size={20} color="#fff" />
+                        </TouchableOpacity>
                     </View>
 
                     {/* Search */}
@@ -217,6 +125,7 @@ export default function ProgressTrackerIndex() {
 
                     {/* Tabs */}
                     <TabSwitcher
+                        variant="frosted"
                         tabs={tabs}
                         activeTab={activeTab}
                         onChange={tabKey => setActiveTab(tabKey as TabKey)}
@@ -224,7 +133,7 @@ export default function ProgressTrackerIndex() {
 
                     {/* List */}
                     {isLoading ? (
-                        <View style={styles.loadingContainer}>
+                        <View style={styles.centerState}>
                             <ActivityIndicator size="large" color="#fff" />
                         </View>
                     ) : (
@@ -234,86 +143,59 @@ export default function ProgressTrackerIndex() {
                             showsVerticalScrollIndicator={false}
                         >
                             {activeTab === 'mentor-wise'
-                                ? mentors.map(item => (
+                                ? mentors.length === 0 ? (
+                                    <View style={styles.emptyContainer}>
+                                        <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
+                                        <Text style={styles.emptyText}>No mentors found</Text>
+                                    </View>
+                                ) : mentors.map(item => (
                                     <MentorCard
                                         key={item.id}
                                         showMenu={true}
                                         mentor={{
                                             id: item.id,
                                             name: `${item.firstName} ${item.lastName ?? ''}`,
-                                            role:
-                                                item.role === 'field_mentor'
-                                                    ? 'Field Mentor'
-                                                    : 'Mentor',
+                                            role: item.role === 'field_mentor' ? 'Field Mentor' : 'Mentor',
                                             menteesCount: item.assignedId?.length ?? 0,
-                                            description:
-                                                item.profileInfo ?? 'No profile info',
+                                            description: item.profileInfo ?? 'No profile info',
                                             profilePicture: item.profilePicture,
                                         }}
                                         layout={viewMode}
-                                        onCall={() =>
-                                            console.log('CALL', item.phoneNumber)
-                                        }
-                                        onWhatsApp={() =>
-                                            console.log('WHATSAPP', item.phoneNumber)
-                                        }
+                                        onCall={() => console.log('CALL', item.phoneNumber)}
+                                        onWhatsApp={() => console.log('WHATSAPP', item.phoneNumber)}
                                         onMail={() => console.log('MAIL', item.email)}
                                         onChat={() => console.log('CHAT')}
                                         onPress={() => handleMentorPress(item)}
                                     />
                                 ))
-                                : filteredMentees.map(mentee => (
+                                : filteredMentees.length === 0 ? (
+                                    <View style={styles.emptyContainer}>
+                                        <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
+                                        <Text style={styles.emptyText}>No pastors found</Text>
+                                    </View>
+                                ) : filteredMentees.map(mentee => (
                                     <MenteeCard
                                         key={mentee.id}
                                         data={mentee as Mentee}
                                         layout={viewMode}
                                         showMenu={true}
-                                        onPress={() =>
-                                            router.push(
-                                                `/(director)/(tabs)/mentees/${mentee.id}/progress`,
-                                            )
-                                        }
-                                        onCall={() =>
-                                            console.log(
-                                                'Call',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
-                                        onChat={() =>
-                                            console.log(
-                                                'Chat',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
-                                        onMail={() =>
-                                            console.log(
-                                                'Mail',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
-                                        onWhatsApp={() =>
-                                            console.log(
-                                                'WhatsApp',
-                                                `${mentee.firstName} ${mentee.lastName ?? ''}`,
-                                            )
-                                        }
+                                        onPress={() => router.push(`/(director)/(tabs)/mentees/${mentee.id}/progress`)}
+                                        onCall={() => console.log('Call', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
+                                        onChat={() => console.log('Chat', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
+                                        onMail={() => console.log('Mail', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
+                                        onWhatsApp={() => console.log('WhatsApp', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
                                         onMenuPress={() => handleMenuPress(mentee)}
-                                        onMarkComplete={() =>
-                                            console.log('Mark complete', mentee.firstName)
-                                        }
+                                        onMarkComplete={() => console.log('Mark complete', mentee.firstName)}
                                     />
-                                ))}
+                                ))
+                            }
                         </ScrollView>
                     )}
                 </View>
 
                 <ActionBottomSheet
                     ref={bottomSheetModalRef}
-                    title={
-                        selectedMentee
-                            ? `${selectedMentee.firstName} ${selectedMentee.lastName ?? ''}`
-                            : ''
-                    }
+                    title={selectedMentee ? `${selectedMentee.firstName} ${selectedMentee.lastName ?? ''}` : ''}
                     image={selectedMentee?.profilePicture}
                     actions={menuItems}
                     onClose={handleCloseModal}
@@ -323,61 +205,53 @@ export default function ProgressTrackerIndex() {
                     visible={filterModalVisible}
                     onClose={() => setFilterModalVisible(false)}
                     selectedFilter={selectedFilter}
-                    onFilterSelect={filter => {
-                        setSelectedFilter(filter);
-                        setFilterModalVisible(false);
-                    }}
+                    onFilterSelect={filter => { setSelectedFilter(filter); setFilterModalVisible(false); }}
                     filterOptions={filterOptions}
                 />
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    screen: { flex: 1 },
     pageRoot: { flex: 1 },
     content: { flex: 1, paddingTop: 24 },
-
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
         paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingBottom: 14,
         marginBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    headerLeft: {
-        flexDirection: 'row',
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    backIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
         alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#fff',
-        marginLeft: 8,
-    },
-    headerActions: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    iconButton: { padding: 4 },
-
-    searchContainer: {
-        paddingHorizontal: 16,
-        marginBottom: 16,
-    },
-
-    scroll: { flex: 1 },
-    scrollContent: {
-        paddingHorizontal: 16,
-        paddingBottom: 16,
-    },
-
-    loadingContainer: {
-        flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
     },
+    headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
+    iconButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.16)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    searchContainer: { paddingHorizontal: 16, marginBottom: 16 },
+    scroll: { flex: 1 },
+    scrollContent: { paddingHorizontal: 16, paddingBottom: 24 },
+    centerState: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    emptyContainer: { alignItems: 'center', paddingVertical: 48, gap: 12 },
+    emptyText: { color: 'rgba(255,255,255,0.5)', fontSize: 15, fontWeight: '500' },
 });
