@@ -1,10 +1,11 @@
 
+import { useMentees } from '@/hooks/useMentees';
+import { useMentors } from '@/hooks/useMentors';
+import { CommonCard, roadmapTheme } from '@/components/ui/design-system';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import MentorMenteeCard from '../Cards/MentorMenteeCard';
-import { useMentors } from '@/hooks/useMentors';
-import { useMentees } from '@/hooks/useMentees';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const isSmallDevice = SCREEN_WIDTH < 375;
@@ -13,12 +14,11 @@ const MentorMenteeSection: React.FC = () => {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<'mentors' | 'mentees'>('mentors');
 
-    // Fetch mentors and mentees from API
     const { data: allMentors, isLoading: isLoadingMentors, error: isErrorMentors } = useMentors(10);
     const { data: menteesData, isLoading: isLoadingMentees, isError: isErrorMentees } = useMentees(10);
     console.log(menteesData, 'menteesData');
     console.log(allMentors, 'allMentors');
-    // Limit to first 3 items
+
     const mentors = useMemo(() => {
         const allMentor = allMentors?.pages.flatMap((page: any) => page.mentors) ?? [];
         return allMentor && Array.isArray(allMentor) ? allMentor.slice(0, 3) : [];
@@ -39,7 +39,6 @@ const MentorMenteeSection: React.FC = () => {
     };
 
     const handleMenteePress = (menteeId: string) => {
-        // const allMentees = mentees ?? [];
         const mentee = mentees.find((m: any) => m.id === menteeId);
         const email = mentee?.email || '';
         router.push(`/(director)/(tabs)/mentees/${menteeId}${email ? `?email=${encodeURIComponent(email)}` : ''}` as any);
@@ -54,8 +53,7 @@ const MentorMenteeSection: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
-            {/* Tab Header */}
+        <CommonCard>
             <View style={styles.header}>
                 <View style={styles.tabs}>
                     <Pressable
@@ -87,16 +85,15 @@ const MentorMenteeSection: React.FC = () => {
                     </Pressable>
                 </View>
 
-                <Pressable onPress={handleSeeAll}>
+                <Pressable onPress={handleSeeAll} hitSlop={8}>
                     <Text style={styles.seeAll}>See all</Text>
                 </Pressable>
             </View>
 
-            {/* List */}
             <View style={styles.listContainer}>
                 {isLoading ? (
                     <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color="#EAF7FF" />
+                        <ActivityIndicator size="small" color={roadmapTheme.textPrimary} />
                     </View>
                 ) : isError ? (
                     <View style={styles.errorContainer}>
@@ -142,17 +139,13 @@ const MentorMenteeSection: React.FC = () => {
                     </>
                 )}
             </View>
-        </View>
+        </CommonCard>
     );
 };
 
 export default MentorMenteeSection;
 
 const styles = StyleSheet.create({
-    container: {
-        // paddingHorizontal: 16,
-        marginTop: 20,
-    },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -164,32 +157,32 @@ const styles = StyleSheet.create({
         gap: isSmallDevice ? 6 : 8,
     },
     tab: {
-        paddingHorizontal: isSmallDevice ? 16 : 20,
-        paddingVertical: isSmallDevice ? 8 : 10,
-        borderRadius: 24,
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.4)',
+        paddingHorizontal: isSmallDevice ? 14 : 16,
+        paddingVertical: isSmallDevice ? 7 : 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorderStrong,
         backgroundColor: 'transparent',
     },
     activeTab: {
-        backgroundColor: '#fff',
-        borderColor: '#fff',
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: 'rgba(255,255,255,0.92)',
     },
     tabText: {
-        fontSize: isSmallDevice ? 14 : 15,
+        fontSize: isSmallDevice ? 13 : 14,
         fontWeight: '700',
-        color: 'rgba(255,255,255,0.9)',
+        color: roadmapTheme.textMuted,
     },
     activeTabText: {
-        color: '#164d62',
+        color: roadmapTheme.textActive,
     },
     seeAll: {
-        fontSize: isSmallDevice ? 13 : 14,
+        fontSize: 13,
         fontWeight: '600',
-        color: '#EAF7FF',
+        color: 'rgba(255,255,255,0.85)',
     },
     listContainer: {
-        paddingBottom: 20,
+        gap: 12,
     },
     loadingContainer: {
         paddingVertical: 20,
@@ -202,7 +195,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     errorText: {
-        color: '#ff6b6b',
+        color: '#fca5a5',
         fontSize: isSmallDevice ? 13 : 14,
         fontWeight: '500',
     },
@@ -212,7 +205,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     emptyText: {
-        color: 'rgba(255,255,255,0.7)',
+        color: roadmapTheme.textMuted,
         fontSize: isSmallDevice ? 13 : 14,
         fontWeight: '500',
     },

@@ -1,5 +1,6 @@
 import { formatClock, formatDate } from '@/utils/date';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ImageBackground, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
 import Animated, { SharedValue, interpolate, useAnimatedStyle } from 'react-native-reanimated';
 import TopBar from './TopBar';
@@ -10,22 +11,24 @@ type Props = {
     bottomBlendColor: string;
     blendHeight?: number;
     scrollOffset: SharedValue<number>;
-
-    // Optional props for backward compatibility
+    /** When false, hides the large clock and date block (Pastor Home compact hero). Default true. */
+    showClockDate?: boolean;
     clock?: string;
     date?: string;
-
-    // Notify parent when greeting changes
     onGreetingPeriodChange?: (period: 'morning' | 'afternoon' | 'evening') => void;
+    /** Greeting + welcome card overlay at bottom of hero (Pastor Home). */
+    children?: ReactNode;
 };
 
 const HeaderHero: React.FC<Props> = ({
     height,
     image,
     scrollOffset,
+    showClockDate = true,
     clock: externalClock,
     date: externalDate,
-    onGreetingPeriodChange
+    onGreetingPeriodChange,
+    children,
 }) => {
     const [now, setNow] = useState(new Date());
     const previousPeriodRef = useRef<'morning' | 'afternoon' | 'evening' | null>(null);
@@ -58,7 +61,7 @@ const HeaderHero: React.FC<Props> = ({
         const interval = setInterval(updateTime, 1000);
         return () => clearInterval(interval);
 
-    }, [useInternalState, onGreetingPeriodChange]);
+    }, [useInternalState, onGreetingPeriodChange, getGreetingPeriod]);
 
     const clock = useInternalState ? formatClock(now) : externalClock!;
     const date = useInternalState ? formatDate(now) : externalDate!;
@@ -84,7 +87,15 @@ const HeaderHero: React.FC<Props> = ({
                 <ImageBackground source={image} resizeMode="cover" style={StyleSheet.absoluteFill} />
             </Animated.View>
 
-            {/* Top Bar (Director Only) */}
+            {children ? (
+                <LinearGradient
+                    colors={['transparent', 'rgba(12, 40, 65, 0.2)', 'rgba(12, 40, 65, 0.82)']}
+                    locations={[0, 0.45, 1]}
+                    style={styles.heroFade}
+                    pointerEvents="none"
+                />
+            ) : null}
+
             <View style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
                 <TopBar
                     notifications={3}
@@ -92,13 +103,56 @@ const HeaderHero: React.FC<Props> = ({
                 />
             </View>
 
-            {/* Clock + Date */}
-            <View style={{ position: 'absolute', left: 0, right: 0, top: '38%', alignItems: 'center' }}>
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 32 }}>{clock}</Text>
-                <Text style={{ color: '#fff', opacity: 0.95, marginTop: 6 }}>{date}</Text>
-            </View>
+            {showClockDate ? (
+                <View style={styles.clockBlock}>
+                    <Text style={styles.clockText}>{clock}</Text>
+                    <Text style={styles.dateText}>{date}</Text>
+                </View>
+            ) : null}
+
+            {children ? (
+                <View style={styles.childrenBlock}>
+                    {children}
+                </View>
+            ) : null}
         </View>
     );
 };
 
 export default HeaderHero;
+
+const styles = StyleSheet.create({
+    heroFade: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: '72%',
+    },
+    clockBlock: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: '38%',
+        alignItems: 'center',
+    },
+    clockText: {
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: 32,
+    },
+    dateText: {
+        color: '#fff',
+        opacity: 0.95,
+        marginTop: 6,
+    },
+    childrenBlock: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        paddingHorizontal: 16,
+        paddingBottom: 10,
+        gap: 4,
+    },
+});

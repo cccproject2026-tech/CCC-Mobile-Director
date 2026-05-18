@@ -20,7 +20,7 @@ export const assessmentService = {
             }
         }
         );
-        console.log('📥 Assessments fetched:', response.data);
+        console.log('📥 Assessments fetched count:', Array.isArray(response.data) ? response.data.length : undefined);
         return response.data;
     },
 

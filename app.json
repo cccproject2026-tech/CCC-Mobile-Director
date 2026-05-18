@@ -87,8 +87,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "45080274-8402-4feb-9b8d-648bc90d4be9"
+        "projectId": "1e74f903-387e-4f81-b692-49aa52a82c77"
       }
-    }
+    },
+    "owner": "bala2002"
   }
 }

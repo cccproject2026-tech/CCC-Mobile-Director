@@ -1,9 +1,10 @@
+import { CommonCard, HomeSectionHeader } from '@/components/ui/design-system';
+import { useAddUser } from '@/hooks/useDirectors';
+import { UserRole } from '@/types/user.types';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import AddUserCard from '../Cards/AddUserCard';
 import UserAddedConfirmationModal from '../Modals/AddUserConfirmationModal';
-import { useAddUser } from '@/hooks/useDirectors';
-import { UserRole } from '@/types/user.types';
 
 type Props = {};
 
@@ -13,11 +14,9 @@ const AddUserSection = (props: Props) => {
 
     const addUserMutation = useAddUser();
 
-    // Updated arguments to receive firstName and lastName separately
     const handleUserAdded = (firstName: string, lastName: string, role: UserRole, email: string) => {
         console.log("[AddUserSection.handleUserAdded] input:", { firstName, lastName, role, email });
 
-        // Build the payload directly using the separate name strings
         const payload = {
             firstName: firstName.trim(),
             lastName: lastName.trim(),
@@ -58,20 +57,18 @@ const AddUserSection = (props: Props) => {
 
     const handleAssign = () => {
         setShowConfirmation(false);
-        // Navigate to assignment screen if needed
     };
 
     return (
-        <View
-            style={{
-                marginTop: 10,
-                gap: 12,
-                borderBottomColor: "#ffffff22",
-                borderBottomWidth: 1,
-                paddingBottom: 18,
-            }}
-        >
-            <AddUserCard onUserAdded={handleUserAdded} />
+        <CommonCard>
+            <HomeSectionHeader
+                icon="person-add-outline"
+                title="Add User"
+                subtitle="Invite mentors, pastors, or staff to the platform."
+            />
+            <View style={styles.body}>
+                <AddUserCard onUserAdded={handleUserAdded} />
+            </View>
             <UserAddedConfirmationModal
                 visible={showConfirmation}
                 userName={addedUser.name}
@@ -79,10 +76,14 @@ const AddUserSection = (props: Props) => {
                 onLater={handleCloseConfirmation}
                 onAssign={handleAssign}
             />
-        </View>
+        </CommonCard>
     );
 };
 
 export default AddUserSection;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+    body: {
+        gap: 12,
+    },
+});
