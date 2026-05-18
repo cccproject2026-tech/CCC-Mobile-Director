@@ -17,45 +17,22 @@ export const UserCardSkeleton: React.FC<UserCardSkeletonProps> = ({
             <View style={styles.listContainer}>
                 {/* Avatar */}
                 <Skeleton
-                    colorMode="light"
+                    colorMode="dark"
                     radius={10}
                     height={46}
                     width={46}
-                    colors={["#dbe9f5", "#b9d4e6"]}
                 />
 
                 {/* Name + small badge */}
                 <View style={styles.listInfo}>
-                    <Skeleton
-                        colorMode="light"
-                        height={16}
-                        width={"70%"}
-                        colors={["#dbe9f5", "#b9d4e6"]}
-                    />
-                    <Skeleton
-                        colorMode="light"
-                        height={12}
-                        width={80}
-                        colors={["#dbe9f5", "#b9d4e6"]}
-                    />
+                    <Skeleton colorMode="dark" height={16} width={"70%"} />
+                    <Skeleton colorMode="dark" height={12} width={80} />
                 </View>
 
                 {/* Right side icons placeholder */}
                 <View style={styles.listIcons}>
-                    <Skeleton
-                        colorMode="light"
-                        radius={999}
-                        height={24}
-                        width={24}
-                        colors={["#dbe9f5", "#b9d4e6"]}
-                    />
-                    <Skeleton
-                        colorMode="light"
-                        radius={999}
-                        height={24}
-                        width={24}
-                        colors={["#dbe9f5", "#b9d4e6"]}
-                    />
+                    <Skeleton colorMode="dark" radius={999} height={24} width={24} />
+                    <Skeleton colorMode="dark" radius={999} height={24} width={24} />
                 </View>
             </View>
         );
@@ -66,100 +43,33 @@ export const UserCardSkeleton: React.FC<UserCardSkeletonProps> = ({
         <View style={styles.card}>
             <View style={styles.cardRow}>
                 {/* Avatar */}
-                <Skeleton
-                    colorMode="light"
-                    radius={10}
-                    height={70}
-                    width={70}
-                    colors={["#dbe9f5", "#b9d4e6"]}
-                />
+                <Skeleton colorMode="dark" radius={10} height={70} width={70} />
 
                 <View style={styles.cardInfo}>
-                    {/* Name + badge row */}
                     <View style={styles.row}>
-                        <Skeleton
-                            colorMode="light"
-                            height={18}
-                            width={"50%"}
-                            colors={["#dbe9f5", "#b9d4e6"]}
-                        />
+                        <Skeleton colorMode="dark" height={18} width={"50%"} />
                         <View style={{ marginLeft: 8 }}>
-                            <Skeleton
-                                colorMode="light"
-                                height={14}
-                                width={90}
-                                colors={["#dbe9f5", "#b9d4e6"]}
-                            />
+                            <Skeleton colorMode="dark" height={14} width={90} />
                         </View>
                     </View>
-
-                    {/* Role */}
                     <View style={{ marginTop: 6 }}>
-                        <Skeleton
-                            colorMode="light"
-                            height={14}
-                            width={80}
-                            colors={["#dbe9f5", "#b9d4e6"]}
-                        />
+                        <Skeleton colorMode="dark" height={14} width={80} />
                     </View>
-
-                    {/* Description */}
                     <View style={{ marginTop: 8, gap: 6 }}>
-                        <Skeleton
-                            colorMode="light"
-                            height={14}
-                            width={"100%"}
-                            colors={["#dbe9f5", "#b9d4e6"]}
-                        />
-                        <Skeleton
-                            colorMode="light"
-                            height={14}
-                            width={"80%"}
-                            colors={["#dbe9f5", "#b9d4e6"]}
-                        />
+                        <Skeleton colorMode="dark" height={14} width={"100%"} />
+                        <Skeleton colorMode="dark" height={14} width={"80%"} />
                     </View>
                 </View>
 
-                {/* Menu icon placeholder */}
-                <Skeleton
-                    colorMode="light"
-                    radius={999}
-                    height={24}
-                    width={24}
-                    colors={["#dbe9f5", "#b9d4e6"]}
-                />
+                <Skeleton colorMode="dark" radius={999} height={24} width={24} />
             </View>
 
             {/* Bottom contact icons row */}
             <View style={styles.contactsRow}>
-                <Skeleton
-                    colorMode="light"
-                    radius={999}
-                    height={30}
-                    width={30}
-                    colors={["#dbe9f5", "#b9d4e6"]}
-                />
-                <Skeleton
-                    colorMode="light"
-                    radius={999}
-                    height={30}
-                    width={30}
-                    colors={["#dbe9f5", "#b9d4e6"]}
-                />
-                <Skeleton
-                    colorMode="light"
-                    radius={999}
-                    height={30}
-                    width={30}
-                    colors={["#dbe9f5", "#b9d4e6"]}
-                />
-                <Skeleton
-                    colorMode="light"
-                    radius={999}
-                    height={30}
-                    width={30}
-                    colors={["#dbe9f5", "#b9d4e6"]}
-                />
+                <Skeleton colorMode="dark" radius={999} height={30} width={30} />
+                <Skeleton colorMode="dark" radius={999} height={30} width={30} />
+                <Skeleton colorMode="dark" radius={999} height={30} width={30} />
+                <Skeleton colorMode="dark" radius={999} height={30} width={30} />
             </View>
         </View>
     );
@@ -168,11 +78,11 @@ export const UserCardSkeleton: React.FC<UserCardSkeletonProps> = ({
 const styles = StyleSheet.create({
     /* Card layout skeleton */
     card: {
-        backgroundColor: "rgba(33, 58, 115, 1)",
-        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.09)",
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.3)",
-        padding: 12,
+        borderColor: "rgba(255,255,255,0.14)",
+        padding: 14,
         marginBottom: 12,
     },
     cardRow: {
@@ -198,12 +108,12 @@ const styles = StyleSheet.create({
     listContainer: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(24,68,123,1)",
-        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.08)",
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.3)",
-        padding: 10,
-        marginBottom: 8,
+        borderColor: "rgba(255,255,255,0.12)",
+        padding: 12,
+        marginBottom: 10,
     },
     listInfo: {
         flex: 1,

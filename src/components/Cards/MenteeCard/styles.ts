@@ -1,41 +1,90 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
-    listContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 14, padding: 10, marginBottom: 10, justifyContent: 'space-between' },
-    selectedCard: { borderColor: "#38BDF8", borderWidth: 2 },
+    // LIST layout
+    listContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.12)",
+        borderRadius: 14,
+        padding: 12,
+        marginBottom: 10,
+        justifyContent: "space-between",
+    },
+    selectedCard: { borderColor: "#6FD4BE", borderWidth: 1.5 },
 
-    listNameSection: { flex: 1 }, listName: { color: "#fff", fontWeight: "600", fontSize: 14 },
+    listNameSection: { flex: 1 },
+    listName: { color: "#fff", fontWeight: "700", fontSize: 14 },
 
-    profileImg: { overflow: "hidden", marginRight: 10, backgroundColor: "#14517D", alignItems: "center", justifyContent: "center" },
+    profileImg: {
+        overflow: "hidden",
+        marginRight: 10,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
     image: { width: "100%", height: "100%" },
 
-    container: { backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 14, marginBottom: 14 },
+    // FULL CARD layout
+    container: {
+        backgroundColor: "rgba(255,255,255,0.09)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.14)",
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 12,
+    },
     menuButton: { position: "absolute", top: 14, right: 14, zIndex: 10 },
 
     topSection: { flexDirection: "row" },
     contentSection: { flex: 1 },
-    name: { color: "#fff", fontSize: 14, fontWeight: "600", marginBottom: 7 },
-    description: { color: "rgba(255,255,255,0.8)", fontSize: 12, lineHeight: 16 },
+    name: { color: "#fff", fontSize: 14, fontWeight: "700", marginBottom: 6 },
+    description: { color: "rgba(255,255,255,0.65)", fontSize: 12, lineHeight: 18 },
 
     // contact
     contactRow: { flexDirection: "row", gap: 6 },
     iconBtn: { width: 23, height: 23, alignItems: "center", justifyContent: "center" },
 
-    // selection card
-    selectionCard: { backgroundColor: "#1A4882", borderWidth: 1, borderColor: "rgba(255,255,255,0.3)", borderRadius: 16, padding: 14, marginBottom: 14 },
+    // SELECTION CARD layout
+    selectionCard: {
+        backgroundColor: "rgba(255,255,255,0.09)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.14)",
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 12,
+    },
     checkboxContainer: { position: "absolute", top: 12, right: 12 },
-    checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: "rgba(255,255,255,0.4)", alignItems: "center", justifyContent: "center" },
-    checkboxSelected: { backgroundColor: "#fff" },
+    checkbox: {
+        width: 22,
+        height: 22,
+        borderRadius: 7,
+        borderWidth: 1.5,
+        borderColor: "rgba(255,255,255,0.35)",
+        backgroundColor: "rgba(255,255,255,0.08)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    checkboxSelected: { backgroundColor: "#6FD4BE", borderColor: "#6FD4BE" },
 
     // progress
     progressRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-    progressLabel: { color: "#fff", fontSize: 12, width: 60 },
-    progressBar: { flex: 1, height: 6, backgroundColor: "rgba(255,255,255,0.3)", borderRadius: 3 },
-    progressFill: { height: "100%", backgroundColor: "#fff" },
-    progressText: { color: "#fff", fontSize: 12, marginLeft: 6 },
+    progressLabel: { color: "rgba(255,255,255,0.7)", fontSize: 12, width: 60 },
+    progressBar: { flex: 1, height: 5, backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 3 },
+    progressFill: { height: "100%", backgroundColor: "#6FD4BE", borderRadius: 3 },
+    progressText: { color: "rgba(255,255,255,0.8)", fontSize: 12, marginLeft: 6 },
 
     // actions
     btnWrap: { borderRadius: 12, padding: 2 },
-    actionBtn: { backgroundColor: "#1A4882", borderRadius: 10, paddingVertical: 12, alignItems: "center" },
-    btnTxt: { color: "#fff", fontSize: 14, fontWeight: "600" },
+    actionBtn: {
+        backgroundColor: "rgba(255,255,255,0.10)",
+        borderRadius: 10,
+        paddingVertical: 12,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.16)",
+    },
+    btnTxt: { color: "#fff", fontSize: 14, fontWeight: "700" },
 });

@@ -5,11 +5,11 @@ import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
 import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useMentees } from '@/hooks/useMentees';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -19,7 +19,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 
 export default function Mentees() {
@@ -39,12 +39,10 @@ export default function Mentees() {
         error,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage
+        isFetchingNextPage,
     } = useMentees();
 
-    if (isError) {
-        console.log('Error : ', error);
-    }
+    if (isError) console.log('Error : ', error);
 
     const menteeList = useMemo(() => {
         return mentees?.pages.flatMap(page => page.mentees) || [];
@@ -57,24 +55,11 @@ export default function Mentees() {
         return Array.from(new Set(states));
     }, [menteeList]);
 
-    const getFilterOptions = (): FilterOption[] => {
-        return [
-            {
-                label: 'Course Completion',
-                options: ['Latest', 'Oldest'],
-                isExpandable: true,
-            },
-            {
-                label: 'State',
-                options: dynamicStates,
-                isExpandable: true,
-            },
-            {
-                label: 'Conference',
-                isExpandable: true,
-            },
-        ];
-    };
+    const getFilterOptions = (): FilterOption[] => [
+        { label: 'Course Completion', options: ['Latest', 'Oldest'], isExpandable: true },
+        { label: 'State', options: dynamicStates, isExpandable: true },
+        { label: 'Conference', isExpandable: true },
+    ];
 
     const menuItems = [
         {
@@ -82,13 +67,7 @@ export default function Mentees() {
             label: 'Revitalization Roadmaps',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => {
-                    // router.push('/mentors/mentor-mentees');
-                    router.push({
-                        pathname: '/(director)/(tabs)/roadmaps',
-                        params: { id: selectedMentee?.id || '' },
-                    });
-                }, 300);
+                setTimeout(() => router.push({ pathname: '/(director)/(tabs)/roadmaps', params: { id: selectedMentee?.id || '' } }), 300);
             },
         },
         {
@@ -96,12 +75,7 @@ export default function Mentees() {
             label: 'Assign Mentor',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => {
-                    router.push({
-                        pathname: '/mentees/assign-mentors',
-                        params: { id: selectedMentee?.id || '' },
-                    });
-                }, 300);
+                setTimeout(() => router.push({ pathname: '/mentees/assign-mentors', params: { id: selectedMentee?.id || '' } }), 300);
             },
         },
         {
@@ -109,24 +83,15 @@ export default function Mentees() {
             label: 'Remove Mentor',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => {
-                    router.push({
-                        pathname: '/mentees/remove-mentors',
-                        params: { id: selectedMentee?.id || '' },
-                    });
-                }, 300);
+                setTimeout(() => router.push({ pathname: '/mentees/remove-mentors', params: { id: selectedMentee?.id || '' } }), 300);
             },
         },
         {
-            icon: "people-outline",
+            icon: 'people-outline',
             label: 'List of Mentors',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => {
-                    router.push({
-                        pathname: '/(director)/(tabs)/(mentors)/mentors',
-                    });
-                }, 300);
+                setTimeout(() => router.push({ pathname: '/(director)/(tabs)/(mentors)/mentors' }), 300);
             },
         },
         { icon: 'person-add-outline', label: 'Assessments', onPress: () => router.push('/(director)/(tabs)/assessments') },
@@ -137,30 +102,24 @@ export default function Mentees() {
             label: 'Mentor Notes',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => {
-                    router.push(`/mentees/notes`);
-                }, 300);
+                setTimeout(() => router.push('/mentees/notes'), 300);
             },
         },
-        { icon: 'book-outline', label: 'View Progress Report', onPress: () => console.log('Assignments of Mentees') },
-        { icon: 'stats-chart-outline', label: 'Micro Grant', onPress: () => console.log('Progress of Mentees') },
-        { icon: 'calendar-outline', label: 'Product and Services', onPress: () => console.log('Schedule a Meeting') },
+        { icon: 'book-outline', label: 'View Progress Report', onPress: () => console.log('View Progress Report') },
+        { icon: 'stats-chart-outline', label: 'Micro Grant', onPress: () => console.log('Micro Grant') },
+        { icon: 'calendar-outline', label: 'Product and Services', onPress: () => console.log('Product and Services') },
     ];
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
     const handleMenuPress = useCallback((mentee: Mentee) => {
         setSelectedMentee(mentee);
-        setTimeout(() => {
-            bottomSheetModalRef.current?.present();
-        }, 0);
+        setTimeout(() => bottomSheetModalRef.current?.present(), 0);
     }, []);
 
     const handleCloseModal = useCallback(() => {
         bottomSheetModalRef.current?.dismiss();
-        setTimeout(() => {
-            setSelectedMentee(null);
-        }, 300);
+        setTimeout(() => setSelectedMentee(null), 300);
     }, []);
 
     const handleTabChange = (key: string) => {
@@ -173,39 +132,26 @@ export default function Mentees() {
 
     const filteredMentees = useMemo(() => {
         let filtered = menteeList;
-
         if (search) {
             const q = search.toLowerCase();
             filtered = filtered.filter(
-                (mentee: Mentee) =>
-                    mentee.firstName.toLowerCase().includes(q) ||
-                    (mentee.lastName ?? "").toLowerCase().includes(q) ||
-                    (mentee.username ?? "").toLowerCase().includes(q) ||
-                    mentee.role?.toLowerCase().includes(q) ||
-                    (mentee as any).profileInfo?.toLowerCase().includes(q),
+                (m: Mentee) =>
+                    m.firstName.toLowerCase().includes(q) ||
+                    (m.lastName ?? '').toLowerCase().includes(q) ||
+                    (m.username ?? '').toLowerCase().includes(q) ||
+                    m.role?.toLowerCase().includes(q) ||
+                    (m as any).profileInfo?.toLowerCase().includes(q),
             );
         }
-
-        if (activeTab === 'not-started') {
-            filtered = filtered.filter((mentee: Mentee) => (mentee.progress ?? 0) === 0);
-        } else if (activeTab === 'in-progress') {
-            filtered = filtered.filter(
-                (mentee: Mentee) => (mentee.progress ?? 0) > 0 && (mentee.progress ?? 0) < 100,
-            );
-        } else if (activeTab === 'completed') {
-            filtered = filtered.filter(
-                (mentee: Mentee) => mentee.progress === 100 || mentee.hasCompleted === true,
-            );
-        }
+        if (activeTab === 'not-started') filtered = filtered.filter((m: Mentee) => (m.progress ?? 0) === 0);
+        else if (activeTab === 'in-progress') filtered = filtered.filter((m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100);
+        else if (activeTab === 'completed') filtered = filtered.filter((m: Mentee) => m.progress === 100 || m.hasCompleted === true);
 
         if (selectedStateFilter) {
             filtered = filtered.filter(
-                (m: Mentee) =>
-                    ((m as any).state || (m as any).profileInfo?.state || '').toLowerCase() ===
-                    selectedStateFilter.toLowerCase(),
+                (m: Mentee) => ((m as any).state || (m as any).profileInfo?.state || '').toLowerCase() === selectedStateFilter.toLowerCase(),
             );
         }
-
         if (selectedFilter.startsWith('Course Completion')) {
             const isLatest = selectedFilter.includes('Latest');
             filtered = [...filtered].sort((a, b) => {
@@ -214,72 +160,36 @@ export default function Mentees() {
                 return isLatest ? pb - pa : pa - pb;
             });
         }
-
         return filtered;
     }, [menteeList, search, activeTab, selectedFilter, selectedStateFilter]);
 
-    const notStartedCount = useMemo(
-        () => menteeList.filter((m: Mentee) => (m.progress ?? 0) === 0).length,
-        [menteeList],
-    );
-
-    const inProgressCount = useMemo(
-        () =>
-            menteeList.filter(
-                (m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100,
-            ).length,
-        [menteeList],
-    );
-
-    const completedCount = useMemo(
-        () =>
-            menteeList.filter(
-                (m: Mentee) => m.progress === 100 || m.hasCompleted === true,
-            ).length,
-        [menteeList],
-    );
+    const notStartedCount = useMemo(() => menteeList.filter((m: Mentee) => (m.progress ?? 0) === 0).length, [menteeList]);
+    const inProgressCount = useMemo(() => menteeList.filter((m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100).length, [menteeList]);
+    const completedCount = useMemo(() => menteeList.filter((m: Mentee) => m.progress === 100 || m.hasCompleted === true).length, [menteeList]);
 
     const tabs = [
         { key: 'all', label: 'All' },
         { key: 'not-started', label: 'Not Started', badge: notStartedCount },
-        { key: 'in-progress', label: 'In-progress', badge: inProgressCount },
+        { key: 'in-progress', label: 'In Progress', badge: inProgressCount },
         { key: 'completed', label: 'Completed', badge: completedCount },
     ];
 
-    // LOADING / ERROR
-
-
     if (isError) {
         return (
-            <LinearGradient
-                colors={['#176192', '#1D548D', '#264387']}
-                style={styles.container}
-            >
+            <GradientBackground>
                 <View style={styles.innerContainer}>
                     <TopBar notifications={3} showUserName showNotifications />
-                    <View
-                        style={{
-                            flex: 1,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            paddingHorizontal: 16,
-                        }}
-                    >
-                        <Text style={{ color: '#fff', textAlign: 'center', fontSize: 16 }}>
-                            Failed to load mentees. Please try again.
-                        </Text>
+                    <View style={styles.errorContainer}>
+                        <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
+                        <Text style={styles.errorText}>Failed to load pastors. Please try again.</Text>
                     </View>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
-    // MAIN UI
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={styles.container}
-        >
+        <GradientBackground>
             <View style={styles.innerContainer}>
                 <TopBar notifications={3} showUserName showNotifications />
 
@@ -287,51 +197,44 @@ export default function Mentees() {
                     {/* Header */}
                     <View style={styles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                            <Ionicons name="chevron-back" size={28} color="#fff" />
-                            <Text style={styles.headerTitle}>Mentees</Text>
+                            <View style={styles.backIconWrap}>
+                                <Ionicons name="chevron-back" size={20} color="#fff" />
+                            </View>
+                            <Text style={styles.headerTitle}>Pastors</Text>
                         </TouchableOpacity>
 
                         <View style={styles.headerActions}>
                             <TouchableOpacity
                                 onPress={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
-                                style={styles.actionButton}
+                                style={styles.iconButton}
                             >
-                                <Ionicons
-                                    name={viewMode === 'card' ? 'list' : 'grid'}
-                                    size={24}
-                                    color="#fff"
-                                />
+                                <Ionicons name={viewMode === 'card' ? 'list' : 'grid'} size={20} color="#fff" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                                style={styles.actionButton}
+                                style={styles.iconButton}
                                 onPress={() => router.push('/mentees/mentees-location')}
                             >
-                                <Ionicons name="location-outline" size={24} color="#fff" />
+                                <Ionicons name="location-outline" size={20} color="#fff" />
                             </TouchableOpacity>
                         </View>
                     </View>
 
-                    {/* Search Bar */}
+                    {/* Search */}
                     <View style={styles.searchContainer}>
                         <SearchBar value={search} onChangeValue={setSearch} />
                     </View>
 
                     {/* Tabs */}
-                    <TabSwitcher tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
-
-                    <View style={styles.profileSwiperContainer} />
+                    <TabSwitcher variant="frosted" tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
 
                     {/* Sort */}
                     <View style={styles.sortContainer}>
                         <Text style={styles.sortLabel}>Sort by</Text>
-                        <Pressable
-                            onPress={() => setFilterModalVisible(true)}
-                            style={styles.sortButton}
-                        >
+                        <Pressable onPress={() => setFilterModalVisible(true)} style={styles.sortButton}>
                             <Text style={styles.sortButtonText} numberOfLines={1}>
                                 {selectedStateFilter || selectedFilter}
                             </Text>
-                            <Ionicons name="chevron-down" size={18} color="#fff" />
+                            <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.8)" />
                         </Pressable>
                     </View>
 
@@ -353,53 +256,40 @@ export default function Mentees() {
                                     data={mentee}
                                     layout={viewMode}
                                     showMenu={true}
-                                    onPress={() =>
-                                        router.push(`/mentees/${mentee.id}`)
-                                    }
+                                    onPress={() => router.push(`/mentees/${mentee.id}`)}
                                     onCall={() => console.log('Call', (mentee as any).name)}
                                     onChat={() => console.log('Chat', (mentee as any).name)}
                                     onMail={() => console.log('Mail', (mentee as any).name)}
                                     onWhatsApp={() => console.log('WhatsApp', (mentee as any).name)}
                                     onMenuPress={() => handleMenuPress(mentee)}
                                     onMarkComplete={() => console.log('Mark complete', (mentee as any).name)}
-                                    onIssueCertificate={() =>
-                                        console.log('Issue certificate', (mentee as any).name)
-                                    }
-                                    onInviteAsFieldMentor={() =>
-                                        console.log('Invite as field mentor', (mentee as any).name)
-                                    }
+                                    onIssueCertificate={() => console.log('Issue certificate', (mentee as any).name)}
+                                    onInviteAsFieldMentor={() => console.log('Invite as field mentor', (mentee as any).name)}
                                 />
                             )}
                             contentContainerStyle={styles.flatListContent}
                             showsVerticalScrollIndicator={false}
                             removeClippedSubviews
                             maxToRenderPerBatch={10}
-                            // updateCellsBatchingPeriod={50}
-                            // initialNumToRender={5}
-                            // windowSize={10}
-                            // getItemLayout={(data, index) => ({
-                            //     length: viewMode === 'list' ? 68 : 280,
-                            //     offset: (viewMode === 'list' ? 68 : 280) * index,
-                            //     index,
-                            // })}
-                            onEndReached={() => {
-                                if (hasNextPage && !isFetchingNextPage) {
-                                    fetchNextPage();
-                                }
-                            }}
+                            onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
                             onEndReachedThreshold={0.5}
-                            ListFooterComponent={() => (
+                            ListEmptyComponent={
+                                <View style={styles.emptyContainer}>
+                                    <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
+                                    <Text style={styles.emptyText}>No pastors found</Text>
+                                </View>
+                            }
+                            ListFooterComponent={() =>
                                 isFetchingNextPage ? (
                                     <View style={{ paddingVertical: 20 }}>
                                         <ActivityIndicator color="#fff" />
                                     </View>
                                 ) : null
-                            )}
+                            }
                         />
                     )}
                 </View>
 
-                {/* MODALS */}
                 <ActionBottomSheet
                     ref={bottomSheetModalRef}
                     title={selectedMentee?.username || selectedMentee?.firstName || ''}
@@ -413,46 +303,56 @@ export default function Mentees() {
                     onClose={() => setFilterModalVisible(false)}
                     selectedFilter={selectedStateFilter || selectedFilter}
                     onFilterSelect={filter => {
-                        if (dynamicStates.includes(filter)) {
-                            setSelectedStateFilter(filter);
-                        } else {
-                            setSelectedFilter(filter);
-                        }
+                        if (dynamicStates.includes(filter)) setSelectedStateFilter(filter);
+                        else setSelectedFilter(filter);
                         setFilterModalVisible(false);
                     }}
                     filterOptions={filterOptions}
                 />
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
     innerContainer: { flex: 1 },
     contentContainer: { flex: 1, paddingTop: 24 },
+    errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 16, gap: 12 },
+    errorText: { color: 'rgba(255,255,255,0.7)', textAlign: 'center', fontSize: 15 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingBottom: 14,
         marginBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backButton: { flexDirection: 'row', alignItems: 'center' },
-    headerTitle: { marginLeft: 8, fontSize: 18, fontWeight: '600', color: '#fff' },
-    headerActions: { flexDirection: 'row', gap: 12 },
-    actionButton: { padding: 4 },
+    backButton: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    backIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerTitle: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
+    headerActions: { flexDirection: 'row', gap: 8 },
+    iconButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.16)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     searchContainer: { paddingHorizontal: 16, marginBottom: 16 },
-    profileSwiperContainer: {
-        marginBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
     sortContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -461,19 +361,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginBottom: 16,
     },
-    sortLabel: { fontSize: 14, color: '#fff' },
+    sortLabel: { fontSize: 13, color: 'rgba(255,255,255,0.65)', fontWeight: '500' },
     sortButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: 'transparent',
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        backgroundColor: 'rgba(255,255,255,0.08)',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.5)',
+        borderColor: 'rgba(255,255,255,0.18)',
         borderRadius: 20,
     },
-    sortButtonText: { fontSize: 14, fontWeight: '500', color: '#fff' },
+    sortButtonText: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
     flatList: { flex: 1 },
-    flatListContent: { paddingHorizontal: 16 },
+    flatListContent: { paddingHorizontal: 16, paddingBottom: 24 },
+    emptyContainer: { alignItems: 'center', paddingVertical: 48, gap: 12 },
+    emptyText: { color: 'rgba(255,255,255,0.5)', fontSize: 15, fontWeight: '500' },
 });

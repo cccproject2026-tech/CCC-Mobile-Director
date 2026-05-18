@@ -1,10 +1,9 @@
 import MentorCard from '@/components/Cards/MentorCard';
 import SearchBar from '@/components/Header/SearchBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useMenteeMentors, useRemoveMentorsFromMentee } from '@/hooks/useMentees';
-import { Mentor } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
@@ -34,7 +33,6 @@ export default function RemoveMentorsFromMenteeScreen() {
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
     const { mentors, isLoading } = useMenteeMentors(menteeId);
-
     const removeMutation = useRemoveMentorsFromMentee();
 
     const toggleSelectMentor = (id: string) => {
@@ -43,31 +41,16 @@ export default function RemoveMentorsFromMenteeScreen() {
         );
     };
 
-    const getFilterOptions = (): FilterOption[] => {
-        return [
-            { label: 'Highest number of Mentees' },
-            {
-                label: 'Last Contacted',
-                options: ['Oldest', 'Newest'],
-                isExpandable: true,
-            },
-            {
-                label: 'State',
-                options: STATES,
-                isExpandable: true,
-            },
-            {
-                label: 'Conference',
-                isExpandable: true,
-            },
-        ];
-    };
+    const getFilterOptions = (): FilterOption[] => [
+        { label: 'Highest number of Mentees' },
+        { label: 'Last Contacted', options: ['Oldest', 'Newest'], isExpandable: true },
+        { label: 'State', options: STATES, isExpandable: true },
+        { label: 'Conference', isExpandable: true },
+    ];
     const filterOptions = useMemo(() => getFilterOptions(), []);
 
     const getFilterDisplayText = () => {
-        if (STATES.includes(selectedFilter)) {
-            return `State : ${selectedFilter}`;
-        }
+        if (STATES.includes(selectedFilter)) return `State : ${selectedFilter}`;
         return selectedFilter || 'Latest Join';
     };
 
@@ -79,294 +62,268 @@ export default function RemoveMentorsFromMenteeScreen() {
     }, [search, mentors]);
 
     const handleRemove = () => {
-        if (!menteeId) {
-            Alert.alert('Error', 'Mentee id is missing.');
-            return;
-        }
-
-        if (selectedMentors.length === 0) {
-            Alert.alert('No Selection', 'Please select at least one mentor to remove.');
-            return;
-        }
+        if (!menteeId) { Alert.alert('Error', 'Mentee id is missing.'); return; }
+        if (selectedMentors.length === 0) { Alert.alert('No Selection', 'Please select at least one mentor to remove.'); return; }
 
         const selectedNames = filteredMentors
             .filter(m => selectedMentors.includes(m.id))
             .map(m => `${m.firstName} ${m.lastName ?? ''}`)
             .join(', ');
 
-        Alert.alert(
-            'Remove Mentors',
-            `Are you sure you want to remove: ${selectedNames}?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Remove',
-                    style: 'destructive',
-                    onPress: () => {
-                        removeMutation.mutate(
-                            { menteeId, mentorIds: selectedMentors },
-                            {
-                                onSuccess: () => {
-                                    router.back();
-                                },
-                                onError: () => {
-                                    Alert.alert('Error', 'Failed to remove mentors. Please try again.');
-                                },
-                            },
-                        );
-                    },
+        Alert.alert('Remove Mentors', `Are you sure you want to remove: ${selectedNames}?`, [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Remove',
+                style: 'destructive',
+                onPress: () => {
+                    removeMutation.mutate(
+                        { menteeId, mentorIds: selectedMentors },
+                        {
+                            onSuccess: () => router.back(),
+                            onError: () => Alert.alert('Error', 'Failed to remove mentors. Please try again.'),
+                        },
+                    );
                 },
-            ],
-        );
+            },
+        ]);
     };
 
     const getSelectedNamesText = () => {
         if (selectedMentors.length === 0) return 'No mentors selected';
-
-        const names = filteredMentors
+        return filteredMentors
             .filter(m => selectedMentors.includes(m.id))
-            .map(m => `${m.firstName} ${m.lastName ?? ''}`);
-
-        return names.join(', ');
+            .map(m => `${m.firstName} ${m.lastName ?? ''}`)
+            .join(', ');
     };
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={[styles.container, { paddingTop: Platform.OS === 'ios' ? top : top + 10 }]}
-        >
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={28} color="#fff" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Remove Mentors</Text>
-                <TouchableOpacity
-                    onPress={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
-                    style={styles.viewToggle}
-                >
-                    <Ionicons
-                        name={viewMode === 'card' ? 'list' : 'grid'}
-                        size={24}
-                        color="#fff"
-                    />
-                </TouchableOpacity>
-            </View>
-
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <SearchBar value={search} onChangeValue={setSearch} />
-            </View>
-
-            {/* Sort By */}
-            <View style={styles.sortContainer}>
-                <Text style={styles.sortLabel}>Sort by</Text>
-                <Pressable
-                    style={styles.sortButton}
-                    onPress={() => setFilterModalVisible(true)}
-                >
-                    <Text style={styles.sortText}>{getFilterDisplayText()}</Text>
-                    <Ionicons name="chevron-down" size={18} color="#fff" />
-                </Pressable>
-            </View>
-
-            {/* Mentors List */}
-            <FlatList
-                data={filteredMentors}
-                keyExtractor={item => item.id}
-                renderItem={({ item }) => (
-                    <View style={styles.mentorCardWrapper}>
-                        <TouchableOpacity
-                            style={styles.checkbox}
-                            onPress={() => toggleSelectMentor(item.id)}
-                        >
-                            <View
-                                style={[
-                                    styles.checkboxInner,
-                                    selectedMentors.includes(item.id) && styles.checkboxSelected,
-                                ]}
-                            >
-                                {selectedMentors.includes(item.id) && (
-                                    <Ionicons name="checkmark" size={16} color="#fff" />
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                        <View style={styles.mentorCardContent}>
-                            <MentorCard
-                                mentor={{
-                                    id: item.id,
-                                    name: `${item.firstName} ${item.lastName ?? ''}`,
-                                    role: item.role ?? 'Mentor',
-                                    menteesCount: item.assignedId ? item.assignedId.length : 0,
-                                    description: item.profileInfo ?? '',
-                                    profilePicture: item.profilePicture,
-                                }}
-                                showMenu={true}
-                                layout={viewMode}
-                                onCall={() => console.log('Call', item.id)}
-                                onChat={() => console.log('Chat', item.id)}
-                                onMail={() => console.log('Mail', item.id)}
-                                onWhatsApp={() => console.log('WhatsApp', item.id)}
-                            />
+        <GradientBackground>
+            <View style={[styles.inner, { paddingTop: Platform.OS === 'ios' ? top : top + 10 }]}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <View style={styles.backIconWrap}>
+                            <Ionicons name="chevron-back" size={20} color="#fff" />
                         </View>
-                    </View>
-                )}
-                contentContainerStyle={[styles.listContent, { paddingBottom: 120 + bottom }]}
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                    !isLoading ? (
-                        <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-                            <Text style={{ color: '#fff' }}>No mentors assigned to remove.</Text>
-                        </View>
-                    ) : null
-                }
-            />
-
-            {/* Sticky Bottom Remove Container */}
-            <View style={[styles.bottomContainer, { paddingBottom: bottom + 16 }]}>
-                <View style={styles.selectedNamesContainer}>
-                    <Text style={styles.selectedNamesText} numberOfLines={1}>
-                        {getSelectedNamesText()}
-                    </Text>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Remove Mentors</Text>
+                    <TouchableOpacity
+                        onPress={() => setViewMode(viewMode === 'card' ? 'list' : 'card')}
+                        style={styles.iconButton}
+                    >
+                        <Ionicons name={viewMode === 'card' ? 'list' : 'grid'} size={20} color="#fff" />
+                    </TouchableOpacity>
                 </View>
 
-                <LinearGradient
-                    colors={['#7C3AED', '#38BDF8']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[
-                        styles.gradientBorder,
-                        (selectedMentors.length === 0 || removeMutation.isPending) &&
-                        styles.gradientBorderDisabled,
-                    ]}
-                >
+                {/* Search */}
+                <View style={styles.searchContainer}>
+                    <SearchBar value={search} onChangeValue={setSearch} />
+                </View>
+
+                {/* Sort */}
+                <View style={styles.sortContainer}>
+                    <Text style={styles.sortLabel}>Sort by</Text>
+                    <Pressable style={styles.sortButton} onPress={() => setFilterModalVisible(true)}>
+                        <Text style={styles.sortText}>{getFilterDisplayText()}</Text>
+                        <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.8)" />
+                    </Pressable>
+                </View>
+
+                {/* Selection badge */}
+                {selectedMentors.length > 0 && (
+                    <View style={styles.selectionBadge}>
+                        <Ionicons name="close-circle" size={16} color="#F87171" />
+                        <Text style={styles.selectionBadgeText}>{selectedMentors.length} selected for removal</Text>
+                    </View>
+                )}
+
+                {/* Mentors List */}
+                <FlatList
+                    data={filteredMentors}
+                    keyExtractor={item => item.id}
+                    renderItem={({ item }) => (
+                        <View style={styles.mentorCardWrapper}>
+                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleSelectMentor(item.id)}>
+                                <View style={[styles.checkboxInner, selectedMentors.includes(item.id) && styles.checkboxSelected]}>
+                                    {selectedMentors.includes(item.id) && (
+                                        <Ionicons name="checkmark" size={14} color="#fff" />
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+                            <View style={styles.mentorCardContent}>
+                                <MentorCard
+                                    mentor={{
+                                        id: item.id,
+                                        name: `${item.firstName} ${item.lastName ?? ''}`,
+                                        role: item.role ?? 'Mentor',
+                                        menteesCount: item.assignedId ? item.assignedId.length : 0,
+                                        description: item.profileInfo ?? '',
+                                        profilePicture: item.profilePicture,
+                                    }}
+                                    showMenu={true}
+                                    layout={viewMode}
+                                    onCall={() => console.log('Call', item.id)}
+                                    onChat={() => console.log('Chat', item.id)}
+                                    onMail={() => console.log('Mail', item.id)}
+                                    onWhatsApp={() => console.log('WhatsApp', item.id)}
+                                />
+                            </View>
+                        </View>
+                    )}
+                    contentContainerStyle={[styles.listContent, { paddingBottom: 120 + bottom }]}
+                    showsVerticalScrollIndicator={false}
+                    ListEmptyComponent={
+                        !isLoading ? (
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="people-outline" size={36} color="rgba(255,255,255,0.3)" />
+                                <Text style={styles.emptyText}>No mentors assigned to remove.</Text>
+                            </View>
+                        ) : null
+                    }
+                />
+
+                {/* Sticky Bottom */}
+                <View style={[styles.bottomContainer, { paddingBottom: bottom + 16 }]}>
+                    <View style={styles.selectedNamesContainer}>
+                        <Text style={styles.selectedNamesText} numberOfLines={1}>
+                            {getSelectedNamesText()}
+                        </Text>
+                    </View>
                     <TouchableOpacity
-                        style={styles.removeButtonInner}
+                        style={[styles.removeButton, (selectedMentors.length === 0 || removeMutation.isPending) && styles.removeButtonDisabled]}
                         onPress={handleRemove}
                         disabled={selectedMentors.length === 0 || removeMutation.isPending}
+                        activeOpacity={0.85}
                     >
                         <Text style={styles.removeButtonText}>
                             {removeMutation.isPending ? 'Removing...' : 'Remove'}
                         </Text>
                     </TouchableOpacity>
-                </LinearGradient>
-            </View>
+                </View>
 
-            <FilterModal
-                visible={filterModalVisible}
-                onClose={() => setFilterModalVisible(false)}
-                selectedFilter={selectedFilter}
-                onFilterSelect={filter => {
-                    setSelectedFilter(filter);
-                    setFilterModalVisible(false);
-                }}
-                filterOptions={filterOptions}
-            />
-        </LinearGradient>
+                <FilterModal
+                    visible={filterModalVisible}
+                    onClose={() => setFilterModalVisible(false)}
+                    selectedFilter={selectedFilter}
+                    onFilterSelect={filter => { setSelectedFilter(filter); setFilterModalVisible(false); }}
+                    filterOptions={filterOptions}
+                />
+            </View>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    inner: { flex: 1 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
+        gap: 12,
     },
-    backButton: { marginRight: 12 },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#fff',
-        flex: 1,
+    backButton: {},
+    backIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    viewToggle: { padding: 4 },
-    searchContainer: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 12,
+    headerTitle: { flex: 1, fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
+    iconButton: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.16)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
+    searchContainer: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
     sortContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-end',
         paddingHorizontal: 16,
         paddingBottom: 12,
-        gap: 12,
+        gap: 8,
     },
-    sortLabel: { fontSize: 15, color: '#fff' },
+    sortLabel: { fontSize: 13, color: 'rgba(255,255,255,0.65)', fontWeight: '500' },
     sortButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+        gap: 6,
+        paddingVertical: 7,
+        paddingHorizontal: 14,
+        backgroundColor: 'rgba(255,255,255,0.08)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
+        borderColor: 'rgba(255,255,255,0.18)',
         borderRadius: 20,
     },
-    sortText: { fontSize: 14, color: '#fff', fontWeight: '500' },
-    listContent: { paddingHorizontal: 16 },
-    mentorCardWrapper: {
+    sortText: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
+    selectionBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        gap: 6,
+        marginHorizontal: 16,
+        marginBottom: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        backgroundColor: 'rgba(248,113,113,0.12)',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(248,113,113,0.25)',
+        alignSelf: 'flex-start',
     },
-    checkbox: {
-        marginRight: 12,
-    },
+    selectionBadgeText: { fontSize: 13, color: '#F87171', fontWeight: '700' },
+    listContent: { paddingHorizontal: 16 },
+    mentorCardWrapper: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    checkbox: { marginRight: 12 },
     checkboxInner: {
         width: 24,
         height: 24,
-        borderRadius: 6,
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.5)',
+        borderRadius: 7,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.35)',
+        backgroundColor: 'rgba(255,255,255,0.08)',
         alignItems: 'center',
         justifyContent: 'center',
     },
-    checkboxSelected: {
-        backgroundColor: '#7C3AED',
-        borderColor: '#7C3AED',
-    },
-    mentorCardContent: {
-        flex: 1,
-    },
+    checkboxSelected: { backgroundColor: '#F87171', borderColor: '#F87171' },
+    mentorCardContent: { flex: 1 },
+    emptyContainer: { paddingVertical: 48, alignItems: 'center', gap: 10 },
+    emptyText: { color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: '500' },
     bottomContainer: {
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#1E366F',
+        backgroundColor: 'rgba(15,59,92,0.97)',
         paddingHorizontal: 16,
-        paddingTop: 16,
+        paddingTop: 14,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.2)',
+        borderTopColor: 'rgba(255,255,255,0.12)',
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
     },
     selectedNamesContainer: { flex: 1 },
-    selectedNamesText: {
-        fontSize: 14,
-        color: '#fff',
-        fontWeight: '500',
-    },
-    gradientBorder: { padding: 2, borderRadius: 13 },
-    gradientBorderDisabled: { opacity: 0.5 },
-    removeButtonInner: {
-        backgroundColor: '#1E366F',
-        borderRadius: 11,
-        paddingVertical: 12,
-        paddingHorizontal: 32,
+    selectedNamesText: { fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
+    removeButton: {
+        backgroundColor: '#F87171',
+        borderRadius: 12,
+        paddingVertical: 11,
+        paddingHorizontal: 24,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    removeButtonText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#fff',
-    },
+    removeButtonDisabled: { opacity: 0.45 },
+    removeButtonText: { fontSize: 14, fontWeight: '800', color: '#fff' },
 });

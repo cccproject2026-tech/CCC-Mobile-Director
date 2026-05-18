@@ -77,7 +77,7 @@ export default function MenteeCard(props: MenteeCardProps) {
                 {!disabled && (
                     <View style={styles.checkboxContainer}>
                         <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                            {isSelected && <Ionicons name="checkmark" size={18} color="#1A4882" />}
+                            {isSelected && <Ionicons name="checkmark" size={14} color="#fff" />}
                         </View>
                     </View>
                 )}

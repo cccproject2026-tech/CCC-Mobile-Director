@@ -8,7 +8,7 @@ import { useMentees } from "@/hooks/useMentees";
 import { useAssessmentProgress, useProgress, useRoadmapProgress } from "@/hooks/useProgress";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { LinearGradient } from "expo-linear-gradient";
+import { GradientBackground } from "@/components/ui/design-system";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -179,48 +179,30 @@ export default function MenteeProgressScreen() {
 
     if (isLoading) {
         return (
-            <LinearGradient
-                colors={[Colors.lightBlue, "#1D548D", "#264387"]}
-                style={{ flex: 1 }}
-            >
+            <GradientBackground>
                 <TopBar showUserName />
-                <View
-                    style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-                >
+                <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                     <ActivityIndicator size="large" color="#fff" />
-                    <Text style={{ color: "#fff", marginTop: 16 }}>
-                        Loading progress...
-                    </Text>
+                    <Text style={{ color: "#fff", marginTop: 16 }}>Loading progress...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     if (progressError) {
         return (
-            <LinearGradient
-                colors={[Colors.lightBlue, "#1D548D", "#264387"]}
-                style={{ flex: 1 }}
-            >
+            <GradientBackground>
                 <TopBar role="pastor" showUserName />
-                <View
-                    style={{
-                        flex: 1,
-                        justifyContent: "center",
-                        alignItems: "center",
-                        padding: 20,
-                    }}
-                >
-                    <Text
-                        style={{ color: "#fff", fontSize: 16, textAlign: "center" }}
-                    >
+                <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+                    <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
+                    <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, textAlign: "center", marginTop: 12 }}>
                         Failed to load progress data
                     </Text>
                     <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
                         <Text style={styles.retryButtonText}>Retry</Text>
                     </TouchableOpacity>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
@@ -230,10 +212,7 @@ export default function MenteeProgressScreen() {
     const currentTitle = "Individual - Roadmaps, Assessments";
 
     return (
-        <LinearGradient
-            colors={[Colors.lightBlue, "#1D548D", "#264387"]}
-            style={{ flex: 1 }}
-        >
+        <GradientBackground>
             <View style={styles.scrollContainer}>
                 {/* Top Bar */}
                 <TopBar role="pastor" showUserName />
@@ -409,7 +388,7 @@ export default function MenteeProgressScreen() {
                     onDownload={handleDownload}
                 /> */}
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
@@ -421,11 +400,14 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        paddingHorizontal: 20,
-        paddingTop: 20,
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.12)",
     },
-    myProgressText: { color: "#fff", fontWeight: "600", fontSize: 17 },
-    backButton: { flexDirection: "row", alignItems: "center", gap: 8 },
+    myProgressText: { color: "#fff", fontWeight: "800", fontSize: 18, letterSpacing: -0.2 },
+    backButton: { flexDirection: "row", alignItems: "center", gap: 10 },
     backIcon: { width: 18, height: 18, transform: [{ scaleX: -1 }] },
     section: { marginHorizontal: 16, marginBottom: 20 },
     sectionTitle: {
@@ -436,11 +418,12 @@ const styles = StyleSheet.create({
     },
     chartWrapper: {
         borderWidth: 1,
-        borderColor: "white",
-        borderRadius: 10,
+        borderColor: "rgba(255,255,255,0.16)",
+        borderRadius: 16,
         paddingVertical: 20,
         paddingLeft: 16,
         paddingRight: 10,
+        backgroundColor: "rgba(255,255,255,0.06)",
     },
     progressBlock: { marginTop: 20, gap: 20 },
     progressBlockTitle: {
@@ -465,15 +448,17 @@ const styles = StyleSheet.create({
         textAlign: "center",
     },
     retryButton: {
-        marginTop: 20,
+        marginTop: 16,
         paddingHorizontal: 24,
-        paddingVertical: 12,
-        backgroundColor: "rgba(255, 255, 255, 0.2)",
-        borderRadius: 8,
+        paddingVertical: 11,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.22)",
     },
     retryButtonText: {
         color: "#fff",
-        fontWeight: "600",
-        fontSize: 16,
+        fontWeight: "700",
+        fontSize: 14,
     },
 });
