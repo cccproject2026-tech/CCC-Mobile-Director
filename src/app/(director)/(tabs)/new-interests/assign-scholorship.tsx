@@ -6,7 +6,13 @@ import { useScholarships, useAddAwardedUser, useUpdateScholarship } from '@/hook
 import { Scholarship } from '@/types/scholorship.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+    CommonCard,
+    GradientBackground,
+    homeLayout,
+    roadmapTheme,
+    ScreenBackHeader,
+} from '@/components/ui/design-system';
 import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import {
@@ -191,23 +197,23 @@ export default function AssignScholarshipScreen() {
                     setErrorMsg('')
                 }}
             />
-            <LinearGradient
-                colors={['#176192', '#1D548D', '#264387']}
-                style={[styles.container, { paddingTop: top + 10 }]}
-            >
+            <GradientBackground style={[styles.container, { paddingTop: top + 10 }]}>
                 <ScrollView
                     style={{ flex: 1 }}
-                    contentContainerStyle={{ paddingBottom: bottom + 20 }}
+                    contentContainerStyle={{
+                        paddingBottom: bottom + 20,
+                        paddingHorizontal: homeLayout.screenPaddingH,
+                        gap: homeLayout.sectionGap,
+                    }}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Header */}
-                    <TouchableOpacity onPress={() => router.back()} style={styles.header}>
-                        <Ionicons name="chevron-back" size={28} color="#fff" />
-                        <Text style={styles.headerTitle}>Interest Received</Text>
-                    </TouchableOpacity>
+                    <ScreenBackHeader
+                        title="Interest Received"
+                        onBack={() => router.back()}
+                        style={styles.screenHeader}
+                    />
 
-                    {/* User Card */}
-                    <View style={styles.userCard}>
+                    <CommonCard compact>
                         <View style={styles.userInfo}>
                             <View style={styles.avatar}>
                                 <Ionicons name="person-outline" size={28} color="#fff" />
@@ -237,10 +243,9 @@ export default function AssignScholarshipScreen() {
                                 <Ionicons name="logo-whatsapp" size={20} color="#fff" />
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </CommonCard>
 
-                    {/* Rural/Urban Toggle */}
-                    <View style={styles.toggleCard}>
+                    <CommonCard compact style={styles.toggleCard}>
                         <Text style={styles.toggleLabel}>Choose Rural or Urban :</Text>
                         <View style={styles.toggleOptions}>
                             <Text style={styles.toggleText}>Rural</Text>
@@ -255,10 +260,9 @@ export default function AssignScholarshipScreen() {
                             />
                             <Text style={styles.toggleText}>Urban</Text>
                         </View>
-                    </View>
+                    </CommonCard>
 
-                    {/* Product and Services */}
-                    <View style={styles.productCard}>
+                    <CommonCard compact style={styles.productCard}>
                         <Pressable
                             style={styles.productHeader}
                             onPress={() => setIsProductExpanded(!isProductExpanded)}
@@ -290,7 +294,7 @@ export default function AssignScholarshipScreen() {
                                 ))}
                             </View>
                         )}
-                    </View>
+                    </CommonCard>
 
                     {/* Amount Section */}
                     <View style={styles.amountSection}>
@@ -343,7 +347,7 @@ export default function AssignScholarshipScreen() {
                     onCancel={handleCloseEdit}
                     onSave={handleSaveEditAmount}
                 />
-            </LinearGradient>
+            </GradientBackground>
         </>
     );
 }
@@ -353,29 +357,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.3)',
-        marginBottom: 16,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#fff',
-        marginLeft: 8,
-    },
-    userCard: {
-        marginHorizontal: 16,
-        marginBottom: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 16,
-        backgroundColor: 'transparent',
+    screenHeader: {
+        marginHorizontal: -homeLayout.screenPaddingH,
+        marginBottom: 4,
     },
     userInfo: {
         flexDirection: 'row',
@@ -386,22 +370,23 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.5)',
-        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: 'rgba(111, 212, 190, 0.28)',
+        backgroundColor: 'rgba(111, 212, 190, 0.14)',
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 12,
     },
     userName: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 17,
+        fontWeight: '800',
+        color: roadmapTheme.textPrimary,
         marginBottom: 4,
+        letterSpacing: -0.2,
     },
     userRole: {
-        fontSize: 15,
-        color: '#fff',
+        fontSize: 14,
+        color: roadmapTheme.textMuted,
     },
     contactIcons: {
         flexDirection: 'row',
@@ -414,20 +399,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     toggleCard: {
-        marginHorizontal: 16,
-        marginBottom: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 16,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     toggleLabel: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
+        color: roadmapTheme.textPrimary,
     },
     toggleOptions: {
         flexDirection: 'row',
@@ -435,65 +414,67 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     toggleText: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+        color: roadmapTheme.textMuted,
     },
     productCard: {
-        marginHorizontal: 16,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 16,
         overflow: 'hidden',
+        padding: 0,
+        gap: 0,
     },
     productHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 16,
+        paddingHorizontal: 14,
+        paddingTop: 14,
+        paddingBottom: 10,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.5)',
+        borderBottomColor: roadmapTheme.divider,
     },
     productTitle: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 15,
+        fontWeight: '800',
+        color: roadmapTheme.textPrimary,
+        letterSpacing: -0.15,
     },
     scholarshipList: {
-        padding: 20,
+        paddingHorizontal: 14,
+        paddingTop: 14,
+        paddingBottom: 14,
+        gap: 4,
     },
     scholarshipItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 16,
     },
     radioOuter: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: roadmapTheme.frostedBorderStrong,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 16,
+        marginRight: 14,
     },
     radioInner: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#000',
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: roadmapTheme.accentMint,
     },
     scholarshipLabel: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+        color: roadmapTheme.textPrimary,
     },
     amountSection: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: 16,
-        marginBottom: 20,
+        marginBottom: 4,
         gap: 8,
     },
     amountCard: {
@@ -503,8 +484,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
+        borderColor: roadmapTheme.frostedBorder,
         borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.06)',
     },
     amountTextContainer: {
         flex: 1,
@@ -513,68 +495,68 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     amountLabel: {
-        fontSize: 13,
-        fontWeight: '500',
-        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
+        color: roadmapTheme.textMuted,
         lineHeight: 16,
         flex: 1,
     },
     amountValue: {
         fontSize: 18,
-        fontWeight: '700',
-        color: '#FFC107',
+        fontWeight: '800',
+        color: roadmapTheme.accentGold,
         marginLeft: 12,
     },
     editButton: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
         paddingVertical: 10,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorder,
         borderRadius: 10,
         minWidth: 70,
     },
     editButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: 13,
+        fontWeight: '700',
+        color: roadmapTheme.textPrimary,
     },
     actionButtons: {
         flexDirection: 'row',
         gap: 12,
-        marginHorizontal: 20,
-        marginBottom: 20,
-        paddingHorizontal: 24,
+        marginBottom: 8,
     },
     backButton: {
         flex: 1,
         paddingVertical: 12,
-        backgroundColor: '#fff',
-        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderRadius: 12,
         alignItems: 'center',
-        minHeight: 44,
+        minHeight: 48,
         justifyContent: 'center',
     },
     backButtonText: {
         fontSize: 14,
-        fontWeight: '700',
-        color: '#1a5b77',
+        fontWeight: '800',
+        color: roadmapTheme.textActive,
     },
     acceptButton: {
         flex: 1,
         paddingVertical: 12,
-        backgroundColor: 'rgba(30, 54, 111, 1)',
-        borderWidth: 2,
-        borderColor: '#fff',
-        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorderStrong,
+        borderRadius: 12,
         alignItems: 'center',
-        minHeight: 44,
+        minHeight: 48,
         justifyContent: 'center',
     },
     acceptButtonText: {
         fontSize: 14,
-        fontWeight: '700',
-        color: '#fff',
+        fontWeight: '800',
+        color: roadmapTheme.textPrimary,
     },
 });

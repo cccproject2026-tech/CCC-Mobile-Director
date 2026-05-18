@@ -1,42 +1,41 @@
-import { Colors } from "@/constants/Colors";
+import { roadmapTheme } from "@/components/ui/design-system";
 import { Skeleton } from "moti/skeleton";
 import { StyleSheet, View } from "react-native";
+
+const skeletonColors = ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.06)"];
 
 export const InterestCardSkeleton = () => {
     return (
         <View style={styles.card}>
-            {/* Avatar */}
             <Skeleton
-                colorMode="light"
+                colorMode="dark"
                 radius={999}
                 height={48}
                 width={48}
-                colors={["#dbe9f5", "#b9d4e6"]}
+                colors={skeletonColors}
             />
 
-            {/* Text Block */}
             <View style={styles.textBlock}>
                 <Skeleton
-                    colorMode="light"
+                    colorMode="dark"
                     height={16}
                     width={'80%'}
-                    colors={["#dbe9f5", "#b9d4e6"]}
+                    colors={skeletonColors}
                 />
                 <Skeleton
-                    colorMode="light"
+                    colorMode="dark"
                     height={14}
                     width={'65%'}
-                    colors={["#dbe9f5", "#b9d4e6"]}
+                    colors={skeletonColors}
                 />
             </View>
 
-            {/* Right placeholder (like the time text) */}
             <Skeleton
-                colorMode="light"
+                colorMode="dark"
                 height={20}
-                width={50}   // wider than before
+                width={50}
                 radius={8}
-                colors={["#dbe9f5", "#b9d4e6"]}
+                colors={skeletonColors}
             />
         </View>
     );
@@ -47,11 +46,11 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         width: '100%',
-        backgroundColor: Colors.lightBlue,
-        borderRadius: 12,
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
+        borderRadius: 14,
         padding: 10,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.25)",
+        borderColor: roadmapTheme.frostedBorder,
         gap: 12,
     },
     textBlock: {

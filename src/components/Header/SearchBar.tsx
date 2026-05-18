@@ -17,6 +17,8 @@ interface SearchBarProps extends Omit<TextInputProps, 'onChangeText'> {
     placeholder?: string;
     style?: StyleProp<TextStyle>;
     backgroundColor?: string;
+    /** Pastor Home / mentorship frosted field */
+    variant?: 'default' | 'frosted';
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -24,10 +26,19 @@ const SearchBar: React.FC<SearchBarProps> = ({
     onChangeValue,
     placeholder = "Search",
     style,
-    backgroundColor = '#14517D',
+    backgroundColor,
+    variant = 'default',
     ...inputProps
-}) => (
-    <View style={[styles.wrapper, { backgroundColor }]}>
+}) => {
+    const isFrosted = variant === 'frosted';
+    const resolvedBg = backgroundColor ?? (isFrosted ? 'rgba(255,255,255,0.08)' : '#14517D');
+
+    return (
+    <View style={[
+        styles.wrapper,
+        isFrosted ? styles.wrapperFrosted : null,
+        { backgroundColor: resolvedBg },
+    ]}>
         <TextInput
             value={value}
             onChangeText={onChangeValue}
@@ -39,7 +50,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
         <Image source={icons.search} style={styles.icon} />
     </View>
-);
+    );
+};
 
 const styles = StyleSheet.create({
     wrapper: {
@@ -50,6 +62,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         paddingHorizontal: Platform.OS === 'android' ? 14 : 18,
         paddingVertical: Platform.OS === 'android' ? 10 : 11,
+    },
+    wrapperFrosted: {
+        borderRadius: 12,
+        borderColor: 'rgba(255,255,255,0.16)',
     },
     input: {
         flex: 1,

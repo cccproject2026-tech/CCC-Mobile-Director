@@ -1,5 +1,5 @@
-import { Colors } from '@/constants/Colors';
 import { InterestItem } from '@/types/interest.types';
+import { roadmapTheme } from '@/components/ui/design-system';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { memo } from 'react';
@@ -48,7 +48,6 @@ const InterestCard: React.FC<Props> = memo(({ data, onCall, onChat, onMail, onPr
 
     return (
         <Pressable onPress={handleCardPress} style={styles.card}>
-            {/* Avatar */}
             <View style={styles.avatarCircle}>
                 {data.profilePicture ? (
                     <Image source={{ uri: data.profilePicture }} style={styles.avatarImage} />
@@ -56,12 +55,11 @@ const InterestCard: React.FC<Props> = memo(({ data, onCall, onChat, onMail, onPr
                     <Ionicons
                         name="person-outline"
                         size={isSmallDevice ? 16 : 18}
-                        color="#EAF7FF"
+                        color={roadmapTheme.accentMint}
                     />
                 )}
             </View>
 
-            {/* Name + Role */}
             <View style={styles.infoBlock}>
                 <Text style={styles.name} numberOfLines={1}>{fullName}</Text>
                 <Text style={styles.role} numberOfLines={1}>
@@ -69,28 +67,25 @@ const InterestCard: React.FC<Props> = memo(({ data, onCall, onChat, onMail, onPr
                 </Text>
             </View>
 
-            {/* Actions */}
             <View style={styles.actions}>
                 <Pressable hitSlop={12} onPress={onCall}>
-                    <Ionicons name="call-outline" size={isSmallDevice ? 16 : 18} color="#EAF7FF" />
+                    <Ionicons name="call-outline" size={isSmallDevice ? 16 : 18} color={roadmapTheme.textPrimary} />
                 </Pressable>
                 <Pressable hitSlop={12} onPress={onChat}>
-                    <MaterialCommunityIcons name="message-outline" size={isSmallDevice ? 16 : 18} color="#EAF7FF" />
+                    <MaterialCommunityIcons name="message-outline" size={isSmallDevice ? 16 : 18} color={roadmapTheme.textPrimary} />
                 </Pressable>
                 <Pressable hitSlop={12} onPress={onMail}>
-                    <MaterialIcons name="mail-outline" size={isSmallDevice ? 16 : 18} color="#EAF7FF" />
+                    <MaterialIcons name="mail-outline" size={isSmallDevice ? 16 : 18} color={roadmapTheme.textPrimary} />
                 </Pressable>
                 <Pressable hitSlop={12} onPress={onWhatsApp}>
-                    <Ionicons name="logo-whatsapp" size={isSmallDevice ? 16 : 18} color="#EAF7FF" />
+                    <Ionicons name="logo-whatsapp" size={isSmallDevice ? 16 : 18} color={roadmapTheme.textPrimary} />
                 </Pressable>
             </View>
 
-            {/* Time */}
             <Text style={styles.time}>{formatTime(data.createdAt)}</Text>
 
-            {/* Chevron */}
             <Pressable hitSlop={12} onPress={onPress}>
-                <Ionicons name="chevron-forward" size={isSmallDevice ? 16 : 18} color="#EAF7FF" />
+                <Ionicons name="chevron-forward" size={isSmallDevice ? 16 : 18} color={roadmapTheme.textMuted} />
             </Pressable>
         </Pressable>
     );
@@ -98,28 +93,26 @@ const InterestCard: React.FC<Props> = memo(({ data, onCall, onChat, onMail, onPr
 
 export default InterestCard;
 
-
 const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.lightBlue,
-        borderRadius: 12,
-        padding: isSmallDevice ? 6 : 8,
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
+        borderRadius: 14,
+        padding: isSmallDevice ? 8 : 10,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
+        borderColor: roadmapTheme.frostedBorder,
         gap: isSmallDevice ? 6 : 8,
-        marginBottom: isSmallDevice ? 8 : 10,
     },
     avatarCircle: {
         width: isSmallDevice ? 44 : 48,
         height: isSmallDevice ? 44 : 48,
         borderRadius: isSmallDevice ? 22 : 24,
-        backgroundColor: '#1a5b77',
+        backgroundColor: 'rgba(111, 212, 190, 0.14)',
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(111, 212, 190, 0.28)',
         overflow: 'hidden',
     },
     avatarImage: {
@@ -132,25 +125,24 @@ const styles = StyleSheet.create({
         minWidth: 0,
     },
     name: {
-        color: '#EAF7FF',
-        fontSize: isSmallDevice ? 15 : 16,
-        fontWeight: '600',
-        marginBottom: 1,
+        color: roadmapTheme.textPrimary,
+        fontSize: isSmallDevice ? 14 : 15,
+        fontWeight: '700',
+        marginBottom: 2,
     },
     role: {
-        color: '#CFE9F3',
-        fontSize: isSmallDevice ? 12 : 13,
-        marginTop: 1,
+        color: roadmapTheme.textMuted,
+        fontSize: isSmallDevice ? 11 : 12,
     },
     actions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: isSmallDevice ? 3 : 4,
+        gap: isSmallDevice ? 4 : 5,
     },
     time: {
-        color: 'rgba(255,255,255,0.85)',
-        fontSize: isSmallDevice ? 11 : 12,
-        marginLeft: isSmallDevice ? 6 : 8,
+        color: roadmapTheme.textSubtle,
+        fontSize: isSmallDevice ? 10 : 11,
+        marginLeft: isSmallDevice ? 4 : 6,
         flexShrink: 0,
     },
 });

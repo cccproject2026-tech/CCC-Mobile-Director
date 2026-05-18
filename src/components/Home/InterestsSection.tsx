@@ -1,11 +1,13 @@
 import { useInterests } from '@/hooks/useInterest';
 import { CommonCard, HomeSectionHeader, roadmapTheme } from '@/components/ui/design-system';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import InterestCard from '../Cards/InterestCard';
 import { InterestCardSkeleton } from '../Cards/InterestCard/InterestCardSkeleton';
 
 const InterestsSection = () => {
+    const router = useRouter();
     const { data, isLoading } = useInterests();
 
     const interests = Array.isArray(data) ? data : data || [];
@@ -34,7 +36,10 @@ const InterestsSection = () => {
                 headerRight={
                     <View style={styles.headerRight}>
                         {badge}
-                        <Pressable hitSlop={8}>
+                        <Pressable
+                            hitSlop={8}
+                            onPress={() => router.push('/(director)/(tabs)/new-interests' as any)}
+                        >
                             <Text style={styles.seeAll}>See all</Text>
                         </Pressable>
                     </View>

@@ -6,10 +6,15 @@ import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
 import AssignInterestChoiceModal from '@/components/Modals/AssignInterestChoiceModal';
 import FilterModal from '@/components/Modals/FilterModal';
+import {
+    GradientBackground,
+    homeLayout,
+    roadmapTheme,
+    ScreenBackHeader,
+} from '@/components/ui/design-system';
 import { useInterests } from '@/hooks/useInterest';
 import { InterestItem, InterestStatus } from '@/types/interest.types';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -18,7 +23,6 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View
 } from 'react-native';
 import { RefreshControl } from 'react-native-gesture-handler';
@@ -35,9 +39,6 @@ export default function InterestReceivedScreen() {
     const router = useRouter();
     const { data: interestsData, isLoading, error, isRefetching, refetch } = useInterests();
 
-    /** ------------------------------------
-     * Country filter options
-     -------------------------------------*/
     const countryOptions = useMemo(() => {
         const list = Array.isArray(interestsData) ? interestsData : [];
 
@@ -50,10 +51,6 @@ export default function InterestReceivedScreen() {
         return ['All', ...unique];
     }, [interestsData]);
 
-
-    /** ------------------------------------
-     * Group by status
-     -------------------------------------*/
     const groupedInterests = useMemo(() => {
         const list = Array.isArray(interestsData) ? interestsData : [];
 
@@ -65,9 +62,6 @@ export default function InterestReceivedScreen() {
         };
     }, [interestsData]);
 
-    /** ------------------------------------
-     * Apply search + filter
-     -------------------------------------*/
     const filteredInterests = useMemo(() => {
         let list = groupedInterests[activeTab as keyof typeof groupedInterests] ?? [];
 
@@ -125,9 +119,6 @@ export default function InterestReceivedScreen() {
         });
     }, [assignPickerItem, router]);
 
-    /** ------------------------------------
-     * Tabs
-     -------------------------------------*/
     const tabs = [
         { key: 'new' as InterestTab, label: 'New', badge: groupedInterests.new.length },
         { key: 'pending' as InterestTab, label: 'Pending', badge: groupedInterests.pending.length },
@@ -135,37 +126,28 @@ export default function InterestReceivedScreen() {
         { key: 'rejected' as InterestTab, label: 'Rejected', badge: groupedInterests.rejected.length },
     ];
 
-    /** ------------------------------------
-     * Render
-     -------------------------------------*/
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
+        <GradientBackground>
             <View style={styles.container}>
                 <TopBar notifications={3} showUserName showNotifications />
 
                 <View style={styles.inner}>
-                    {/* BACK BUTTON */}
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={styles.backRow}
-                    >
-                        <Ionicons name="chevron-back" size={28} color="#fff" />
-                        <Text style={styles.backText}>Interest Received</Text>
-                    </TouchableOpacity>
+                    <ScreenBackHeader
+                        title="Interest Received"
+                        onBack={() => router.back()}
+                    />
 
-                    {/* SEARCH */}
                     <View style={styles.searchWrapper}>
-                        <SearchBar value={search} onChangeValue={setSearch} />
+                        <SearchBar value={search} onChangeValue={setSearch} variant="frosted" />
                     </View>
 
-                    {/* TABS */}
                     <TabSwitcher
                         tabs={tabs}
                         activeTab={activeTab}
                         onChange={(key) => setActiveTab(key as InterestTab)}
+                        variant="frosted"
                     />
 
-                    {/* FILTERS */}
                     <View style={styles.filterRow}>
                         <Text style={styles.filterLabel}>Filters</Text>
                         <Pressable
@@ -177,11 +159,10 @@ export default function InterestReceivedScreen() {
                                     ? 'All Countries'
                                     : `Country: ${selectedFilter}`}
                             </Text>
-                            <Ionicons name="chevron-down" size={18} color="#fff" />
+                            <Ionicons name="chevron-down" size={16} color={roadmapTheme.textPrimary} />
                         </Pressable>
                     </View>
 
-                    {/* LIST */}
                     {isLoading ? (
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={styles.list}>
@@ -212,9 +193,9 @@ export default function InterestReceivedScreen() {
                                 {filteredInterests.length > 0 ? (
                                     filteredInterests.map(item =>
                                         activeTab === 'accepted'
-                                            ? <AcceptedUserCard 
+                                            ? <AcceptedUserCard
                                                 key={item.id}
-                                                data={item} 
+                                                data={item}
                                                 onAssignPress={() => {
                                                     router.push({
                                                         pathname: '/mentees/assign-mentors',
@@ -233,7 +214,6 @@ export default function InterestReceivedScreen() {
                     )}
                 </View>
 
-                {/* FILTER MODAL */}
                 <FilterModal
                     visible={filterModalVisible}
                     onClose={() => setFilterModalVisible(false)}
@@ -257,60 +237,59 @@ export default function InterestReceivedScreen() {
                 />
 
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    inner: { flex: 1, paddingTop: 24 },
-    backRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-        marginBottom: 16,
-        borderBottomWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)'
+    inner: { flex: 1, paddingTop: 8 },
+    searchWrapper: {
+        paddingHorizontal: homeLayout.screenPaddingH,
+        marginBottom: 14,
     },
-    backText: {
-        marginLeft: 8,
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#fff'
-    },
-    searchWrapper: { paddingHorizontal: 16, marginBottom: 16 },
     filterRow: {
         flexDirection: 'row',
         justifyContent: 'flex-end',
-        paddingHorizontal: 16,
-        marginBottom: 16,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        marginBottom: 14,
         alignItems: 'center',
-        gap: 8
+        gap: 8,
     },
-    filterLabel: { fontSize: 16, color: '#fff' },
+    filterLabel: {
+        fontSize: 14,
+        color: roadmapTheme.textMuted,
+        fontWeight: '600',
+    },
     filterButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 999
+        borderColor: roadmapTheme.frostedBorderStrong,
+        borderRadius: 999,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        gap: 4,
     },
     filterButtonText: {
-        color: '#fff',
-        marginRight: 6,
-        fontSize: 16,
-        fontWeight: '500'
+        color: roadmapTheme.textPrimary,
+        fontSize: 13,
+        fontWeight: '600',
     },
-    list: { paddingHorizontal: 16, gap: 12, paddingTop: 8, paddingBottom: 24 },
+    list: {
+        paddingHorizontal: homeLayout.screenPaddingH,
+        gap: 10,
+        paddingTop: 4,
+        paddingBottom: 24,
+    },
     error: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
-    errorText: { color: '#fba', fontSize: 16, textAlign: 'center' },
+    errorText: { color: '#fca5a5', fontSize: 15, textAlign: 'center' },
     noData: {
-        color: 'rgba(255,255,255,0.7)',
+        color: roadmapTheme.textMuted,
         textAlign: 'center',
         marginTop: 40,
-        fontSize: 14
-    }
+        fontSize: 14,
+        lineHeight: 20,
+    },
 });

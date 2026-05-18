@@ -1,11 +1,12 @@
+import { roadmapTheme } from "@/components/ui/design-system";
 import { InterestItem } from "@/types/interest.types";
 import { Mentee } from "@/types/user.types";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import React, { memo, useCallback } from "react";
 import {
     Dimensions,
     Image,
+    Pressable,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -72,13 +73,12 @@ const AcceptedUserCard = memo(
                     <View style={styles.checkboxContainer}>
                         <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
                             {isSelected && (
-                                <Ionicons name="checkmark" size={18} color="#1A4882" />
+                                <Ionicons name="checkmark" size={18} color={roadmapTheme.textActive} />
                             )}
                         </View>
                     </View>
                 )}
 
-                {/* TOP ROW */}
                 <View style={styles.topRow}>
                     <View style={styles.profileImageContainer}>
                         {data.profilePicture ? (
@@ -87,7 +87,7 @@ const AcceptedUserCard = memo(
                             <Ionicons
                                 name="person-outline"
                                 size={isSmallDevice ? 40 : 50}
-                                color="#fff"
+                                color={roadmapTheme.accentMint}
                             />
                         )}
                     </View>
@@ -116,52 +116,42 @@ const AcceptedUserCard = memo(
                     </View>
                 </View>
 
-                {/* BOTTOM */}
                 <View style={styles.bottomRow}>
                     <View style={styles.contactIcons}>
                         <TouchableOpacity
                             style={styles.iconButton}
                             onPress={(e) => stopPropagation(e, () => console.log("Call"))}
                         >
-                            <Ionicons name="call-outline" size={20} color="#fff" />
+                            <Ionicons name="call-outline" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.iconButton}
                             onPress={(e) => stopPropagation(e, () => console.log("Chat"))}
                         >
-                            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
+                            <Ionicons name="chatbubble-outline" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.iconButton}
                             onPress={(e) => stopPropagation(e, () => console.log("Mail"))}
                         >
-                            <Ionicons name="mail-outline" size={20} color="#fff" />
+                            <Ionicons name="mail-outline" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.iconButton}
                             onPress={(e) => stopPropagation(e, () => console.log("WhatsApp"))}
                         >
-                            <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+                            <Ionicons name="logo-whatsapp" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>
                     </View>
 
                     {!selectable && showAssignButton && (
-                        <LinearGradient
-                            colors={["#7C3AED", "#38BDF8"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.gradientBorder}
-                        >
-                            <TouchableOpacity
-                                style={styles.innerButtonContainer}
-                                onPress={onAssignPress}
-                            >
-                                <Text style={styles.assignButtonText}>Assign</Text>
-                            </TouchableOpacity>
-                        </LinearGradient>
+                        <Pressable style={styles.assignButton} onPress={onAssignPress}>
+                            <Text style={styles.assignButtonText}>Assign</Text>
+                            <Ionicons name="arrow-forward" size={14} color={roadmapTheme.textActive} />
+                        </Pressable>
                     )}
                 </View>
             </Wrapper>
@@ -171,21 +161,19 @@ const AcceptedUserCard = memo(
 
 export default AcceptedUserCard;
 
-/* STYLES UNCHANGED */
 const styles = StyleSheet.create({
     acceptedCard: {
-        padding: 16,
-        backgroundColor: "#1A4882",
+        padding: 14,
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.3)",
+        borderColor: roadmapTheme.frostedBorder,
         borderRadius: 16,
-        marginBottom: 12,
         position: "relative",
     },
     selectedCard: {
-        borderColor: "#38BDF8",
+        borderColor: roadmapTheme.accentMint,
         borderWidth: 2,
-        backgroundColor: "#1F5A9E",
+        backgroundColor: "rgba(111, 212, 190, 0.12)",
     },
     checkboxContainer: {
         position: "absolute",
@@ -198,26 +186,26 @@ const styles = StyleSheet.create({
         height: 24,
         borderRadius: 6,
         borderWidth: 2,
-        borderColor: "rgba(255,255,255,0.5)",
+        borderColor: roadmapTheme.frostedBorderStrong,
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "transparent",
     },
     checkboxSelected: {
-        backgroundColor: "#fff",
-        borderColor: "#fff",
+        backgroundColor: "rgba(255,255,255,0.92)",
+        borderColor: "rgba(255,255,255,0.92)",
     },
     topRow: {
         flexDirection: "row",
-        marginBottom: 16,
+        marginBottom: 14,
     },
     profileImageContainer: {
-        width: isSmallDevice ? 90 : 110,
-        height: isSmallDevice ? 90 : 110,
-        backgroundColor: "#14517D",
-        borderWidth: 2,
-        borderColor: "rgba(255,255,255,0.5)",
-        borderRadius: 16,
+        width: isSmallDevice ? 90 : 100,
+        height: isSmallDevice ? 90 : 100,
+        backgroundColor: "rgba(111, 212, 190, 0.14)",
+        borderWidth: 1,
+        borderColor: "rgba(111, 212, 190, 0.28)",
+        borderRadius: 14,
         overflow: "hidden",
         alignItems: "center",
         justifyContent: "center",
@@ -234,35 +222,33 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
     },
     userName: {
-        fontSize: isSmallDevice ? 16 : 18,
-        fontWeight: "600",
-        color: "#fff",
+        fontSize: isSmallDevice ? 16 : 17,
+        fontWeight: "800",
+        color: roadmapTheme.textPrimary,
         marginBottom: 4,
+        letterSpacing: -0.2,
     },
     userRole: {
         fontSize: isSmallDevice ? 13 : 14,
-        color: "rgba(255,255,255,0.8)",
+        color: roadmapTheme.textMuted,
         marginBottom: 8,
     },
     infoRow: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 6,
+        marginBottom: 4,
         flexWrap: "wrap",
     },
     infoLabel: {
         fontSize: isSmallDevice ? 12 : 13,
-        color: "#fff",
+        color: roadmapTheme.textSubtle,
         marginRight: 4,
     },
     infoValue: {
         fontSize: isSmallDevice ? 12 : 13,
-        color: "rgba(255,255,255,0.8)",
+        color: roadmapTheme.textPrimary,
+        fontWeight: "500",
         flexShrink: 1,
-    },
-    warningText: {
-        fontSize: isSmallDevice ? 12 : 13,
-        color: "#FACC15",
     },
     bottomRow: {
         flexDirection: "row",
@@ -271,7 +257,7 @@ const styles = StyleSheet.create({
     },
     contactIcons: {
         flexDirection: "row",
-        gap: 8,
+        gap: 4,
         flex: 1,
     },
     iconButton: {
@@ -280,23 +266,20 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    gradientBorder: {
-        padding: 2,
-        borderRadius: 13,
+    assignButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: "rgba(255,255,255,0.92)",
+        borderRadius: 10,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
         marginLeft: 8,
         flexShrink: 0,
     },
-    innerButtonContainer: {
-        backgroundColor: "#1A4882",
-        borderRadius: 11,
-        paddingVertical: 8,
-        paddingHorizontal: isSmallDevice ? 12 : 16,
-        alignItems: "center",
-        justifyContent: "center",
-    },
     assignButtonText: {
         fontSize: isSmallDevice ? 13 : 14,
-        fontWeight: "600",
-        color: "#fff",
+        fontWeight: "700",
+        color: roadmapTheme.textActive,
     },
 });

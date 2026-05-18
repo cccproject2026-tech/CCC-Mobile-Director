@@ -1,10 +1,15 @@
 
 import TopBar from '@/components/Header/TopBar';
 import AppModal from '@/components/Modals/AppModal';
+import {
+    CommonCard,
+    GradientBackground,
+    homeLayout,
+    roadmapTheme,
+} from '@/components/ui/design-system';
 import { useInterests, useUpdateInterestStatus } from '@/hooks/useInterest';
 import { InterestItem } from '@/types/interest.types';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
@@ -21,8 +26,6 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const LOGO = require('@/assets/images/app/CCClogo.png');
 
 /* -------------------------------------------------------
    Extract & Normalize Form Data from InterestItem
@@ -156,23 +159,12 @@ console.log("Interest ID:--------", interestId);
 
     if (!formData) {
         return (
-            <View style={{ padding: 40, alignItems: 'center' }}>
-                <Text style={{ color: '#fff', textAlign: 'center', fontSize: 16 }}>
-                    Unable to load form data.
-                </Text>
-                <Pressable
-                    onPress={() => router.back()}
-                    style={{
-                        marginTop: 16,
-                        paddingHorizontal: 20,
-                        paddingVertical: 10,
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        borderRadius: 8,
-                    }}
-                >
-                    <Text style={{ color: '#fff' }}>Go Back</Text>
+            <GradientBackground style={styles.centeredState}>
+                <Text style={styles.stateText}>Unable to load form data.</Text>
+                <Pressable onPress={() => router.back()} style={styles.stateButton}>
+                    <Text style={styles.stateButtonText}>Go Back</Text>
                 </Pressable>
-            </View>
+            </GradientBackground>
         );
     }
 
@@ -180,10 +172,7 @@ console.log("Interest ID:--------", interestId);
        RENDER
     -------------------------------------------------------- */
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={[styles.container]}
-        >
+        <GradientBackground style={styles.container}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -193,41 +182,30 @@ console.log("Interest ID:--------", interestId);
                 </View>
                 <ScrollView
                     style={{ flex: 1 }}
-                    contentContainerStyle={{ paddingBottom: bottom + 20, flexGrow: 1 }}
+                    contentContainerStyle={{
+                        paddingBottom: bottom + 20,
+                        flexGrow: 1,
+                        paddingHorizontal: homeLayout.screenPaddingH,
+                        gap: homeLayout.sectionGap,
+                    }}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
-                    {/* HEADER */}
-
-                    {/* LOADING */}
                     {isLoading ? (
-                        <View style={{ padding: 40, alignItems: 'center' }}>
-                            <ActivityIndicator color="#fff" size="large" />
-                            <Text style={{ color: '#fff', marginTop: 12 }}>Loading interest details...</Text>
+                        <View style={styles.loadingBlock}>
+                            <ActivityIndicator color={roadmapTheme.textPrimary} size="large" />
+                            <Text style={styles.loadingText}>Loading interest details...</Text>
                         </View>
                     ) : !interest ? (
-                        /* NOT FOUND */
-                        <View style={{ padding: 40, alignItems: 'center' }}>
-                            <Text style={{ color: '#fff', textAlign: 'center', fontSize: 16 }}>
-                                Interest not found
-                            </Text>
-                            <Pressable
-                                onPress={() => router.back()}
-                                style={{
-                                    marginTop: 16,
-                                    paddingHorizontal: 20,
-                                    paddingVertical: 10,
-                                    backgroundColor: 'rgba(255,255,255,0.2)',
-                                    borderRadius: 8,
-                                }}
-                            >
-                                <Text style={{ color: '#fff' }}>Go Back</Text>
+                        <View style={styles.loadingBlock}>
+                            <Text style={styles.stateText}>Interest not found</Text>
+                            <Pressable onPress={() => router.back()} style={styles.stateButton}>
+                                <Text style={styles.stateButtonText}>Go Back</Text>
                             </Pressable>
                         </View>
                     ) : (
                         <>
-                            {/* USER CARD */}
-                            <View style={styles.userCard}>
+                            <CommonCard compact style={styles.userCard}>
                                 <View style={styles.userCardTop}>
                                     <View style={styles.avatarContainer}>
                                         <Ionicons name="person-outline" size={28} color="#fff" />
@@ -273,13 +251,9 @@ console.log("Interest ID:--------", interestId);
                                         <Ionicons name="logo-whatsapp" size={22} color="#fff" />
                                     </TouchableOpacity>
                                 </View>
-                            </View>
+                            </CommonCard>
 
-                            {/* ======================
-                                PERSONAL INFORMATION
-                               ====================== */}
-                            <View style={styles.sectionWrapper}>
-                                <View style={styles.sectionBorder}>
+                            <CommonCard compact>
                                     <View style={styles.section}>
                                         <Text style={styles.sectionTitle}>Personal Information</Text>
 
@@ -306,13 +280,10 @@ console.log("Interest ID:--------", interestId);
                                             </View>
                                         </View>
                                     </View>
-                                </View>
+                            </CommonCard>
 
-                                {/* ======================
-                                    CHURCHES (DYNAMIC)
-                                   ====================== */}
                                 {formData.churchList.map((church, index) => (
-                                    <View key={index} style={styles.sectionBorder}>
+                                    <CommonCard compact key={index}>
                                         <View style={styles.section}>
                                             <Text style={styles.sectionTitle}>
                                                 Current Church - {index + 1} Information
@@ -366,13 +337,10 @@ console.log("Interest ID:--------", interestId);
                                                 </View>
                                             </View>
                                         </View>
-                                    </View>
+                                    </CommonCard>
                                 ))}
 
-                                {/* ======================
-                                    OTHER INFORMATION
-                                   ====================== */}
-                                <View style={styles.section}>
+                            <CommonCard compact>
                                     <Text style={styles.sectionTitle}>Other Information</Text>
 
                                     <View style={[styles.input, styles.readOnlyField]}>
@@ -405,43 +373,37 @@ console.log("Interest ID:--------", interestId);
                                         <Text style={styles.fieldLabel}>Comments</Text>
                                         <Text style={styles.fieldValue}>{formData.comments}</Text>
                                     </View>
-                                </View>
-                            </View>
+                            </CommonCard>
 
-                            {/* ======================
-                               ACTION BUTTONS
-                            ====================== */}
                             <View style={styles.actionButtons}>
                                 <Pressable
                                     style={[styles.rejectButton, isUpdatingStatus && styles.buttonDisabled]}
                                     onPress={() => setShowRejectModal(true)}
                                     disabled={isUpdatingStatus}
                                 >
-                                    <Text style={styles.buttonText}>REJECT</Text>
+                                    <Text style={styles.rejectButtonText}>REJECT</Text>
                                 </Pressable>
 
                                 <Pressable
-                                    style={[styles.nextButton, isUpdatingStatus && styles.buttonDisabled]}
+                                    style={[styles.acceptOutlineButton, isUpdatingStatus && styles.buttonDisabled]}
                                     onPress={handleAccept}
                                     disabled={isUpdatingStatus}
                                 >
                                     {isUpdatingStatus ? (
-                                        <ActivityIndicator color="#fff" size="small" />
+                                        <ActivityIndicator color={roadmapTheme.textPrimary} size="small" />
                                     ) : (
-                                        <Text style={[styles.buttonText, { color: '#fff' }]}>ACCEPT</Text>
+                                        <Text style={styles.acceptOutlineText}>ACCEPT</Text>
                                     )}
                                 </Pressable>
                             </View>
 
-                            <View style={styles.pendingButtonContainer}>
-                                <Pressable
-                                    style={styles.pendingButton}
-                                    onPress={handleAddToPending}
-                                >
-                                    <Ionicons name="arrow-back" size={20} color="#fff" />
-                                    <Text style={styles.pendingButtonText}>Add to Pending</Text>
-                                </Pressable>
-                            </View>
+                            <Pressable
+                                style={styles.pendingButton}
+                                onPress={handleAddToPending}
+                            >
+                                <Ionicons name="arrow-back" size={18} color={roadmapTheme.textPrimary} />
+                                <Text style={styles.pendingButtonText}>Add to Pending</Text>
+                            </Pressable>
                         </>
                     )}
                 </ScrollView>
@@ -469,7 +431,7 @@ console.log("Interest ID:--------", interestId);
                     router.back();
                 }}
             />
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
@@ -477,7 +439,40 @@ console.log("Interest ID:--------", interestId);
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#2563A8',
+    },
+    centeredState: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 32,
+    },
+    stateText: {
+        color: roadmapTheme.textPrimary,
+        textAlign: 'center',
+        fontSize: 16,
+        lineHeight: 22,
+    },
+    stateButton: {
+        marginTop: 16,
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorder,
+    },
+    stateButtonText: {
+        color: roadmapTheme.textPrimary,
+        fontWeight: '700',
+    },
+    loadingBlock: {
+        padding: 40,
+        alignItems: 'center',
+    },
+    loadingText: {
+        color: roadmapTheme.textMuted,
+        marginTop: 12,
+        fontSize: 14,
     },
     header: {
         flexDirection: 'row',
@@ -487,56 +482,8 @@ const styles = StyleSheet.create({
         paddingBottom: Platform.OS === 'android' ? 12 : 16,
         position: 'relative',
     },
-    headerCenter: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    sectionWrapper: {
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-        borderRadius: 20,
-        marginHorizontal: 16,
-        paddingVertical: 16,
-    },
-    gradientBorder: {
-        padding: 2,
-        borderRadius: 13,
-    },
-    titleContainer: {
-        backgroundColor: '#176192',
-        borderRadius: Platform.OS === 'android' ? 8 : 11,
-        paddingVertical: Platform.OS === 'android' ? 6 : 9,
-        paddingHorizontal: Platform.OS === 'android' ? 20 : 28,
-    },
-    titleText: {
-        color: '#E2E8F0',
-        fontSize: Platform.OS === 'android' ? 16 : 18,
-        fontWeight: '600',
-    },
-    logoButton: {
-        width: Platform.OS === 'android' ? 32 : 36,
-        height: Platform.OS === 'android' ? 32 : 36,
-        borderRadius: Platform.OS === 'android' ? 16 : 18,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.65)',
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    logo: {
-        width: Platform.OS === 'android' ? 24 : 27,
-        height: Platform.OS === 'android' ? 24 : 27,
-        borderRadius: Platform.OS === 'android' ? 12 : 15,
-    },
     userCard: {
-        marginHorizontal: Platform.OS === 'android' ? 12 : 16,
-        marginBottom: Platform.OS === 'android' ? 16 : 24,
-        padding: Platform.OS === 'android' ? 12 : 16,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-        borderRadius: Platform.OS === 'android' ? 12 : 16,
+        marginTop: 4,
     },
     userCardTop: {
         flexDirection: 'row',
@@ -544,25 +491,26 @@ const styles = StyleSheet.create({
         marginBottom: Platform.OS === 'android' ? 12 : 16,
     },
     avatarContainer: {
-        width: Platform.OS === 'android' ? 48 : 56,
-        height: Platform.OS === 'android' ? 48 : 56,
-        backgroundColor: '#14517D',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: Platform.OS === 'android' ? 24 : 28,
+        width: Platform.OS === 'android' ? 48 : 52,
+        height: Platform.OS === 'android' ? 48 : 52,
+        backgroundColor: 'rgba(111, 212, 190, 0.14)',
+        borderWidth: 1,
+        borderColor: 'rgba(111, 212, 190, 0.28)',
+        borderRadius: Platform.OS === 'android' ? 24 : 26,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: Platform.OS === 'android' ? 10 : 12,
     },
     userName: {
-        fontSize: Platform.OS === 'android' ? 16 : 18,
-        fontWeight: '600',
-        color: '#fff',
+        fontSize: Platform.OS === 'android' ? 16 : 17,
+        fontWeight: '800',
+        color: roadmapTheme.textPrimary,
         marginBottom: 4,
+        letterSpacing: -0.2,
     },
     userRole: {
-        fontSize: Platform.OS === 'android' ? 14 : 16,
-        color: 'rgba(255,255,255,0.8)',
+        fontSize: Platform.OS === 'android' ? 13 : 14,
+        color: roadmapTheme.textMuted,
     },
     contactIcons: {
         flexDirection: 'row',
@@ -575,14 +523,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     section: {
-        paddingHorizontal: Platform.OS === 'android' ? 12 : 16,
-        marginBottom: Platform.OS === 'android' ? 8 : 12,
+        gap: 2,
     },
     sectionTitle: {
         fontSize: Platform.OS === 'android' ? 14 : 15,
-        fontWeight: '600',
-        color: '#fff',
+        fontWeight: '800',
+        color: roadmapTheme.textPrimary,
         marginBottom: Platform.OS === 'android' ? 8 : 10,
+        letterSpacing: -0.15,
     },
     row: {
         flexDirection: 'row',
@@ -591,12 +539,12 @@ const styles = StyleSheet.create({
     input: {
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: Platform.OS === 'android' ? 8 : 10,
+        borderColor: roadmapTheme.frostedBorder,
+        borderRadius: 10,
         paddingHorizontal: Platform.OS === 'android' ? 10 : 12,
         paddingVertical: Platform.OS === 'android' ? 8 : 10,
         fontSize: Platform.OS === 'android' ? 14 : 15,
-        color: '#fff',
+        color: roadmapTheme.textPrimary,
         marginBottom: Platform.OS === 'android' ? 8 : 10,
     },
     halfInput: {
@@ -608,76 +556,72 @@ const styles = StyleSheet.create({
     },
     actionButtons: {
         flexDirection: 'row',
-        gap: Platform.OS === 'android' ? 12 : 16,
-        marginVertical: Platform.OS === 'android' ? 16 : 24,
-        width: Platform.OS === 'android' ? '60%' : '50%',
-        alignSelf: 'center',
+        gap: 12,
+        marginTop: 4,
     },
     rejectButton: {
         flex: 1,
-        paddingVertical: Platform.OS === 'android' ? 10 : 14,
-        backgroundColor: '#fff',
-        borderRadius: Platform.OS === 'android' ? 8 : 10,
+        minHeight: 48,
+        paddingVertical: 12,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderRadius: 12,
         alignItems: 'center',
+        justifyContent: 'center',
     },
-    nextButton: {
+    rejectButtonText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: roadmapTheme.textActive,
+    },
+    acceptOutlineButton: {
         flex: 1,
-        paddingVertical: Platform.OS === 'android' ? 10 : 14,
-        backgroundColor: 'rgba(30, 54, 111, 1)',
-        borderWidth: 2,
-        borderColor: '#fff',
-        borderRadius: Platform.OS === 'android' ? 8 : 10,
+        minHeight: 48,
+        paddingVertical: 12,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorderStrong,
+        borderRadius: 12,
         alignItems: 'center',
+        justifyContent: 'center',
     },
-    buttonText: {
-        fontSize: Platform.OS === 'android' ? 14 : 16,
-        fontWeight: '600',
-        color: '#1a5b77',
+    acceptOutlineText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: roadmapTheme.textPrimary,
     },
     buttonDisabled: {
         opacity: 0.6,
     },
-    pendingButtonContainer: {
-        marginHorizontal: 16,
-        marginBottom: Platform.OS === 'android' ? 16 : 24,
-        alignItems: 'flex-start',
-    },
     pendingButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.16)',
-        paddingVertical: Platform.OS === 'android' ? 8 : 12,
-        paddingHorizontal: Platform.OS === 'android' ? 16 : 20,
-        borderRadius: Platform.OS === 'android' ? 8 : 10,
+        alignSelf: 'flex-start',
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorder,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        borderRadius: 10,
+        gap: 8,
+        marginBottom: 8,
     },
     pendingButtonText: {
-        fontSize: Platform.OS === 'android' ? 16 : 18,
-        fontWeight: '500',
-        color: '#fff',
-        marginLeft: Platform.OS === 'android' ? 8 : 12,
-    },
-
-
-    sectionBorder: {
-        borderBottomColor: '#ccc',
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomStartRadius: 50,
-        borderBottomEndRadius: 50,
-        marginBottom: Platform.OS === 'android' ? 12 : 20,
+        fontSize: 14,
+        fontWeight: '600',
+        color: roadmapTheme.textPrimary,
     },
     readOnlyField: {
         backgroundColor: 'rgba(255,255,255,0.05)',
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: roadmapTheme.frostedBorder,
     },
     fieldLabel: {
         fontSize: Platform.OS === 'android' ? 11 : 12,
-        color: 'rgba(255,255,255,0.7)',
+        color: roadmapTheme.textSubtle,
         marginBottom: Platform.OS === 'android' ? 2 : 4,
     },
     fieldValue: {
         fontSize: Platform.OS === 'android' ? 13 : 14,
-        color: '#fff',
+        color: roadmapTheme.textPrimary,
         fontWeight: '500',
         lineHeight: Platform.OS === 'android' ? 16 : 18,
     },

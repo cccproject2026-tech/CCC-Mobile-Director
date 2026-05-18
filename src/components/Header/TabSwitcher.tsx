@@ -11,10 +11,12 @@ interface TabSwitcherProps {
     tabs: TabItem[];
     activeTab: string;
     onChange: (key: string) => void;
+    variant?: 'default' | 'frosted';
 }
 
 export const TabSwitcher: React.FC<TabSwitcherProps> = memo(
-    ({ tabs, activeTab, onChange }) => {
+    ({ tabs, activeTab, onChange, variant = 'default' }) => {
+        const isFrosted = variant === 'frosted';
         return (
             <View style={styles.wrapper}>
                 <ScrollView
@@ -36,13 +38,26 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = memo(
                                     hitSlop={10}
                                     style={[
                                         styles.tabButton,
-                                        isActive ? styles.activeTab : styles.inactiveTab,
+                                        isFrosted ? styles.tabButtonFrosted : null,
+                                        isActive
+                                            ? isFrosted
+                                                ? styles.activeTabFrosted
+                                                : styles.activeTab
+                                            : isFrosted
+                                              ? styles.inactiveTabFrosted
+                                              : styles.inactiveTab,
                                     ]}
                                 >
                                     <Text
                                         style={[
                                             styles.tabText,
-                                            isActive ? styles.activeTabText : styles.inactiveTabText,
+                                            isActive
+                                                ? isFrosted
+                                                    ? styles.activeTabTextFrosted
+                                                    : styles.activeTabText
+                                                : isFrosted
+                                                  ? styles.inactiveTabTextFrosted
+                                                  : styles.inactiveTabText,
                                         ]}
                                         numberOfLines={1}
                                     >
@@ -51,8 +66,10 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = memo(
                                 </Pressable>
 
                                 {isActive && hasBadge && (
-                                    <View style={styles.badge}>
-                                        <Text style={styles.badgeText}>{tab.badge}</Text>
+                                    <View style={[styles.badge, isFrosted ? styles.badgeFrosted : null]}>
+                                        <Text style={[styles.badgeText, isFrosted ? styles.badgeTextFrosted : null]}>
+                                            {tab.badge}
+                                        </Text>
                                     </View>
                                 )}
                             </View>
@@ -120,5 +137,34 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 11,
         fontWeight: 'bold',
+    },
+    tabButtonFrosted: {
+        borderRadius: 20,
+        borderWidth: 1,
+        paddingHorizontal: Platform.OS === 'android' ? 14 : 16,
+        paddingVertical: Platform.OS === 'android' ? 8 : 9,
+    },
+    inactiveTabFrosted: {
+        backgroundColor: 'transparent',
+        borderColor: 'rgba(255,255,255,0.18)',
+    },
+    activeTabFrosted: {
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: 'rgba(255,255,255,0.92)',
+    },
+    inactiveTabTextFrosted: {
+        color: 'rgba(255,255,255,0.85)',
+        fontWeight: '700',
+    },
+    activeTabTextFrosted: {
+        color: '#0E5A62',
+        fontWeight: '700',
+    },
+    badgeFrosted: {
+        backgroundColor: '#0E5A62',
+        borderColor: 'rgba(255,255,255,0.92)',
+    },
+    badgeTextFrosted: {
+        color: '#fff',
     },
 });
