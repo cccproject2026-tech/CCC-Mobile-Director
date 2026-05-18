@@ -4,11 +4,11 @@ import SearchBar from '@/components/Header/SearchBar';
 import TopBar from '@/components/Header/TopBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
 import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useMentorMentees } from '@/hooks/useMentors';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
@@ -26,7 +26,7 @@ const PHASES = ['All Phases', 'Phase 1', 'Phase 2', 'Phase 3'];
 
 export default function MentorMentees() {
     const router = useRouter();
-    const { id } = useLocalSearchParams<{ id: string }>(); // mentor id from route
+    const { id } = useLocalSearchParams<{ id: string }>();
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] =
         useState<'all' | 'in-progress' | 'completed'>('in-progress');
@@ -40,7 +40,7 @@ export default function MentorMentees() {
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const { mentor, mentees, isLoading, isError } = useMentorMentees(id);
-   console.log('Mentees: ', mentees);
+    console.log('Mentees: ', mentees);
     console.log('Mentor: ', mentor);
     console.log('Mentor ID: ', id);
     const mentorName = mentor
@@ -79,9 +79,7 @@ export default function MentorMentees() {
         {
             icon: 'people-outline',
             label: 'Revitalization Roadmaps',
-            onPress: () => router.push(
-                '/mentors/mentor-mentees',
-            ),
+            onPress: () => router.push('/mentors/mentor-mentees'),
         },
         {
             icon: 'person-add-outline',
@@ -91,19 +89,6 @@ export default function MentorMentees() {
                 params: { id: selectedMentee?.id || '' },
             }),
         },
-        // {
-        //     icon: 'person-remove-outline',
-        //     label: 'Assignments',
-        //     onPress: router.push.bind(
-        //         router,
-        //         '/mentors/remove-mentee',
-        //     ),
-        // },
-        // {
-        //     icon: 'clipboard-outline',
-        //     label: 'Roadmaps of Mentees',
-        //     onPress: () => console.log('Roadmaps of Mentees'),
-        // },
         {
             icon: 'checkmark-done-outline',
             label: 'Mentor Notes',
@@ -165,10 +150,7 @@ export default function MentorMentees() {
 
     if (isLoading) {
         return (
-            <LinearGradient
-                colors={['#176192', '#1D548D', '#264387']}
-                style={{ flex: 1, paddingBottom: bottom + height * 0.05 }}
-            >
+            <GradientBackground>
                 <View style={styles.pageRoot}>
                     <TopBar notifications={3} showUserName showNotifications />
                     <View style={styles.loadingListContainer}>
@@ -178,33 +160,28 @@ export default function MentorMentees() {
                         <UserCardSkeleton layout="list" />
                     </View>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     if (isError) {
         return (
-            <LinearGradient
-                colors={['#176192', '#1D548D', '#264387']}
-                style={{ flex: 1, paddingBottom: bottom + height * 0.05 }}
-            >
+            <GradientBackground>
                 <View style={styles.pageRoot}>
                     <TopBar notifications={3} showUserName showNotifications />
                     <View style={styles.errorContainer}>
+                        <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
                         <Text style={styles.errorText}>
                             Failed to load mentees. Please try again.
                         </Text>
                     </View>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={{ flex: 1 }}
-        >
+        <GradientBackground>
             <View style={styles.pageRoot}>
                 <TopBar notifications={3} showUserName showNotifications />
 
@@ -213,11 +190,13 @@ export default function MentorMentees() {
                     <View style={styles.header}>
                         <TouchableOpacity onPress={() => router.back()}>
                             <View style={styles.headerLeft}>
-                                <Ionicons name="chevron-back" size={28} color="#fff" />
+                                <View style={styles.backIconWrap}>
+                                    <Ionicons name="chevron-back" size={20} color="#fff" />
+                                </View>
                                 <View style={styles.headerTitleWrapper}>
                                     <Text style={styles.headerTitle}>Mentees</Text>
                                     <Text style={styles.headerSubtitle}>
-                                        Mentor &gt; {mentorName}
+                                        Mentor › {mentorName}
                                     </Text>
                                 </View>
                             </View>
@@ -233,7 +212,7 @@ export default function MentorMentees() {
                                 }
                                 style={styles.assignButton}
                             >
-                                <Ionicons name="add" size={18} color="#fff" />
+                                <Ionicons name="add" size={16} color="#fff" />
                                 <Text style={styles.assignButtonText}>Assign</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -244,7 +223,7 @@ export default function MentorMentees() {
                             >
                                 <Ionicons
                                     name={viewMode === 'card' ? 'list' : 'grid'}
-                                    size={24}
+                                    size={20}
                                     color="#fff"
                                 />
                             </TouchableOpacity>
@@ -256,7 +235,7 @@ export default function MentorMentees() {
                                     )
                                 }
                             >
-                                <Ionicons name="location-outline" size={24} color="#fff" />
+                                <Ionicons name="location-outline" size={20} color="#fff" />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -268,57 +247,26 @@ export default function MentorMentees() {
 
                     {/* Tabs */}
                     <View style={styles.tabsRow}>
-                        <Pressable
-                            onPress={() => handleTabChange('all')}
-                            style={[
-                                styles.tabButton,
-                                activeTab === 'all' && styles.tabButtonActive,
-                            ]}
-                        >
-                            <Text
+                        {(['all', 'in-progress', 'completed'] as const).map(tab => (
+                            <Pressable
+                                key={tab}
+                                onPress={() => handleTabChange(tab)}
                                 style={[
-                                    styles.tabText,
-                                    activeTab === 'all' && styles.tabTextActive,
+                                    styles.tabButton,
+                                    activeTab === tab && styles.tabButtonActive,
                                 ]}
                             >
-                                All
-                            </Text>
-                        </Pressable>
-                        <Pressable
-                            onPress={() => handleTabChange('in-progress')}
-                            style={[
-                                styles.tabButton,
-                                activeTab === 'in-progress' && styles.tabButtonActive,
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.tabText,
-                                    activeTab === 'in-progress' && styles.tabTextActive,
-                                ]}
-                            >
-                                In-progress ({inProgressCount})
-                            </Text>
-                        </Pressable>
-                        <Pressable
-                            onPress={() => handleTabChange('completed')}
-                            style={[
-                                styles.tabButton,
-                                activeTab === 'completed' && styles.tabButtonActive,
-                            ]}
-                        >
-                            <Text
-                                style={[
-                                    styles.tabText,
-                                    activeTab === 'completed' && styles.tabTextActive,
-                                ]}
-                            >
-                                Completed
-                            </Text>
-                        </Pressable>
+                                <Text
+                                    style={[
+                                        styles.tabText,
+                                        activeTab === tab && styles.tabTextActive,
+                                    ]}
+                                >
+                                    {tab === 'all' ? 'All' : tab === 'in-progress' ? `In Progress (${inProgressCount})` : 'Completed'}
+                                </Text>
+                            </Pressable>
+                        ))}
                     </View>
-
-                    <View style={styles.profileSwiperContainer} />
 
                     {/* Sort */}
                     <View style={styles.sortRow}>
@@ -330,11 +278,11 @@ export default function MentorMentees() {
                             <Text style={styles.sortButtonText} numberOfLines={1}>
                                 {getFilterDisplayText()}
                             </Text>
-                            <Ionicons name="chevron-down" size={18} color="#fff" />
+                            <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.8)" />
                         </Pressable>
                     </View>
 
-                    {/* Mentees List (FlatList) */}
+                    {/* Mentees List */}
                     <FlatList
                         style={styles.list}
                         data={filteredMentees}
@@ -366,21 +314,21 @@ export default function MentorMentees() {
                         }
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
+                                <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
                                 <Text style={styles.emptyTitle}>No mentees assigned yet</Text>
                                 <Text style={styles.emptySubtitle}>
                                     Assign mentees to this mentor to see them listed here.
                                 </Text>
                                 <TouchableOpacity
                                     style={styles.emptyButton}
-                                    onPress={() =>{
-                                        
+                                    onPress={() => {
                                         router.push({
                                             pathname: '/mentors/assign-mentees',
                                             params: { id: mentor?.id },
-                                        })}
-                                    }
+                                        });
+                                    }}
                                 >
-                                    <Ionicons name="person-add-outline" size={18} color="#fff" />
+                                    <Ionicons name="person-add-outline" size={16} color="#fff" />
                                     <Text style={styles.emptyButtonText}>Assign Mentees</Text>
                                 </TouchableOpacity>
                             </View>
@@ -412,7 +360,7 @@ export default function MentorMentees() {
                     filterOptions={filterOptions}
                 />
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
@@ -430,84 +378,100 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 16,
+        gap: 12,
     },
-    errorText: { color: '#fff', textAlign: 'center', fontSize: 16 },
+    errorText: { color: 'rgba(255,255,255,0.7)', textAlign: 'center', fontSize: 15 },
 
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingBottom: 14,
         marginBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
     headerLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 10,
     },
-    headerTitleWrapper: { marginLeft: 8 },
+    backIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerTitleWrapper: { gap: 2 },
     headerTitle: {
-        fontSize: 20,
-        fontWeight: '600',
+        fontSize: 18,
+        fontWeight: '800',
         color: '#fff',
+        letterSpacing: -0.2,
     },
-    headerSubtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)' },
+    headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: '500' },
     headerActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 8,
     },
     assignButton: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
-        paddingVertical: 8,
+        paddingVertical: 7,
         paddingHorizontal: 12,
+        backgroundColor: 'rgba(255,255,255,0.12)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 8,
+        borderColor: 'rgba(255,255,255,0.22)',
+        borderRadius: 10,
     },
-    assignButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
-    iconButton: { padding: 4 },
+    assignButtonText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+    iconButton: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.16)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 
     searchContainer: { paddingHorizontal: 16, marginBottom: 16 },
 
     tabsRow: {
         flexDirection: 'row',
-        gap: 12,
+        gap: 8,
         paddingHorizontal: 16,
         marginBottom: 16,
     },
     tabButton: {
         flex: 1,
-        paddingVertical: 12,
-        borderRadius: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        backgroundColor: '#14517D',
+        borderColor: 'rgba(255,255,255,0.18)',
+        backgroundColor: 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
     },
     tabButtonActive: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: 'rgba(255,255,255,0.92)',
     },
     tabText: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#ffffff',
+        fontSize: 12,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.85)',
     },
     tabTextActive: {
-        color: '#1a5b77',
-    },
-
-    profileSwiperContainer: {
-        marginBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.3)',
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
+        color: '#0E5A62',
     },
 
     sortRow: {
@@ -518,60 +482,62 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginBottom: 16,
     },
-    sortLabel: { fontSize: 16, color: '#fff' },
+    sortLabel: { fontSize: 13, color: 'rgba(255,255,255,0.65)', fontWeight: '500' },
     sortButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: 'transparent',
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        backgroundColor: 'rgba(255,255,255,0.08)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 999,
+        borderColor: 'rgba(255,255,255,0.18)',
+        borderRadius: 20,
     },
-    sortButtonText: { fontSize: 16, fontWeight: '500', color: '#fff' },
+    sortButtonText: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
 
     list: { flex: 1 },
     listContent: {
         paddingHorizontal: 16,
-        paddingBottom: 16,
+        paddingBottom: 24,
     },
     emptyContentContainer: {
         flexGrow: 1,
         paddingHorizontal: 16,
-        paddingBottom: 16,
+        paddingBottom: 24,
         justifyContent: 'center',
     },
     emptyContainer: {
         alignItems: 'center',
         paddingHorizontal: 16,
+        gap: 10,
     },
     emptyTitle: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: 17,
+        fontWeight: '700',
         color: '#fff',
-        marginBottom: 8,
     },
     emptySubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.8)',
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.6)',
         textAlign: 'center',
-        marginBottom: 16,
+        lineHeight: 20,
     },
     emptyButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 6,
         paddingHorizontal: 16,
         paddingVertical: 10,
-        borderRadius: 999,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.12)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.7)',
+        borderColor: 'rgba(255,255,255,0.22)',
+        marginTop: 4,
     },
     emptyButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 13,
+        fontWeight: '700',
         color: '#fff',
     },
-})
+});

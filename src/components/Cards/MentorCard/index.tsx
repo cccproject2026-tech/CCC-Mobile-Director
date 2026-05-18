@@ -116,45 +116,44 @@ const ImageContainer = ({ src, size }: { src?: string; size: number }) => (
 export const styles = StyleSheet.create({
     /* Card */
     card: {
-        backgroundColor: "rgba(33, 58, 115, 1)",
-        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.09)",
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.3)",
-        padding: 12,
+        borderColor: "rgba(255,255,255,0.14)",
+        padding: 14,
         marginBottom: 12,
     },
     cardRow: { flexDirection: "row" },
     cardInfo: { flex: 1 },
 
-    name: { fontSize: 16, fontWeight: "600", color: "#fff", marginRight: 16 },
-    role: { fontSize: 14, color: "#fff", marginBottom: 6 },
-    desc: { fontSize: 14, color: "rgba(255,255,255,0.8)", lineHeight: 20,marginTop:10 },
+    name: { fontSize: 16, fontWeight: "700", color: "#fff", marginRight: 16 },
+    role: { fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 6, fontWeight: "600", textTransform: "capitalize" },
+    desc: { fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 20, marginTop: 8 },
 
     /* Avatar */
-    avatar: { borderRadius: 10, overflow: "hidden", marginRight: 12 },
+    avatar: { borderRadius: 12, overflow: "hidden", marginRight: 12 },
     img: { width: "100%", height: "100%" },
-    placeholder: { flex: 1, backgroundColor: "#2A5080", alignItems: "center", justifyContent: "center" },
+    placeholder: { flex: 1, backgroundColor: "rgba(255,255,255,0.12)", alignItems: "center", justifyContent: "center" },
 
     /* List Layout */
     listContainer: {
-        flexDirection: "row", 
+        flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "rgba(24,68,123,1)",
-        borderRadius: 12, 
-        borderWidth: 1, 
-        borderColor: "rgba(255,255,255,0.3)",
-        padding: 10, 
-        marginBottom: 8,
-        justifyContent: 'space-between'
+        backgroundColor: "rgba(255,255,255,0.08)",
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.12)",
+        padding: 12,
+        marginBottom: 10,
+        justifyContent: "space-between",
     },
-    listInfo: {  flexDirection: 'row' },
-    listName: { fontSize: 14, fontWeight: "600", color: "#fff", marginRight: 5 },
+    listInfo: { flexDirection: "row", alignItems: "center" },
+    listName: { fontSize: 14, fontWeight: "700", color: "#fff", marginRight: 6 },
 
     /* Mentees Badge */
     menteesBadge: { flexDirection: "row", alignItems: "center" },
-    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#FFC107", marginRight: 6 },
-    menteesText: { fontSize: 11, color: "#FFC107", fontWeight: "500" },
-    row: { flexDirection: "row", alignItems: 'center' },
-    justifyBetween: {justifyContent: 'space-between'},
-
+    dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#6FD4BE", marginRight: 5 },
+    menteesText: { fontSize: 11, color: "#6FD4BE", fontWeight: "600" },
+    row: { flexDirection: "row", alignItems: "center" },
+    justifyBetween: { justifyContent: "space-between" },
 });

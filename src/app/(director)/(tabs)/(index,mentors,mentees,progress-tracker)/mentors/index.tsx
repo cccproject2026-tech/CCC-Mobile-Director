@@ -5,12 +5,13 @@ import { TabSwitcher } from "@/components/Header/TabSwitcher";
 import TopBar from "@/components/Header/TopBar";
 import FilterModal, { FilterOption } from "@/components/Modals/FilterModal";
 import ActionBottomSheet from "@/components/Sheets/ActionBottomSheet";
+import { GradientBackground, ScreenBackHeader } from "@/components/ui/design-system";
+import { roadmapTheme } from "@/components/ui/design-system/roadmapTheme";
 import { useMentors } from "@/hooks/useMentors";
 import { Mentor } from "@/types/user.types";
 
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -94,15 +95,6 @@ export default function Mentors() {
         {
             icon: "checkmark-done-outline",
             label: "Assessments of Mentees",
-            // onPress: () => {
-            //     console.log("selectedMentor", selectedMentor)
-            //     if (selectedMentor?.id) {
-            //         router.push({
-            //             pathname: "/(director)/(tabs)/assessments",
-            //             params: { id: selectedMentor.id },
-            //         });
-            //     }
-            // },
             onPress: () => router.push("/(director)/(tabs)/assessments"),
         },
         {
@@ -114,12 +106,9 @@ export default function Mentors() {
             icon: "stats-chart-outline",
             label: "Progress of Mentees",
             onPress: () => {
-                console.log(selectedMentor,"progreess");
+                console.log(selectedMentor, "progreess");
                 if (selectedMentor?.id) {
-                    // Close the bottom sheet before navigating
                     bottomSheetRef.current?.dismiss();
-
-                    // Navigate and pass the mentorId param
                     router.push({ pathname: "/progress-tracker/mentors" as any, params: { id: selectedMentor.id } });
                 }
             },
@@ -182,7 +171,6 @@ export default function Mentors() {
         { label: "Least number of Mentees" },
     ];
 
-    /* ------------------- APPLY SEARCH & FILTERS ------------------- */
     const filteredMentors = useMemo(() => {
         let list = mentorList;
 
@@ -203,12 +191,10 @@ export default function Mentors() {
         return list;
     }, [mentorList, search, activeTab, selectedFilter]);
 
-    /* ------------------- OPEN ACTION SHEET ------------------- */
     const openMenu = useCallback((mentor: Mentor) => {
         setSelectedMentor(mentor);
         setTimeout(() => bottomSheetRef.current?.present(), 10);
     }, []);
-
 
     const renderItem = ({ item }: { item: Mentor }) => (
         <MentorCard
@@ -234,10 +220,7 @@ export default function Mentors() {
     );
 
     return (
-        <LinearGradient
-            colors={["#176192", "#1D548D", "#264387"]}
-            style={{ flex: 1 }}
-        >
+        <GradientBackground>
             <View style={{ flex: 1 }}>
                 <TopBar notifications={3} showUserName showNotifications />
 
@@ -248,18 +231,21 @@ export default function Mentors() {
                             onPress={() => router.back()}
                             style={styles.backButton}
                         >
-                            <Ionicons name="chevron-back" size={24} color="#fff" />
+                            <View style={styles.backIconWrap}>
+                                <Ionicons name="chevron-back" size={20} color="#fff" />
+                            </View>
                             <Text style={styles.headerTitle}>Mentors</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
+                            style={styles.iconButton}
                             onPress={() =>
                                 setViewMode(viewMode === "card" ? "list" : "card")
                             }
                         >
                             <Ionicons
                                 name={viewMode === "card" ? "list" : "grid"}
-                                size={24}
+                                size={22}
                                 color="#fff"
                             />
                         </TouchableOpacity>
@@ -272,6 +258,7 @@ export default function Mentors() {
 
                     {/* TABS */}
                     <TabSwitcher
+                        variant="frosted"
                         tabs={[
                             { key: "all", label: "All" },
                             { key: "mentor", label: "Mentor" },
@@ -286,7 +273,6 @@ export default function Mentors() {
                     {/* FILTER */}
                     <View style={styles.filterContainer}>
                         <Text style={styles.sortByText}>Sort By</Text>
-
                         <Pressable
                             style={styles.filterButton}
                             onPress={() => setFilterModalVisible(true)}
@@ -294,7 +280,7 @@ export default function Mentors() {
                             <Text style={styles.filterText}>
                                 {selectedFilter || "Select Filter"}
                             </Text>
-                            <Ionicons name="chevron-down" size={14} color="#fff" />
+                            <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.8)" />
                         </Pressable>
                     </View>
 
@@ -326,6 +312,12 @@ export default function Mentors() {
                                 }
                             }}
                             onEndReachedThreshold={0.5}
+                            ListEmptyComponent={
+                                <View style={styles.emptyContainer}>
+                                    <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
+                                    <Text style={styles.emptyText}>No mentors found</Text>
+                                </View>
+                            }
                             ListFooterComponent={() => (
                                 isFetchingNextPage ? (
                                     <View style={{ paddingVertical: 20 }}>
@@ -364,7 +356,7 @@ export default function Mentors() {
                     />
                 )}
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
@@ -374,41 +366,46 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingBottom: 14,
         marginBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.3)",
+        borderBottomColor: "rgba(255,255,255,0.12)",
     },
-
     backButton: {
         flexDirection: "row",
         alignItems: "center",
+        gap: 10,
     },
-
+    backIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.18)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
     headerTitle: {
-        marginLeft: 8,
         fontSize: 20,
-        fontWeight: "600",
+        fontWeight: "800",
         color: "#fff",
+        letterSpacing: -0.2,
     },
-
-    viewToggle: {
-        padding: 8,
+    iconButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 9,
+        backgroundColor: "rgba(255,255,255,0.10)",
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.16)",
+        alignItems: "center",
+        justifyContent: "center",
     },
-
     searchContainer: {
         paddingHorizontal: 16,
         marginBottom: 16,
     },
-
-    swiperContainer: {
-        marginBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.3)",
-        borderBottomLeftRadius: 20,
-        borderBottomRightRadius: 20,
-    },
-
     filterContainer: {
         flexDirection: "row",
         alignItems: "center",
@@ -417,36 +414,39 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginBottom: 16,
     },
-
     sortByText: {
-        fontSize: 16,
-        color: "#fff",
+        fontSize: 13,
+        color: "rgba(255,255,255,0.65)",
+        fontWeight: "500",
     },
-
     filterButton: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: "transparent",
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 7,
+        backgroundColor: "rgba(255,255,255,0.08)",
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.5)",
-        borderRadius: 25,
+        borderColor: "rgba(255,255,255,0.18)",
+        borderRadius: 20,
     },
-
     filterText: {
-        fontSize: 16,
-        fontWeight: "500",
-        color: "#fff",
+        fontSize: 13,
+        fontWeight: "600",
+        color: "rgba(255,255,255,0.85)",
     },
-
-    flatList: {
-        flex: 1,
-    },
-
     flatListContent: {
         paddingHorizontal: 16,
-        paddingBottom: 16,
+        paddingBottom: 24,
+    },
+    emptyContainer: {
+        alignItems: "center",
+        paddingVertical: 48,
+        gap: 12,
+    },
+    emptyText: {
+        color: "rgba(255,255,255,0.5)",
+        fontSize: 15,
+        fontWeight: "500",
     },
 });
