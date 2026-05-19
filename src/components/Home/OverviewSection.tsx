@@ -1,11 +1,12 @@
 import { useDirectorOverview } from '@/hooks/useProgress';
-import { CommonCard, HomeSectionHeader, roadmapTheme } from '@/components/ui/design-system';
-import { LinearGradient } from 'expo-linear-gradient';
+import { CommonCard, HomeSectionHeader, homeLayout, roadmapTheme } from '@/components/ui/design-system';
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 import { PieChart, BarChart } from 'react-native-gifted-charts';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const CIRCLE_SIZE = SCREEN_WIDTH * 0.26;
 
 const OverviewSection = () => {
     const { data, isLoading } = useDirectorOverview();
@@ -26,12 +27,12 @@ const OverviewSection = () => {
         );
     }
 
-    const barData = data.monthlyData.map(item => ([
+    const barData = data.monthlyData.map((item: any) => ([
         {
             value: item.pastorsCompleted,
             label: item.monthName.substring(0, 3),
             spacing: 2,
-            labelTextStyle: { color: '#FFFFFF', fontSize: 10 },
+            labelTextStyle: { color: roadmapTheme.textMuted, fontSize: 10 },
             frontColor: '#7C3AED',
             gradientColor: '#38BDF8',
             showGradient: true,
@@ -39,86 +40,118 @@ const OverviewSection = () => {
         {
             value: item.mentorsCompleted,
             frontColor: '#38BDF8',
-            gradientColor: '#2DD4BF',
+            gradientColor: roadmapTheme.accentMint,
             showGradient: true,
-        }
+        },
     ])).flat();
 
     const pieData = [
         { value: data.completedPastors, color: '#38BDF8', text: 'Graduated' },
         { value: data.totalPastors - data.completedPastors, color: '#7C3AED', text: 'In-progress' },
-        { value: 0, color: '#2DD4BF', text: 'Ready to Graduate' },
+        { value: 0, color: roadmapTheme.accentMint, text: 'Ready to Graduate' },
     ];
 
     return (
         <View style={styles.wrapper}>
+            {/* Stat circles */}
             <CommonCard>
                 <HomeSectionHeader
                     icon="stats-chart-outline"
                     title="Overview"
                     subtitle="Mentors, pastors, and completion at a glance."
                 />
-                <View style={styles.circleContainer}>
-                    <StatCircle label="Total Mentors" value={data.totalMentors} />
-                    <StatCircle label="Total Pastors" value={data.totalPastors} />
-                    <StatCircle label="Pastors Completed" value={data.completedPastors} />
+                <View style={styles.circleRow}>
+                    <StatCircle label="Total Mentors" value={data.totalMentors} color="#38BDF8" />
+                    <StatCircle label="Total Pastors" value={data.totalPastors} color="#7C3AED" />
+                    <StatCircle label="Completed" value={data.completedPastors} color={roadmapTheme.accentMint} />
                 </View>
             </CommonCard>
 
+            {/* Graduate status pie */}
             <CommonCard>
-                <Text style={styles.chartCardTitle}>Graduate Status of Pastors in a Year</Text>
-                <View style={styles.chartCardHeader}>
-                    <View style={styles.yearBadge}><Text style={styles.yearText}>2025 ⌄</Text></View>
+                <View style={styles.cardTitleRow}>
+                    <View style={styles.cardTitleIconWrap}>
+                        <Text style={styles.cardTitleIcon}>🎓</Text>
+                    </View>
+                    <View style={styles.cardTitleTexts}>
+                        <Text style={styles.cardTitle}>Graduate Status of Pastors</Text>
+                        <Text style={styles.cardSubtitle}>Progress breakdown for the year</Text>
+                    </View>
+                    <View style={styles.yearBadge}>
+                        <Text style={styles.yearText}>2025</Text>
+                    </View>
                 </View>
+
                 <View style={styles.pieRow}>
                     <PieChart
                         data={pieData}
                         donut
                         radius={SCREEN_WIDTH * 0.18}
-                        innerRadius={SCREEN_WIDTH * 0.14}
-                        innerCircleColor={'rgba(15, 59, 92, 0.9)'}
+                        innerRadius={SCREEN_WIDTH * 0.13}
+                        innerCircleColor={roadmapTheme.frostedSurfaceStrong}
                         centerLabelComponent={() => (
-                            <Text style={styles.pieCenter}>{data.totalPastors}</Text>
+                            <View style={styles.pieCenterWrap}>
+                                <Text style={styles.pieCenterValue}>{data.totalPastors}</Text>
+                                <Text style={styles.pieCenterLabel}>Total</Text>
+                            </View>
                         )}
                     />
-                    <View style={styles.legendContainer}>
-                        {pieData.map((item, index) => (
-                            <View key={index} style={styles.legendItem}>
-                                <View style={[styles.dot, { backgroundColor: item.color }]} />
-                                <Text style={styles.legendText}>{item.text}</Text>
+                    <View style={styles.legendList}>
+                        {pieData.map((item, i) => (
+                            <View key={i} style={styles.legendItem}>
+                                <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+                                <View>
+                                    <Text style={styles.legendLabel}>{item.text}</Text>
+                                    <Text style={[styles.legendValue, { color: item.color }]}>
+                                        {item.value}
+                                    </Text>
+                                </View>
                             </View>
                         ))}
                     </View>
                 </View>
             </CommonCard>
 
+            {/* Monthly trends bar */}
             <CommonCard>
-                <Text style={styles.chartCardTitle}>Monthly Trends of Pastors and Mentors</Text>
-                <View style={styles.chartCardHeader}>
-                    <View style={styles.barLegend}>
-                        <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#7C3AED' }]} /><Text style={styles.legendText}>Pastor</Text></View>
-                        <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: '#38BDF8' }]} /><Text style={styles.legendText}>Mentor</Text></View>
+                <View style={styles.cardTitleRow}>
+                    <View style={styles.cardTitleTexts}>
+                        <Text style={styles.cardTitle}>Monthly Trends</Text>
+                        <Text style={styles.cardSubtitle}>Pastors and mentors over 12 months</Text>
                     </View>
-                    <View style={styles.yearBadge}><Text style={styles.yearText}>Past 12 months ⌄</Text></View>
+                    <View style={styles.yearBadge}>
+                        <Text style={styles.yearText}>12 mo</Text>
+                    </View>
                 </View>
 
-                <View style={styles.chartWrapper}>
+                <View style={styles.barLegendRow}>
+                    <View style={styles.legendItem}>
+                        <View style={[styles.legendDot, { backgroundColor: '#7C3AED' }]} />
+                        <Text style={styles.legendLabel}>Pastor</Text>
+                    </View>
+                    <View style={styles.legendItem}>
+                        <View style={[styles.legendDot, { backgroundColor: '#38BDF8' }]} />
+                        <Text style={styles.legendLabel}>Mentor</Text>
+                    </View>
+                </View>
+
+                <View style={styles.chartWrap}>
                     <BarChart
                         data={barData}
                         width={SCREEN_WIDTH - 120}
-                        height={200}
+                        height={180}
                         barWidth={10}
                         initialSpacing={10}
                         spacing={18}
                         hideRules
                         yAxisThickness={0}
                         xAxisThickness={1}
-                        xAxisColor={'rgba(255,255,255,0.4)'}
-                        yAxisTextStyle={{ color: '#FFFFFF', fontSize: 12 }}
+                        xAxisColor={roadmapTheme.divider}
+                        yAxisTextStyle={{ color: roadmapTheme.textCaption, fontSize: 11 }}
                         backgroundColor="transparent"
                         noOfSections={5}
                         showFractionalValues={false}
-                        xAxisLabelTextStyle={{ color: '#FFFFFF', fontSize: 10, textAlign: 'center' }}
+                        xAxisLabelTextStyle={{ color: roadmapTheme.textCaption, fontSize: 10, textAlign: 'center' }}
                     />
                 </View>
             </CommonCard>
@@ -126,81 +159,92 @@ const OverviewSection = () => {
     );
 };
 
-const StatCircle = ({ label, value }: { label: string; value: number }) => (
+const StatCircle = ({ label, value, color }: { label: string; value: number; color: string }) => (
     <View style={styles.statBox}>
-        <LinearGradient
-            colors={["#7C3AED", "#38BDF8"]}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-            style={styles.gradientBorder}
-        >
-            <View style={styles.innerCircle}>
-                <Text style={styles.circleLabel}>{label.split(' ').join('\n')}</Text>
-                <Text style={styles.circleValue}>{value}</Text>
+        <View style={[styles.circleOuter, { borderColor: color + '55' }]}>
+            <View style={[styles.circleInner, { borderColor: color + '33' }]}>
+                <Text style={[styles.circleValue, { color }]}>{value}</Text>
+                <Text style={styles.circleLabel}>{label}</Text>
             </View>
-        </LinearGradient>
+        </View>
     </View>
 );
 
 const styles = StyleSheet.create({
-    wrapper: {
-        gap: 22,
-    },
-    loader: {
-        marginVertical: 24,
-    },
-    empty: {
-        color: roadmapTheme.textMuted,
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    circleContainer: {
+    wrapper: { gap: homeLayout.cardsGroupGap },
+    loader: { marginVertical: 24 },
+    empty: { color: roadmapTheme.textMuted, fontSize: 14, textAlign: 'center' },
+
+    // Stat circles
+    circleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 4,
     },
-    gradientBorder: {
-        width: SCREEN_WIDTH * 0.26,
-        height: SCREEN_WIDTH * 0.26,
-        borderRadius: (SCREEN_WIDTH * 0.26) / 2,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     statBox: { alignItems: 'center' },
-    innerCircle: {
-        width: (SCREEN_WIDTH * 0.26) - 4,
-        height: (SCREEN_WIDTH * 0.26) - 4,
-        borderRadius: ((SCREEN_WIDTH * 0.26) - 4) / 2,
-        backgroundColor: "rgba(15, 59, 92, 0.95)",
-        justifyContent: 'center',
+    circleOuter: {
+        width: CIRCLE_SIZE,
+        height: CIRCLE_SIZE,
+        borderRadius: CIRCLE_SIZE / 2,
+        borderWidth: 2,
         alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(255,255,255,0.04)',
     },
-    circleLabel: {
-        color: roadmapTheme.textMuted,
-        fontSize: 10,
-        textAlign: 'center',
-        lineHeight: 14,
+    circleInner: {
+        width: CIRCLE_SIZE - 10,
+        height: CIRCLE_SIZE - 10,
+        borderRadius: (CIRCLE_SIZE - 10) / 2,
+        borderWidth: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 2,
     },
     circleValue: {
-        color: roadmapTheme.textPrimary,
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: '800',
-        marginTop: 2,
+        lineHeight: 26,
     },
-    chartCardTitle: {
+    circleLabel: {
+        color: roadmapTheme.textCaption,
+        fontSize: 9,
+        textAlign: 'center',
+        lineHeight: 12,
+        paddingHorizontal: 4,
+    },
+
+    // Card title row
+    cardTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 14,
+    },
+    cardTitleIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: roadmapTheme.frostedSurface,
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorder,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cardTitleIcon: { fontSize: 16 },
+    cardTitleTexts: { flex: 1 },
+    cardTitle: {
         color: roadmapTheme.textPrimary,
         fontSize: 15,
-        fontWeight: '700',
-        marginBottom: 10,
+        fontWeight: '800',
         letterSpacing: -0.15,
     },
-    chartCardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        marginBottom: 12,
+    cardSubtitle: {
+        color: roadmapTheme.textCaption,
+        fontSize: 11,
+        marginTop: 1,
     },
     yearBadge: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: roadmapTheme.frostedSurface,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 8,
@@ -208,49 +252,61 @@ const styles = StyleSheet.create({
         borderColor: roadmapTheme.frostedBorder,
     },
     yearText: {
-        color: roadmapTheme.textPrimary,
+        color: roadmapTheme.textMuted,
         fontSize: 11,
         fontWeight: '600',
     },
-    chartWrapper: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+
+    // Pie
     pieRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    pieCenter: {
+    pieCenterWrap: { alignItems: 'center' },
+    pieCenterValue: {
         color: roadmapTheme.textPrimary,
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '800',
     },
-    legendContainer: {
+    pieCenterLabel: {
+        color: roadmapTheme.textCaption,
+        fontSize: 10,
+    },
+    legendList: {
         flex: 1,
         marginLeft: 16,
-        gap: 10,
+        gap: 12,
     },
     legendItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
-    dot: {
-        width: 10,
-        height: 10,
+    legendDot: {
+        width: 9,
+        height: 9,
         borderRadius: 3,
     },
-    legendText: {
-        color: roadmapTheme.textPrimary,
+    legendLabel: {
+        color: roadmapTheme.textMuted,
         fontSize: 12,
         fontWeight: '500',
     },
-    barLegend: {
+    legendValue: {
+        fontSize: 13,
+        fontWeight: '800',
+        marginTop: 1,
+    },
+
+    // Bar
+    barLegendRow: {
         flexDirection: 'row',
-        flex: 1,
-        gap: 15,
-        justifyContent: 'flex-start',
+        gap: 14,
+        marginBottom: 12,
+    },
+    chartWrap: {
+        alignItems: 'center',
     },
 });
 

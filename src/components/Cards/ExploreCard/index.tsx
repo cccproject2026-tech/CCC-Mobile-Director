@@ -150,12 +150,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: isSmallDevice ? 72 : 80,
+        height: isSmallDevice ? 80 : 88,
     },
     cardFrostedCompact: {
         paddingVertical: isSmallDevice ? 7 : 8,
         paddingHorizontal: 5,
-        minHeight: isSmallDevice ? 52 : 56,
+        height: isSmallDevice ? 72 : 80,
     },
     icon: {
         width: isSmallDevice ? 32 : 36,
@@ -189,5 +189,6 @@ const styles = StyleSheet.create({
         fontSize: isSmallDevice ? 9 : 10,
         lineHeight: isSmallDevice ? 12 : 13,
         fontWeight: '600',
+        height: isSmallDevice ? 24 : 26,
     },
 });

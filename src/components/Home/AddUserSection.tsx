@@ -2,7 +2,7 @@ import { CommonCard, HomeSectionHeader } from '@/components/ui/design-system';
 import { useAddUser } from '@/hooks/useDirectors';
 import { UserRole } from '@/types/user.types';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import AddUserCard from '../Cards/AddUserCard';
 import UserAddedConfirmationModal from '../Modals/AddUserConfirmationModal';
 
@@ -66,9 +66,7 @@ const AddUserSection = (props: Props) => {
                 title="Add User"
                 subtitle="Invite mentors, pastors, or staff to the platform."
             />
-            <View style={styles.body}>
-                <AddUserCard onUserAdded={handleUserAdded} />
-            </View>
+            <AddUserCard onUserAdded={handleUserAdded} />
             <UserAddedConfirmationModal
                 visible={showConfirmation}
                 userName={addedUser.name}
@@ -82,8 +80,4 @@ const AddUserSection = (props: Props) => {
 
 export default AddUserSection;
 
-const styles = StyleSheet.create({
-    body: {
-        gap: 12,
-    },
-});
+const styles = StyleSheet.create({});

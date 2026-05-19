@@ -1,18 +1,14 @@
 import { icons } from '@/constants';
+import { homeLayout, roadmapTheme } from '@/components/ui/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Dimensions, Image, Pressable, StyleSheet, Text, View } from 'react-native';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const isSmallDevice = SCREEN_WIDTH < 375;
-const isMediumDevice = SCREEN_WIDTH >= 375 && SCREEN_WIDTH < 414;
-const isLargeDevice = SCREEN_WIDTH >= 414;
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
     name: string;
     role: string;
-    metricLabel?: string; // "5 Mentees" or "Last Contacted"
-    metricValue?: string; // "" or "5 Days Ago"
+    metricLabel?: string;
+    metricValue?: string;
     avatar?: any;
     onCall?: () => void;
     onChat?: () => void;
@@ -32,78 +28,46 @@ const MentorMenteeCard: React.FC<Props> = ({
     onMail,
     onWhatsApp,
     onPress,
-}) => {
-    return (
-        <View style={styles.card}>
+}) => (
+    <Pressable style={styles.card} onPress={onPress}>
+        {/* Avatar */}
+        <View style={styles.avatarWrap}>
+            <Image source={avatar} style={styles.avatar} resizeMode="cover" />
+        </View>
 
-            <View style={styles.leftSection}>
-                <Image source={avatar} style={styles.avatar} resizeMode="cover" />
-                <View style={styles.info}>
-                    <Text style={styles.name} numberOfLines={1}>
-                        {name}
-                    </Text>
-                    <Text style={styles.role} numberOfLines={1}>
-                        {role}
-                    </Text>
-
-                    <View style={styles.actions}>
-                        <Pressable hitSlop={12} onPress={onCall}>
-                            <Ionicons
-                                name="call-outline"
-                                size={isSmallDevice ? 16 : 18}
-                                color="#EAF7FF"
-                            />
-                        </Pressable>
-                        <Pressable hitSlop={12} onPress={onChat}>
-                            <Ionicons
-                                name="chatbubble-outline"
-                                size={isSmallDevice ? 16 : 18}
-                                color="#EAF7FF"
-                            />
-                        </Pressable>
-                        <Pressable hitSlop={12} onPress={onMail}>
-                            <Ionicons
-                                name="mail-outline"
-                                size={isSmallDevice ? 16 : 18}
-                                color="#EAF7FF"
-                            />
-                        </Pressable>
-                        <Pressable hitSlop={12} onPress={onWhatsApp}>
-                            <Ionicons
-                                name="logo-whatsapp"
-                                size={isSmallDevice ? 16 : 18}
-                                color="#EAF7FF"
-                            />
-                        </Pressable>
-                    </View>
-                </View>
-            </View>
-
-
-            <View style={styles.rightSection}>
-                {metricLabel && (
-                    <View style={styles.metricContainer}>
-                        {metricValue ? (
-                            <>
-                                <Text style={styles.metricLabel}>{metricLabel}</Text>
-                                <Text style={styles.metricValue}>{metricValue}</Text>
-                            </>
-                        ) : (
-                            <Text style={styles.singleMetric}>{metricLabel}</Text>
-                        )}
-                    </View>
-                )}
-                <Pressable hitSlop={12} onPress={onPress} style={styles.chevronContainer}>
-                    <Ionicons
-                        name="chevron-forward"
-                        size={isSmallDevice ? 16 : 18}
-                        color="#EAF7FF"
-                    />
+        {/* Info */}
+        <View style={styles.info}>
+            <Text style={styles.name} numberOfLines={1}>{name}</Text>
+            <Text style={styles.role} numberOfLines={1}>{role}</Text>
+            <View style={styles.actions}>
+                <Pressable hitSlop={12} onPress={onCall}>
+                    <Ionicons name="call-outline" size={16} color={roadmapTheme.textPrimary} />
+                </Pressable>
+                <Pressable hitSlop={12} onPress={onChat}>
+                    <Ionicons name="chatbubble-outline" size={16} color={roadmapTheme.textPrimary} />
+                </Pressable>
+                <Pressable hitSlop={12} onPress={onMail}>
+                    <Ionicons name="mail-outline" size={16} color={roadmapTheme.textPrimary} />
+                </Pressable>
+                <Pressable hitSlop={12} onPress={onWhatsApp}>
+                    <Ionicons name="logo-whatsapp" size={16} color={roadmapTheme.textPrimary} />
                 </Pressable>
             </View>
         </View>
-    );
-};
+
+        {/* Metric + chevron */}
+        <View style={styles.right}>
+            {metricLabel && (
+                <View style={styles.metricBadge}>
+                    <Text style={styles.metricText}>
+                        {metricValue ? `${metricLabel}\n${metricValue}` : metricLabel}
+                    </Text>
+                </View>
+            )}
+            <Ionicons name="chevron-forward" size={16} color={roadmapTheme.textCaption} />
+        </View>
+    </Pressable>
+);
 
 export default MentorMenteeCard;
 
@@ -111,81 +75,67 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#1E4A6F',
-        borderRadius: 14,
-        borderWidth: 1.5,
-        borderColor: 'rgba(255,255,255,0.5)',
-        padding: isSmallDevice ? 8 : 10,
-        marginBottom: isSmallDevice ? 8 : 10,
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
+        borderRadius: homeLayout.cardRadiusCompact,
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorder,
+        padding: 10,
+        gap: 10,
     },
-    leftSection: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: isSmallDevice ? 8 : 10,
-        flex: 1,
-        minWidth: 0, // Prevent overflow
+    avatarWrap: {
+        width: 48,
+        height: 48,
+        borderRadius: 10,
+        overflow: 'hidden',
+        backgroundColor: 'rgba(111,212,190,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(111,212,190,0.22)',
+        flexShrink: 0,
     },
     avatar: {
-        width: isSmallDevice ? 48 : isMediumDevice ? 52 : 56,
-        height: isSmallDevice ? 48 : isMediumDevice ? 52 : 56,
-        borderRadius: 12,
-        backgroundColor: '#ccc',
+        width: '100%',
+        height: '100%',
     },
     info: {
         flex: 1,
-        minWidth: 0, // Prevent overflow
+        minWidth: 0,
+        gap: 2,
     },
     name: {
-        color: '#EAF7FF',
-        fontSize: isSmallDevice ? 14 : 15,
+        color: roadmapTheme.textPrimary,
+        fontSize: 14,
         fontWeight: '700',
-        marginBottom: 2,
     },
     role: {
-        color: '#CFE9F3',
-        fontSize: isSmallDevice ? 12 : 13,
-        marginBottom: isSmallDevice ? 4 : 6,
+        color: roadmapTheme.textMuted,
+        fontSize: 12,
+        marginBottom: 4,
     },
     actions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: isSmallDevice ? 8 : 10,
+        gap: 10,
     },
-    rightSection: {
+    right: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: isSmallDevice ? 4 : 6,
+        gap: 6,
         flexShrink: 0,
-        maxWidth: SCREEN_WIDTH * 0.4, // Limit to 40% of screen width
     },
-    metricContainer: {
-        alignItems: 'flex-end',
-        flexShrink: 1,
-        minWidth: 0,
+    metricBadge: {
+        backgroundColor: 'rgba(111,212,190,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(111,212,190,0.22)',
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        alignItems: 'center',
     },
-    metricLabel: {
-        color: 'rgba(255,255,255,0.85)',
-        fontSize: isSmallDevice ? 10 : 11,
-        textAlign: 'right',
-        lineHeight: isSmallDevice ? 12 : 14,
-    },
-    metricValue: {
-        color: '#d7f96c',
+    metricText: {
+        color: roadmapTheme.accentMint,
+        fontSize: 11,
         fontWeight: '700',
-        fontSize: isSmallDevice ? 10 : 11,
-        textAlign: 'right',
-        lineHeight: isSmallDevice ? 12 : 14,
-    },
-    singleMetric: {
-        color: '#d7f96c',
-        fontWeight: '700',
-        fontSize: isSmallDevice ? 10 : 11,
-        textAlign: 'right',
-        lineHeight: isSmallDevice ? 12 : 14,
-    },
-    chevronContainer: {
-        padding: 2,
-        flexShrink: 0,
+        textAlign: 'center',
+        lineHeight: 15,
     },
 });
