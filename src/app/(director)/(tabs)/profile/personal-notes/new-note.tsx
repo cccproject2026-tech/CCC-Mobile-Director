@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -17,6 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NotesService } from '@/services/notes.service';
 import { useAuthStore } from '@/stores/auth.store';
 import { useNotesStore } from '@/stores/notes.store';
+import {
+    GradientBackground,
+    homeLayout,
+    roadmapTheme,
+    ScreenBackHeader,
+} from '@/components/ui/design-system';
 
 export default function NewPersonalNoteScreen() {
     const params = useLocalSearchParams<{
@@ -63,7 +68,6 @@ export default function NewPersonalNoteScreen() {
             Alert.alert('Error', 'Please enter some content before saving.');
             return;
         }
-
         try {
             setSaving(true);
             if (isEdit && noteId) {
@@ -82,9 +86,10 @@ export default function NewPersonalNoteScreen() {
                 ]);
             }
         } catch (err: unknown) {
-            const msg = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message
-                ?? (err as { message?: string })?.message
-                ?? 'Failed to save note. Please try again.';
+            const msg =
+                (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message ??
+                (err as { message?: string })?.message ??
+                'Failed to save note. Please try again.';
             console.warn('Save personal note failed', err);
             Alert.alert('Error', msg);
         } finally {
@@ -93,71 +98,41 @@ export default function NewPersonalNoteScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={0}
-        >
-            <ScrollView
-                style={{ flex: 1 }}
-                contentContainerStyle={{ flexGrow: 1 }}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-            >
-                <LinearGradient
-                    colors={['#1A3A6B', '#2B5A8E', '#1A3A6B']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    style={styles.container}
+        <GradientBackground>
+            <SafeAreaView style={styles.safeArea} edges={['top']}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <KeyboardAvoidingView
+                    style={styles.flex}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={0}
                 >
-                    <SafeAreaView style={styles.safeArea} edges={['top']}>
-                        <Stack.Screen options={{ headerShown: false }} />
+                    <ScreenBackHeader
+                        title={isEdit ? 'Edit Note' : 'New Note'}
+                        onBack={() => router.back()}
+                    />
 
-                        <View style={styles.header}>
-                            <View style={styles.headerTop}>
-                                <TouchableOpacity
-                                    activeOpacity={0.7}
-                                    onPress={() => router.back()}
-                                    style={styles.backButton}
-                                >
-                                    <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-                                </TouchableOpacity>
-                                <View style={styles.headerCenter}>
-                                    <View style={styles.profileBadge}>
-                                        <Text style={styles.profileName}>
-                                            {isEdit ? 'Edit Note' : 'New Note'}
-                                        </Text>
-                                    </View>
-                                </View>
-                                <View style={styles.headerRight} />
-                            </View>
-                            <View style={styles.titleSection}>
-                                <Text style={styles.title}>Personal Notes</Text>
-                            </View>
-                            {userName ? <Text style={styles.subtitle}>{userName}</Text> : null}
+                    {userName ? (
+                        <View style={styles.subtitleRow}>
+                            <Ionicons name="person-outline" size={13} color={roadmapTheme.textCaption} />
+                            <Text style={styles.subtitle}>{userName}</Text>
                         </View>
+                    ) : null}
 
-                        <View style={styles.tabContainer}>
-                            <TouchableOpacity
-                                activeOpacity={0.8}
-                                style={[styles.tabButton, styles.tabButtonActive]}
-                            >
-                                <Text style={[styles.tabText, styles.tabTextActive]}>New</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                activeOpacity={0.8}
-                                style={[styles.tabButton, styles.tabButtonInactive]}
-                                onPress={() => router.back()}
-                            >
-                                <Text style={[styles.tabText, styles.tabTextInactive]}>Previous</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View style={styles.contentContainer}>
+                    <ScrollView
+                        style={styles.flex}
+                        contentContainerStyle={styles.scrollContent}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        <View style={styles.editorCard}>
+                            <View style={styles.editorHeader}>
+                                <Ionicons name="document-text-outline" size={16} color={roadmapTheme.accentMint} />
+                                <Text style={styles.editorLabel}>Note content</Text>
+                            </View>
                             <TextInput
                                 style={styles.textInput}
                                 placeholder="Write your note here..."
-                                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                                placeholderTextColor={roadmapTheme.textCaption}
                                 multiline
                                 textAlignVertical="top"
                                 value={noteContent}
@@ -166,98 +141,96 @@ export default function NewPersonalNoteScreen() {
                             />
                         </View>
 
-                        <View style={styles.bottomContainer}>
-                            <TouchableOpacity
-                                activeOpacity={0.85}
-                                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-                                onPress={handleSave}
-                                disabled={saving}
-                            >
-                                <Text style={styles.saveButtonText}>
-                                    {saving ? 'Saving...' : 'Save'}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </SafeAreaView>
-                </LinearGradient>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                        <TouchableOpacity
+                            activeOpacity={0.85}
+                            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+                            onPress={handleSave}
+                            disabled={saving}
+                        >
+                            {saving ? (
+                                <Text style={styles.saveButtonText}>Saving...</Text>
+                            ) : (
+                                <>
+                                    <Ionicons name="checkmark-circle-outline" size={18} color={roadmapTheme.textActive} />
+                                    <Text style={styles.saveButtonText}>
+                                        {isEdit ? 'Update Note' : 'Save Note'}
+                                    </Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
     safeArea: { flex: 1 },
-    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 },
-    headerTop: {
+    flex: { flex: 1 },
+    subtitleRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 20,
+        gap: 5,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        marginBottom: 14,
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
+    subtitle: {
+        color: roadmapTheme.textCaption,
+        fontSize: 13,
+        fontWeight: '500',
     },
-    headerCenter: { flex: 1, alignItems: 'center' },
-    profileBadge: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 24,
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    scrollContent: {
+        paddingHorizontal: homeLayout.screenPaddingH,
+        paddingBottom: 32,
+        gap: 14,
     },
-    profileName: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
-    headerRight: { width: 40 },
-    titleSection: { marginBottom: 4 },
-    title: { color: '#FFFFFF', fontSize: 28, fontWeight: '700' },
-    subtitle: { color: 'rgba(255, 255, 255, 0.8)', fontSize: 16, fontWeight: '500' },
-    tabContainer: {
-        flexDirection: 'row',
-        gap: 16,
-        paddingHorizontal: 20,
-        marginBottom: 16,
-    },
-    tabButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    tabButtonActive: { backgroundColor: '#FFFFFF' },
-    tabButtonInactive: { backgroundColor: 'rgba(255, 255, 255, 0.15)' },
-    tabText: { fontSize: 16, fontWeight: '600' },
-    tabTextActive: { color: '#1A3A6B' },
-    tabTextInactive: { color: '#FFFFFF' },
-    contentContainer: {
-        flex: 1,
-        marginHorizontal: 20,
-        marginBottom: 16,
-        borderRadius: 16,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    editorCard: {
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
+        borderRadius: homeLayout.cardRadius,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-        padding: 20,
+        borderColor: roadmapTheme.frostedBorder,
+        padding: 14,
+        gap: 10,
+    },
+    editorHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingBottom: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: roadmapTheme.divider,
+    },
+    editorLabel: {
+        color: roadmapTheme.textMuted,
+        fontSize: 13,
+        fontWeight: '600',
     },
     textInput: {
-        flex: 1,
-        color: '#FFFFFF',
-        fontSize: 16,
+        color: roadmapTheme.textPrimary,
+        fontSize: 15,
         lineHeight: 24,
-        minHeight: 120,
+        minHeight: 200,
     },
-    bottomContainer: { paddingHorizontal: 20, paddingBottom: 20 },
     saveButton: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        paddingVertical: 16,
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 8,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderRadius: homeLayout.cardRadiusCompact,
+        minHeight: 48,
+        paddingVertical: 12,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
     },
-    saveButtonDisabled: { opacity: 0.7 },
-    saveButtonText: { color: '#1A4882', fontSize: 18, fontWeight: '700' },
+    saveButtonDisabled: { opacity: 0.6 },
+    saveButtonText: {
+        color: roadmapTheme.textActive,
+        fontSize: 15,
+        fontWeight: '800',
+    },
 });

@@ -219,36 +219,29 @@ console.log("Interest ID:--------", interestId);
 
                                 {/* CONTACT ICONS */}
                                 <View style={styles.contactIcons}>
-                                    {/* CALL */}
                                     <TouchableOpacity
                                         style={styles.iconButton}
                                         onPress={() => console.log("Call:", interest.phoneNumber)}
                                     >
-                                        <Ionicons name="call-outline" size={22} color="#fff" />
+                                        <Ionicons name="call-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
-
-                                    {/* CHAT */}
                                     <TouchableOpacity
                                         style={styles.iconButton}
                                         onPress={() => console.log("Chat:", interest.email)}
                                     >
-                                        <Ionicons name="chatbubble-outline" size={22} color="#fff" />
+                                        <Ionicons name="chatbubble-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
-
-                                    {/* EMAIL */}
                                     <TouchableOpacity
                                         style={styles.iconButton}
                                         onPress={() => console.log("Email:", interest.email)}
                                     >
-                                        <Ionicons name="mail-outline" size={22} color="#fff" />
+                                        <Ionicons name="mail-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
-
-                                    {/* WHATSAPP */}
                                     <TouchableOpacity
                                         style={styles.iconButton}
                                         onPress={() => console.log("WhatsApp:", interest.phoneNumber)}
                                     >
-                                        <Ionicons name="logo-whatsapp" size={22} color="#fff" />
+                                        <Ionicons name="logo-whatsapp" size={20} color="#fff" />
                                     </TouchableOpacity>
                                 </View>
                             </CommonCard>
@@ -478,8 +471,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: Platform.OS === 'android' ? 12 : 16,
-        paddingBottom: Platform.OS === 'android' ? 12 : 16,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        paddingBottom: 14,
         position: 'relative',
     },
     userCard: {
@@ -488,71 +481,75 @@ const styles = StyleSheet.create({
     userCardTop: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Platform.OS === 'android' ? 12 : 16,
+        marginBottom: 14,
     },
     avatarContainer: {
-        width: Platform.OS === 'android' ? 48 : 52,
-        height: Platform.OS === 'android' ? 48 : 52,
+        width: 50,
+        height: 50,
         backgroundColor: 'rgba(111, 212, 190, 0.14)',
         borderWidth: 1,
         borderColor: 'rgba(111, 212, 190, 0.28)',
-        borderRadius: Platform.OS === 'android' ? 24 : 26,
+        borderRadius: 25,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Platform.OS === 'android' ? 10 : 12,
+        marginRight: 12,
     },
     userName: {
-        fontSize: Platform.OS === 'android' ? 16 : 17,
+        fontSize: 17,
         fontWeight: '800',
         color: roadmapTheme.textPrimary,
-        marginBottom: 4,
+        marginBottom: 3,
         letterSpacing: -0.2,
     },
     userRole: {
-        fontSize: Platform.OS === 'android' ? 13 : 14,
+        fontSize: 13,
         color: roadmapTheme.textMuted,
     },
     contactIcons: {
         flexDirection: 'row',
-        gap: Platform.OS === 'android' ? 12 : 16,
+        gap: 10,
     },
     iconButton: {
-        width: Platform.OS === 'android' ? 36 : 40,
-        height: Platform.OS === 'android' ? 36 : 40,
+        width: 40,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: roadmapTheme.frostedSurface,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorder,
     },
     section: {
         gap: 2,
     },
     sectionTitle: {
-        fontSize: Platform.OS === 'android' ? 14 : 15,
+        fontSize: 14,
         fontWeight: '800',
         color: roadmapTheme.textPrimary,
-        marginBottom: Platform.OS === 'android' ? 8 : 10,
+        marginBottom: 10,
         letterSpacing: -0.15,
     },
     row: {
         flexDirection: 'row',
-        gap: Platform.OS === 'android' ? 8 : 12,
+        gap: 10,
     },
     input: {
         backgroundColor: 'transparent',
         borderWidth: 1,
         borderColor: roadmapTheme.frostedBorder,
         borderRadius: 10,
-        paddingHorizontal: Platform.OS === 'android' ? 10 : 12,
-        paddingVertical: Platform.OS === 'android' ? 8 : 10,
-        fontSize: Platform.OS === 'android' ? 14 : 15,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
         color: roadmapTheme.textPrimary,
-        marginBottom: Platform.OS === 'android' ? 8 : 10,
+        marginBottom: 10,
     },
     halfInput: {
         flex: 1,
     },
     textArea: {
-        minHeight: Platform.OS === 'android' ? 80 : 100,
-        paddingTop: Platform.OS === 'android' ? 8 : 10,
+        minHeight: 90,
+        paddingTop: 10,
     },
     actionButtons: {
         flexDirection: 'row',
@@ -564,23 +561,29 @@ const styles = StyleSheet.create({
         minHeight: 48,
         paddingVertical: 12,
         backgroundColor: 'rgba(255,255,255,0.92)',
-        borderRadius: 12,
+        borderRadius: homeLayout.cardRadiusCompact,
         alignItems: 'center',
         justifyContent: 'center',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
     },
     rejectButtonText: {
         fontSize: 14,
         fontWeight: '800',
         color: roadmapTheme.textActive,
+        letterSpacing: 0.3,
     },
     acceptOutlineButton: {
         flex: 1,
         minHeight: 48,
         paddingVertical: 12,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: roadmapTheme.frostedSurface,
         borderWidth: 1,
         borderColor: roadmapTheme.frostedBorderStrong,
-        borderRadius: 12,
+        borderRadius: homeLayout.cardRadiusCompact,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -588,6 +591,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '800',
         color: roadmapTheme.textPrimary,
+        letterSpacing: 0.3,
     },
     buttonDisabled: {
         opacity: 0.6,
@@ -615,14 +619,14 @@ const styles = StyleSheet.create({
         borderColor: roadmapTheme.frostedBorder,
     },
     fieldLabel: {
-        fontSize: Platform.OS === 'android' ? 11 : 12,
+        fontSize: 11,
         color: roadmapTheme.textSubtle,
-        marginBottom: Platform.OS === 'android' ? 2 : 4,
+        marginBottom: 3,
     },
     fieldValue: {
-        fontSize: Platform.OS === 'android' ? 13 : 14,
+        fontSize: 13,
         color: roadmapTheme.textPrimary,
         fontWeight: '500',
-        lineHeight: Platform.OS === 'android' ? 16 : 18,
+        lineHeight: 18,
     },
 });

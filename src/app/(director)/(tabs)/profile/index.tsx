@@ -1,24 +1,23 @@
 import React from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { GradientBackground } from '@/components/ui/design-system';
+import { roadmapTheme } from '@/components/ui/design-system/roadmapTheme';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ProfileContent from '@/components/ProfileSection/ProfileContent';
 import { useAuthStore } from '@/stores/auth.store';
-import { Colors } from '@/constants/Colors';
 import { useUserProfile } from '@/hooks/useProfile';
 
 export default function DirectorProfileScreen() {
   const router = useRouter();
   const { bottom } = useSafeAreaInsets();
   const { user: authUser } = useAuthStore();
-  // For this specific page, the target is always the logged-in Director
   const targetUserId = authUser?.id || "";
 
   if (!targetUserId) {
     return (
-      <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+      <GradientBackground>
         <View style={styles.centeredPadded}>
           <Text style={styles.errorText}>No session found. Please login again.</Text>
           <TouchableOpacity
@@ -28,7 +27,7 @@ export default function DirectorProfileScreen() {
             <Text style={styles.goBackText}>Go to Login</Text>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </GradientBackground>
     );
   }
   const { data: userData, isLoading, isError } = useUserProfile(authUser?.id || "");
@@ -38,7 +37,7 @@ export default function DirectorProfileScreen() {
     return {
       user: userData,
       interest: userData.interest || null,
-      progress: null, // Directors don't have progress tracking
+      progress: null,
     };
   }, [userData]);
 
@@ -55,9 +54,6 @@ export default function DirectorProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   centeredPadded: {
     flex: 1,
     justifyContent: 'center',
@@ -65,7 +61,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    color: '#fff',
+    color: roadmapTheme.textPrimary,
     fontSize: 16,
     textAlign: 'center',
   },
@@ -73,11 +69,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backgroundColor: Colors.lightBlue,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: roadmapTheme.frostedBorder,
   },
   goBackText: {
-    color: '#fff',
+    color: roadmapTheme.textPrimary,
     fontSize: 14,
+    fontWeight: '600',
   },
 });

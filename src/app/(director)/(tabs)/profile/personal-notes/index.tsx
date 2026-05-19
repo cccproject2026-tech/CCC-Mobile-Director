@@ -1,8 +1,14 @@
 import { ApiNote, NotesService } from '@/services/notes.service';
 import { useNotesStore } from '@/stores/notes.store';
+import { useAuthStore } from '@/stores/auth.store';
+import {
+    GradientBackground,
+    homeLayout,
+    roadmapTheme,
+    ScreenBackHeader,
+} from '@/components/ui/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, Stack } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -12,9 +18,9 @@ import {
     TouchableOpacity,
     View,
     ActivityIndicator,
+    Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/stores/auth.store';
 
 interface UINote {
     id: string;
@@ -28,7 +34,6 @@ export default function PersonalNotesScreen() {
     const { user } = useAuthStore();
     const userId = (user as { id?: string; _id?: string })?.id ?? (user as { _id?: string })?._id;
     const userName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Personal Notes';
-    const [activeTab, setActiveTab] = useState<'new' | 'previous'>('previous');
     const [notes, setNotes] = useState<UINote[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -50,15 +55,9 @@ export default function PersonalNotesScreen() {
                     minute: '2-digit',
                 });
                 const preview = (n.content || '')
-                    .replace(/<(.|\n)*?>/g, '')
+                    .replace(/<(.|\\n)*?>/g, '')
                     .substring(0, 200);
-                return {
-                    id: noteId,
-                    content: n.content,
-                    date,
-                    time,
-                    preview,
-                } as UINote;
+                return { id: noteId, content: n.content, date, time, preview } as UINote;
             });
             setNotes(mapped);
         } catch (err) {
@@ -77,101 +76,51 @@ export default function PersonalNotesScreen() {
     );
 
     useEffect(() => {
-        if (userId && invalidationKey > 0) {
-            fetchNotes(true);
-        }
+        if (userId && invalidationKey > 0) fetchNotes(true);
     }, [userId, invalidationKey, fetchNotes]);
 
     const handleNotePress = (note: UINote) => {
         router.push({
             pathname: '/(director)/(tabs)/profile/personal-notes/note-detail',
-            params: {
-                noteId: note.id,
-                userId,
-                userName,
-            },
+            params: { noteId: note.id, userId, userName },
         });
     };
 
     const handleNewNote = () => {
         router.push({
             pathname: '/(director)/(tabs)/profile/personal-notes/new-note',
-            params: {
-                userName,
-                userId,
-            },
+            params: { userName, userId },
         });
     };
 
     return (
-        <LinearGradient
-            colors={['#1A3A6B', '#2B5A8E', '#1A3A6B']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={styles.container}
-        >
+        <GradientBackground>
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <Stack.Screen options={{ headerShown: false }} />
 
-                <View style={styles.header}>
-                    <View style={styles.headerTop}>
-                        <TouchableOpacity
-                            activeOpacity={0.7}
-                            onPress={() => router.back()}
-                            style={styles.backButton}
-                        >
-                            <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
-                        </TouchableOpacity>
-                        <View style={styles.headerCenter}>
-                            <View style={styles.profileBadge}>
-                                <Text style={styles.profileName}>Personal Notes</Text>
-                            </View>
-                        </View>
-                        <View style={styles.headerRight} />
-                    </View>
-                </View>
+                <ScreenBackHeader title="Personal Notes" onBack={() => router.back()} />
 
-                <View style={styles.tabContainer}>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={[
-                            styles.tabButton,
-                            activeTab === 'new' ? styles.tabButtonActive : styles.tabButtonInactive,
-                        ]}
-                        onPress={handleNewNote}
-                    >
-                        <Text
-                            style={[
-                                styles.tabText,
-                                activeTab === 'new' ? styles.tabTextActive : styles.tabTextInactive,
-                            ]}
-                        >
-                            New
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={[
-                            styles.tabButton,
-                            activeTab === 'previous' ? styles.tabButtonActive : styles.tabButtonInactive,
-                        ]}
-                        onPress={() => setActiveTab('previous')}
-                    >
-                        <Text
-                            style={[
-                                styles.tabText,
-                                activeTab === 'previous' ? styles.tabTextActive : styles.tabTextInactive,
-                            ]}
-                        >
-                            Previous
-                        </Text>
-                    </TouchableOpacity>
+                {/* Tab row */}
+                <View style={styles.tabRow}>
+                    <Pressable style={styles.tabNew} onPress={handleNewNote}>
+                        <Ionicons name="add-circle-outline" size={16} color={roadmapTheme.textActive} />
+                        <Text style={styles.tabNewText}>New Note</Text>
+                    </Pressable>
+                    <View style={styles.tabCountBadge}>
+                        <Text style={styles.tabCountText}>{notes.length} notes</Text>
+                    </View>
                 </View>
 
                 {loading ? (
                     <View style={styles.loadingBox}>
                         <ActivityIndicator size="large" color="#FFFFFF" />
                         <Text style={styles.loadingText}>Loading notes...</Text>
+                    </View>
+                ) : notes.length === 0 ? (
+                    <View style={styles.emptyBox}>
+                        <Ionicons name="document-text-outline" size={40} color="rgba(255,255,255,0.3)" />
+                        <Text style={styles.emptyText}>No notes yet</Text>
+                        <Text style={styles.emptySubtext}>Tap "New Note" to create your first note</Text>
                     </View>
                 ) : (
                     <ScrollView
@@ -186,99 +135,135 @@ export default function PersonalNotesScreen() {
                                 style={styles.noteCard}
                                 onPress={() => handleNotePress(note)}
                             >
+                                <View style={styles.noteIconWrap}>
+                                    <Ionicons name="document-text-outline" size={18} color={roadmapTheme.accentMint} />
+                                </View>
                                 <View style={styles.noteContent}>
-                                    <Text style={styles.notePreview} numberOfLines={3}>
+                                    <Text style={styles.notePreview} numberOfLines={2}>
                                         {note.preview}
                                     </Text>
                                     <View style={styles.noteFooter}>
+                                        <Ionicons name="time-outline" size={12} color={roadmapTheme.textCaption} />
                                         <Text style={styles.noteDate}>{note.date}</Text>
+                                        <Text style={styles.noteDot}>·</Text>
                                         <Text style={styles.noteTime}>{note.time}</Text>
                                     </View>
                                 </View>
                                 <Ionicons
                                     name="chevron-forward"
-                                    size={24}
-                                    color="rgba(255,255,255,0.6)"
-                                    style={styles.chevron}
+                                    size={18}
+                                    color={roadmapTheme.textCaption}
                                 />
                             </TouchableOpacity>
                         ))}
                     </ScrollView>
                 )}
             </SafeAreaView>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
     safeArea: { flex: 1 },
-    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 },
-    headerTop: {
+    tabRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 20,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        marginBottom: 14,
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    headerCenter: { flex: 1, alignItems: 'center' },
-    profileBadge: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 24,
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    profileName: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
-    headerRight: { width: 40 },
-    tabContainer: {
+    tabNew: {
         flexDirection: 'row',
-        gap: 16,
-        paddingHorizontal: 20,
-        marginBottom: 24,
-    },
-    tabButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: homeLayout.cardRadiusCompact,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
     },
-    tabButtonActive: { backgroundColor: '#FFFFFF' },
-    tabButtonInactive: { backgroundColor: 'rgba(255, 255, 255, 0.15)' },
-    tabText: { fontSize: 16, fontWeight: '600' },
-    tabTextActive: { color: '#1A3A6B' },
-    tabTextInactive: { color: '#FFFFFF' },
+    tabNewText: {
+        color: roadmapTheme.textActive,
+        fontSize: 14,
+        fontWeight: '800',
+    },
+    tabCountBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 999,
+        backgroundColor: roadmapTheme.frostedSurface,
+        borderWidth: 1,
+        borderColor: roadmapTheme.frostedBorder,
+    },
+    tabCountText: {
+        color: roadmapTheme.textMuted,
+        fontSize: 12,
+        fontWeight: '600',
+    },
     loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-    loadingText: { color: 'rgba(255,255,255,0.9)', fontSize: 16 },
+    loadingText: { color: roadmapTheme.textMuted, fontSize: 15 },
+    emptyBox: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 8,
+        paddingHorizontal: 32,
+    },
+    emptyText: {
+        color: roadmapTheme.textMuted,
+        fontSize: 16,
+        fontWeight: '700',
+        marginTop: 8,
+    },
+    emptySubtext: {
+        color: roadmapTheme.textCaption,
+        fontSize: 13,
+        textAlign: 'center',
+        lineHeight: 18,
+    },
     scrollView: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 24 },
+    scrollContent: {
+        paddingHorizontal: homeLayout.screenPaddingH,
+        paddingBottom: 24,
+        gap: 10,
+    },
     noteCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 16,
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
+        borderRadius: homeLayout.cardRadiusCompact,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-        padding: 20,
-        marginBottom: 16,
+        borderColor: roadmapTheme.frostedBorder,
+        padding: 14,
         gap: 12,
     },
-    noteContent: { flex: 1 },
+    noteIconWrap: {
+        width: 38,
+        height: 38,
+        borderRadius: 10,
+        backgroundColor: 'rgba(111,212,190,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(111,212,190,0.22)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    noteContent: { flex: 1, gap: 6 },
     notePreview: {
-        color: '#FFFFFF',
+        color: roadmapTheme.textPrimary,
         fontSize: 14,
         lineHeight: 20,
-        marginBottom: 12,
+        fontWeight: '500',
     },
-    noteFooter: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    noteDate: { color: 'rgba(255, 255, 255, 0.7)', fontSize: 13, fontWeight: '500' },
-    noteTime: { color: 'rgba(255, 255, 255, 0.7)', fontSize: 13, fontWeight: '500' },
-    chevron: { marginLeft: 8 },
+    noteFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    noteDate: { color: roadmapTheme.textCaption, fontSize: 12 },
+    noteDot: { color: roadmapTheme.textCaption, fontSize: 12 },
+    noteTime: { color: roadmapTheme.textCaption, fontSize: 12 },
 });
