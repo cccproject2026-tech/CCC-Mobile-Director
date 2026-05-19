@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useMicroGrantApplicationDetails } from '@/hooks/useMicroGrant';
 
 const ApplicationDetails = () => {
@@ -28,25 +28,26 @@ const ApplicationDetails = () => {
 
     if (isLoading) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
+            <GradientBackground>
                 <TopBar notifications={3} showUserName={true} showNotifications={true} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading application...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     if (!application || error) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
+            <GradientBackground>
                 <TopBar notifications={3} showUserName={true} showNotifications={true} />
                 <View style={styles.emptyContainer}>
+                    <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
                     <Text style={styles.emptyText}>Application not found</Text>
                     {error && <Text style={styles.errorText}>{(error as Error).message}</Text>}
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
@@ -55,7 +56,7 @@ const ApplicationDetails = () => {
     const profilePicture = userProfile?.profilePicture;
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
+        <GradientBackground>
             <TopBar notifications={3} showUserName={true} showNotifications={true} />
 
             <ScrollView
@@ -140,203 +141,93 @@ const ApplicationDetails = () => {
                     <Text style={styles.nextBtnText}>Next</Text>
                 </TouchableOpacity>
             </ScrollView>
-        </LinearGradient>
+        </GradientBackground>
     );
 };
 
 export default ApplicationDetails;
 
 const styles = StyleSheet.create({
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    loadingText: {
-        color: '#fff',
-        marginTop: 12,
-        fontSize: 14,
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 32,
-    },
-    emptyText: {
-        color: '#fff',
-        fontSize: 16,
-    },
-    errorText: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
-        marginTop: 8,
-        textAlign: 'center',
-    },
+    scrollView: { flex: 1 },
+    scrollContent: { paddingHorizontal: 16, paddingTop: 16 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingText: { color: '#fff', marginTop: 12, fontSize: 14 },
+    emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, gap: 12 },
+    emptyText: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '500' },
+    errorText: { color: 'rgba(255,255,255,0.55)', fontSize: 13, textAlign: 'center' },
     titleContainer: {
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
+        borderRadius: 14,
         padding: 16,
         marginBottom: 16,
+        backgroundColor: 'rgba(255,255,255,0.06)',
     },
-    title: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
-        lineHeight: 24,
-    },
+    title: { color: '#fff', fontSize: 15, fontWeight: '700', textAlign: 'center', lineHeight: 24 },
     userCard: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 14,
         padding: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.12)',
         marginBottom: 16,
         flexDirection: 'row',
         alignItems: 'flex-start',
         gap: 12,
     },
     avatarCircle: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.3)',
+        width: 52, height: 52, borderRadius: 26,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        alignItems: 'center', justifyContent: 'center',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
         overflow: 'hidden',
     },
-    avatarImage: {
-        width: '100%',
-        height: '100%',
-    },
-    userInfo: {
-        flex: 1,
-    },
-    userName: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    userRole: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 14,
-        marginBottom: 8,
-    },
-    actionIconsInCard: {
-        flexDirection: 'row',
-        gap: 16,
-        marginBottom: 8,
-    },
-    applicationDate: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 12,
-    },
+    avatarImage: { width: '100%', height: '100%' },
+    userInfo: { flex: 1 },
+    userName: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 3 },
+    userRole: { color: 'rgba(255,255,255,0.65)', fontSize: 13, marginBottom: 8 },
+    actionIconsInCard: { flexDirection: 'row', gap: 14, marginBottom: 8 },
+    applicationDate: { color: 'rgba(255,255,255,0.55)', fontSize: 12 },
     viewProfileBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 8,
-        gap: 6,
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        paddingHorizontal: 12, paddingVertical: 7,
+        borderRadius: 9, gap: 4,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
     },
-    viewProfileText: {
-        color: '#fff',
-        fontSize: 13,
-        fontWeight: '600',
-    },
+    viewProfileText: { color: '#fff', fontSize: 12, fontWeight: '700' },
     section: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    sectionSubtitle: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 13,
-        lineHeight: 20,
-    },
-    questionBox: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-        marginBottom: 16,
-    },
-    questionLabel: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-    questionHint: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 12,
-        marginBottom: 12,
-    },
-    answerBox: {
         backgroundColor: 'rgba(255,255,255,0.08)',
-        borderRadius: 8,
-        padding: 12,
+        borderRadius: 14, padding: 16,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+        marginBottom: 16,
     },
-    answerText: {
-        color: '#fff',
-        fontSize: 14,
-        lineHeight: 20,
+    sectionTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 4 },
+    sectionSubtitle: { color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 20 },
+    questionBox: {
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 14, padding: 16,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+        marginBottom: 16,
     },
+    questionLabel: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 8 },
+    questionHint: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: 12 },
+    answerBox: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 12 },
+    answerText: { color: 'rgba(255,255,255,0.9)', fontSize: 14, lineHeight: 20 },
     downloadBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        gap: 8,
-        marginTop: 12,
-        marginBottom: 8,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        paddingVertical: 11, paddingHorizontal: 16,
+        borderRadius: 10, gap: 8,
+        marginTop: 12, marginBottom: 8,
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
     },
-    downloadText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    fileHint: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 11,
-        textAlign: 'center',
-    },
+    downloadText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+    fileHint: { color: 'rgba(255,255,255,0.5)', fontSize: 11, textAlign: 'center' },
     nextBtn: {
-        backgroundColor: '#fff',
-        paddingVertical: 14,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginBottom: 20,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        paddingVertical: 14, borderRadius: 12,
+        alignItems: 'center', marginBottom: 20,
     },
-    nextBtnText: {
-        color: '#1a5b77',
-        fontSize: 15,
-        fontWeight: '700',
-    },
+    nextBtnText: { color: '#0E5A62', fontSize: 15, fontWeight: '800' },
 });

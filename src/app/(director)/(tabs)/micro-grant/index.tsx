@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import SearchBar from '@/components/Header/SearchBar';
 import ApplicationCard from '@/components/Cards/ApplicationCard';
 import { useMicroGrantApplicationWithProfiles } from '@/hooks/useMicroGrant';
@@ -56,10 +56,7 @@ const MicroGrant = () => {
     };
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={{ flex: 1, paddingBottom: bottom + height * 0.05 }}
-        >
+        <GradientBackground>
             <View style={{ flex: 1 }}>
                 <TopBar notifications={3} showUserName={true} showNotifications={true} />
 
@@ -67,7 +64,9 @@ const MicroGrant = () => {
                     {/* Header */}
                     <View style={styles.header}>
                         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                            <Ionicons name="chevron-back" size={28} color="#fff" />
+                            <View style={styles.backIconWrap}>
+                                <Ionicons name="chevron-back" size={20} color="#fff" />
+                            </View>
                             <Text style={styles.headerTitle}>
                                 Micro Grant - Application Received
                             </Text>
@@ -80,7 +79,7 @@ const MicroGrant = () => {
                     </View>
 
                     {/* Tab Switcher */}
-                    <TabSwitcher tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
+                    <TabSwitcher variant="frosted" tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
 
                     {/* Applications List */}
                     {isLoading ? (
@@ -120,7 +119,7 @@ const MicroGrant = () => {
                     )}
                 </View>
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 };
 
@@ -131,21 +130,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingVertical: 14,
         marginBottom: 16,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    backButton: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: 'white',
-        marginLeft: 8,
-    },
+    headerTitle: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: -0.1 },
     searchContainer: {
         paddingHorizontal: 16,
         marginBottom: 16,
