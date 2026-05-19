@@ -1,10 +1,21 @@
 import { MenuItem } from '@/constants';
+import { homeLayout, roadmapTheme } from '@/components/ui/design-system';
+import { Colors } from '@/constants/Colors';
 import { useAuthStore } from '@/stores/auth.store';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface CustomDrawerProps extends DrawerContentComponentProps {
@@ -14,14 +25,11 @@ interface CustomDrawerProps extends DrawerContentComponentProps {
 
 export default function CustomDrawerContent(props: CustomDrawerProps) {
     const router = useRouter();
-    const { bottom } = useSafeAreaInsets();
-    // Destructure user and logout from the store
+    const { top, bottom } = useSafeAreaInsets();
     const { user, logout } = useAuthStore();
 
-    // Get the current user's role, default to empty string if user is null
     const currentUserRole = (user?.role ?? '') as 'director' | 'super admin';
 
-    // Expandable groups initialization
     const initExpanded = (items: MenuItem[], expandAll: boolean) => {
         const result: Record<string, boolean> = {};
         const traverse = (items: MenuItem[]) =>
@@ -35,47 +43,26 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
         return result;
     };
 
-    // 1. Filtered Menu Items Logic
     const filteredMenuItems = useMemo(() => {
-        const filterItems = (items: MenuItem[]): MenuItem[] => {
-            return items.reduce((acc: MenuItem[], item) => {
-
-                // Check role restriction
+        const filterItems = (items: MenuItem[]): MenuItem[] =>
+            items.reduce((acc: MenuItem[], item) => {
                 const isAllowed = !item.roles || item.roles.includes(currentUserRole);
-
                 if (isAllowed) {
                     const newItem: MenuItem = { ...item };
-
-                    // Recursively filter children if they exist
-                    if (item.children?.length) {
-                        newItem.children = filterItems(item.children);
-                    }
-
-                    // Only add the item if it's allowed OR if it's a parent 
-                    // that still has children after filtering
-                    if (newItem.children?.length || !item.children?.length) {
-                        acc.push(newItem);
-                    }
+                    if (item.children?.length) newItem.children = filterItems(item.children);
+                    if (newItem.children?.length || !item.children?.length) acc.push(newItem);
                 }
                 return acc;
             }, []);
-        };
-
         return filterItems(props.menuItems);
     }, [props.menuItems, currentUserRole]);
 
-
-    // Initialize state using the filtered list
     const [expandedItems, setExpandedItems] = useState(() =>
         initExpanded(filteredMenuItems, !!props.expandAllByDefault)
     );
 
     const toggleExpand = useCallback((id: string) =>
         setExpandedItems(prev => ({ ...prev, [id]: !prev[id] })), []);
-
-    const handleLogoPress = useCallback(() => {
-        props.navigation.closeDrawer();
-    }, [props.navigation]);
 
     const handleLogout = useCallback(() => {
         Alert.alert('Log Out', 'Are you sure you want to log out?', [
@@ -92,66 +79,58 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
         ]);
     }, [props.navigation, logout, router]);
 
-    const renderMenuItem = (
-        item: MenuItem,
-        isNested = false,
-        index: number,
-        total: number
-    ) => {
+    const renderMenuItem = (item: MenuItem, isNested = false, index: number, total: number) => {
         const hasChildren = (item.children?.length ?? 0) > 0;
         const expanded = expandedItems[item.id];
         const isLast = index === total - 1;
+        const isLogout = item.id === 'logout';
 
         return (
             <View key={item.id}>
                 <TouchableOpacity
-                    style={[styles.drawerItem, isNested && styles.nestedItem]}
+                    style={[styles.menuItem, isNested && styles.menuItemNested]}
+                    activeOpacity={0.7}
                     onPress={() => {
-                        if (item.id === 'logout') {
-                            handleLogout();
-                            return;
-                        }
-
-                        if (hasChildren) {
-                            toggleExpand(item.id);
-                            return;
-                        }
-
+                        if (isLogout) { handleLogout(); return; }
+                        if (hasChildren) { toggleExpand(item.id); return; }
                         if (item.route) {
                             props.navigation.closeDrawer();
                             router.push(item.route as any);
                         }
                     }}
                 >
-                    <View style={styles.leftRow}>
-                        <View style={styles.iconContainer}>
-                            {item.iconType === 'image' ? (
-                                <Image source={item.icon} style={styles.itemIcon} />
-                            ) : (
-                                <Ionicons name={item.icon as any} size={20} color="#0A5A8A" />
-                            )}
-                        </View>
-
-                        <Text style={styles.drawerLabel}>{item.label}</Text>
-
-                        {item.badge && item.badge > 0 && (
-                            <View style={styles.badge}>
-                                <Text style={styles.badgeText}>{item.badge}</Text>
-                            </View>
+                    {/* Icon wrap */}
+                    <View style={[styles.iconWrap, isLogout && styles.iconWrapLogout]}>
+                        {item.iconType === 'image' ? (
+                            <Image source={item.icon} style={styles.itemIcon} />
+                        ) : (
+                            <Ionicons
+                                name={item.icon as any}
+                                size={18}
+                                color={isLogout ? '#EF4444' : BRAND}
+                            />
                         )}
                     </View>
+
+                    <Text style={[styles.menuLabel, isLogout && styles.menuLabelLogout]}>
+                        {item.label}
+                    </Text>
+
+                    {item.badge && item.badge > 0 && (
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>{item.badge}</Text>
+                        </View>
+                    )}
 
                     {hasChildren ? (
                         <Ionicons
                             name={expanded ? 'chevron-up' : 'chevron-down'}
-                            size={18}
-                            color="#0A5A8A"
+                            size={16}
+                            color='#94A3B8'
                         />
-                    ) : (
-                        item.showChevron && (
-                            <Ionicons name="chevron-forward" size={16} color="#999" />
-                        )
-                    )}
+                    ) : item.showChevron ? (
+                        <Ionicons name="chevron-forward" size={16} color='#94A3B8' />
+                    ) : null}
                 </TouchableOpacity>
 
                 {!isLast && <View style={styles.divider} />}
@@ -164,34 +143,43 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
         );
     };
 
+    const displayName = user
+        ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
+        : 'Guest User';
+
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                {user && user.profilePicture ? (
-                    <Image
-                        source={{ uri: user.profilePicture }}
-                        style={styles.avatar}
-                    />
-                ) : (
-                    <Ionicons name="person-circle-outline" size={48} color="#fff" style={styles.avatar} />
-                )}
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.userName}>
-                        {user ? `${user.firstName} ${user.lastName}` : 'Guest User'}
-                    </Text>
+        <View style={styles.root}>
+            {/* Header — gradient */}
+            <LinearGradient colors={[...Colors.appBgGradient]} style={[styles.header, { paddingTop: top + 16 }]}>
+                <View style={styles.avatarWrap}>
+                    {user?.profilePicture ? (
+                        <Image source={{ uri: user.profilePicture }} style={styles.avatarImage} />
+                    ) : (
+                        <Ionicons name="person-outline" size={26} color={roadmapTheme.accentMint} />
+                    )}
                 </View>
 
-                <TouchableOpacity style={styles.logoButton} onPress={handleLogoPress}>
-                    <Image
-                        source={require('@/assets/images/app/CCClogo.png')}
-                        style={styles.logoImage}
-                    />
-                </TouchableOpacity>
-            </View>
+                <View style={styles.headerInfo}>
+                    <Text style={styles.userName} numberOfLines={1}>{displayName}</Text>
+                    {user?.role ? (
+                        <View style={styles.rolePill}>
+                            <Text style={styles.roleText}>{user.role}</Text>
+                        </View>
+                    ) : null}
+                </View>
 
-            {/* Menu - Renders FILTERED items */}
+                <TouchableOpacity
+                    style={styles.closeBtn}
+                    onPress={() => props.navigation.closeDrawer()}
+                    hitSlop={8}
+                >
+                    <Ionicons name="close" size={20} color={roadmapTheme.textPrimary} />
+                </TouchableOpacity>
+            </LinearGradient>
+
+            {/* Body — white */}
             <ScrollView
+                style={styles.menuScroll}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.menuContent}
             >
@@ -200,131 +188,205 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
                 )}
             </ScrollView>
 
-            {/* Footer */}
-            <View style={[styles.footer, { paddingBottom: bottom + 5 }]}>
+            {/* Footer — gradient */}
+            <LinearGradient
+                colors={[...Colors.appBgGradient]}
+                style={[styles.footer, { paddingBottom: bottom + 12 }]}
+            >
                 <Text style={styles.footerTitle}>Contact Information</Text>
 
                 <View style={styles.contactRow}>
-                    <Ionicons name="call" size={14} color="#fff" />
-                    <Text style={styles.contactText}>: 269-471-0159</Text>
+                    <View style={styles.contactIconWrap}>
+                        <Ionicons name="call-outline" size={13} color={roadmapTheme.accentMint} />
+                    </View>
+                    <Text style={styles.contactText}>269-471-0159</Text>
                 </View>
 
                 <View style={styles.contactRow}>
-                    <Ionicons name="mail" size={14} color="#fff" />
-                    <Text style={styles.contactText}>: communitychange@andrews.edu</Text>
+                    <View style={styles.contactIconWrap}>
+                        <Ionicons name="mail-outline" size={13} color={roadmapTheme.accentMint} />
+                    </View>
+                    <Text style={styles.contactText}>communitychange@andrews.edu</Text>
                 </View>
 
-                {/* Extra margin so the logo NEVER gets cut */}
-                <View style={{ marginTop: 22, marginBottom: bottom + 10, alignItems: "center" }}>
+                <View style={styles.footerLogoRow}>
                     <Image
                         source={require('@/assets/images/app/footerIcon.png')}
                         style={styles.footerLogo}
                         resizeMode="contain"
                     />
+                    <Image
+                        source={require('@/assets/images/app/CCClogo.png')}
+                        style={styles.footerCCCLogo}
+                        resizeMode="contain"
+                    />
                 </View>
-            </View>
-
+            </LinearGradient>
         </View>
     );
 }
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
+const BRAND = Colors.appBgGradient[1]; // #1A4F7A
 
+const styles = StyleSheet.create({
+    root: { flex: 1, backgroundColor: '#fff' },
+
+    // ── Header (gradient) ─────────────────────────────────────────────────────
     header: {
-        backgroundColor: '#14517D',
-        paddingTop: 50,
-        paddingBottom: 16,
-        paddingHorizontal: 16,
         flexDirection: 'row',
         alignItems: 'center',
+        paddingHorizontal: homeLayout.screenPaddingH,
+        paddingBottom: 18,
+        gap: 12,
     },
-
-    avatar: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        marginRight: 12,
-    },
-
-    userName: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: '#fff',
-    },
-
-    logoButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        justifyContent: 'center',
+    avatarWrap: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: 'rgba(111,212,190,0.14)',
+        borderWidth: 1,
+        borderColor: 'rgba(111,212,190,0.28)',
         alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        flexShrink: 0,
+    },
+    avatarImage: { width: '100%', height: '100%', borderRadius: 26 },
+    headerInfo: { flex: 1, minWidth: 0, gap: 4 },
+    userName: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: '#fff',
+        letterSpacing: -0.2,
+    },
+    rolePill: {
+        alignSelf: 'flex-start',
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.25)',
+        borderRadius: 999,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+    },
+    roleText: {
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: 11,
+        fontWeight: '600',
+        textTransform: 'capitalize',
+    },
+    closeBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.25)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
     },
 
-    logoImage: { width: 26, height: 26 },
+    // ── Body (white) ──────────────────────────────────────────────────────────
+    menuScroll: { flex: 1, backgroundColor: '#fff' },
+    menuContent: { paddingVertical: 6 },
+    menuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        gap: 12,
+    },
+    menuItemNested: {
+        paddingLeft: homeLayout.screenPaddingH + 42,
+    },
+    iconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        backgroundColor: '#EAF3FB',
+        borderWidth: 1,
+        borderColor: '#C8DFF0',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+    },
+    iconWrapLogout: {
+        backgroundColor: '#FEF2F2',
+        borderColor: '#FECACA',
+    },
+    itemIcon: { width: 18, height: 18, tintColor: BRAND },
+    menuLabel: {
+        flex: 1,
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1A3A5C',
+    },
+    menuLabelLogout: { color: '#EF4444' },
+    badge: {
+        backgroundColor: BRAND,
+        borderRadius: 999,
+        minWidth: 20,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 5,
+    },
+    badgeText: { fontSize: 11, fontWeight: '800', color: '#fff' },
+    divider: {
+        height: 1,
+        backgroundColor: '#EEF2F7',
+        marginHorizontal: homeLayout.screenPaddingH,
+    },
 
-    menuContent: { paddingVertical: 8 },
-
-    drawerItem: {
+    // ── Footer (gradient) ─────────────────────────────────────────────────────
+    footer: {
+        paddingHorizontal: homeLayout.screenPaddingH,
+        paddingTop: 16,
+    },
+    footerTitle: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.6)',
+        textTransform: 'uppercase',
+        letterSpacing: 0.7,
+        marginBottom: 10,
+    },
+    contactRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 8,
+    },
+    contactIconWrap: {
+        width: 26,
+        height: 26,
+        borderRadius: 7,
+        backgroundColor: 'rgba(111,212,190,0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(111,212,190,0.25)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    contactText: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
+        fontWeight: '500',
+        flex: 1,
+    },
+    footerLogoRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 14,
-        paddingHorizontal: 20,
+        marginTop: 14,
     },
-
-    nestedItem: { paddingLeft: 48 },
-
-    leftRow: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-
-    iconContainer: {
-        width: 28,
-        height: 28,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
-    itemIcon: { width: 22, height: 22 },
-
-    drawerLabel: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: '#0A5A8A',
-        marginLeft: 12,
-        flex: 1,
-    },
-
-    badge: {
-        backgroundColor: '#0A5A8A',
-        borderRadius: 12,
-        minWidth: 22,
-        height: 22,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 6,
-        marginLeft: 6,
-    },
-
-    badgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
-
-    divider: { height: 1, backgroundColor: '#E5E5E5', marginHorizontal: 20 },
-
-    footer: {
-        backgroundColor: '#14517D',
-        paddingHorizontal: 20,
-        paddingTop: 20,
-    },
-
     footerLogo: {
-        width: 34,
-        height: 34,
-        tintColor: '#fff',
+        width: 32,
+        height: 32,
+        tintColor: 'rgba(255,255,255,0.35)',
     },
-
-    footerTitle: { fontSize: 16, color: '#fff', fontWeight: '600', marginBottom: 12 },
-
-    contactRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-
-    contactText: { fontSize: 13, color: '#fff', marginLeft: 4 },
+    footerCCCLogo: {
+        width: 48,
+        height: 28,
+        tintColor: 'rgba(255,255,255,0.55)',
+    },
 });
