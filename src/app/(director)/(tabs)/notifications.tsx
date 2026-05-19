@@ -1,22 +1,16 @@
-
-
 import NotificationCard, { Notification } from "@/components/Cards/NotificationsCard";
 import TopBar from "@/components/Header/TopBar";
-import { Colors } from "@/constants/Colors";
+import {
+    GradientBackground,
+    homeLayout,
+    roadmapTheme,
+    ScreenBackHeader,
+} from "@/components/ui/design-system";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Stack } from "expo-router";
 import React from "react";
-import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 const dummyNotifications: Notification[] = [
     {
@@ -56,96 +50,76 @@ const dummyNotifications: Notification[] = [
     },
 ];
 
+const unreadCount = dummyNotifications.filter((n) => !n.read).length;
+
 export default function NotificationScreen() {
     const navigation = useNavigation();
-    const insets = useSafeAreaInsets();
 
     return (
         <>
             <Stack.Screen options={{ headerShown: false, title: "Notifications" }} />
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
-
+            <GradientBackground>
                 <View style={styles.root}>
-                    <TopBar
-                        showNotifications={false}
+                    <TopBar showNotifications={false} />
+
+                    <ScreenBackHeader
+                        title="Notifications"
+                        onBack={() => navigation.goBack()}
                     />
 
-
-                    <Pressable onPress={() => navigation.goBack()} style={styles.titleRow}>
-                        <Ionicons name="chevron-back" size={22} color="#D9EEF8" />
-                        <Text style={styles.titleText}>Notifications</Text>
-                    </Pressable>
-
-                    <View style={styles.divider} />
+                    {/* unread badge row */}
+                    {unreadCount > 0 && (
+                        <View style={styles.badgeRow}>
+                            <View style={styles.unreadBadge}>
+                                <Ionicons name="ellipse" size={7} color={roadmapTheme.accentMint} />
+                                <Text style={styles.unreadText}>
+                                    {unreadCount} unread
+                                </Text>
+                            </View>
+                        </View>
+                    )}
 
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.listContent}
                     >
                         {dummyNotifications.map((n, idx) => (
-                            <View key={`${n.title}-${idx}`} style={styles.block}>
-                                <NotificationCard data={n} />
-                                {idx !== dummyNotifications.length - 1 && (
-                                    <View style={styles.sectionSeparator} />
-                                )}
-                            </View>
+                            <NotificationCard key={`${n.title}-${idx}`} data={n} />
                         ))}
                     </ScrollView>
                 </View>
-            </LinearGradient >
+            </GradientBackground>
         </>
     );
 }
 
 const styles = StyleSheet.create({
     root: { flex: 1 },
-
-    // Header
-    appBar: {
-        width: "100%",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-        paddingTop: 6,
+    badgeRow: {
+        paddingHorizontal: homeLayout.screenPaddingH,
+        marginBottom: 10,
     },
-    menuBtn: { paddingVertical: 6, paddingRight: 8 },
-    logoWrap: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
+    unreadBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        alignSelf: "flex-start",
+        backgroundColor: "rgba(111,212,190,0.12)",
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.65)",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "rgba(255,255,255,0.08)",
+        borderColor: "rgba(111,212,190,0.22)",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 999,
     },
-
-    titleRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 8,
-        paddingHorizontal: 16,
-        paddingBottom: 12,
+    unreadText: {
+        color: roadmapTheme.accentMint,
+        fontSize: 12,
+        fontWeight: "700",
     },
-    titleText: { color: "#EAF7FF", fontSize: 18, fontWeight: "700" },
-    divider: {
-        height: 1,
-        backgroundColor: "rgba(255,255,255,0.16)",
-    },
-
-    // List
     listContent: {
-        paddingTop: 12,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        paddingTop: 4,
         paddingBottom: 32,
-        paddingHorizontal: 12,
-    },
-    block: { width: "100%" },
-    sectionSeparator: {
-        height: 1,
-        backgroundColor: "rgba(255,255,255,0.16)",
-        marginVertical: 16,
-        marginHorizontal: 8,
+        gap: 10,
     },
 });

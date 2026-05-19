@@ -1,12 +1,17 @@
-
 import TopBar from '@/components/Header/TopBar';
+import { TabSwitcher } from '@/components/Header/TabSwitcher';
+import {
+    GradientBackground,
+    homeLayout,
+    roadmapTheme,
+    ScreenBackHeader,
+} from '@/components/ui/design-system';
 import { icons } from '@/constants';
 import { useDeleteDocument, useDocuments, useUploadDocument } from '@/hooks/useProfile';
 import { useAuthStore } from '@/stores/auth.store';
 import { Document } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -22,36 +27,38 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+type DocTab = 'myDocuments' | 'mentors';
+
+const TABS = [
+    { key: 'myDocuments' as DocTab, label: 'My Documents' },
+    { key: 'mentors' as DocTab, label: 'Mentors' },
+];
 
 export default function PastorDocumentsScreen() {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
     const { user } = useAuthStore();
 
-    // React Query hooks
     const { data: documents = [], isLoading, refetch } = useDocuments();
     const uploadDocument = useUploadDocument();
     const deleteDocument = useDeleteDocument();
 
-    const [activeTab, setActiveTab] = useState<'myDocuments' | 'mentors'>('myDocuments');
+    const [activeTab, setActiveTab] = useState<DocTab>('myDocuments');
 
     const pickDocument = async () => {
         try {
-            console.log('📄 Starting document picker...');
-
             const result = await DocumentPicker.getDocumentAsync({
-                type: ['application/pdf', 'image/*', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                type: [
+                    'application/pdf',
+                    'image/*',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                ],
                 copyToCacheDirectory: true,
             });
 
-            console.log('📄 Document picker result:', result);
-
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const file = result.assets[0];
-
-                console.log('📤 Uploading document:', file.name);
-
-                // Upload using mutation
                 await uploadDocument.mutateAsync({
                     uri: file.uri,
                     name: file.name,
@@ -59,12 +66,10 @@ export default function PastorDocumentsScreen() {
                     mimeType: file.mimeType || 'application/octet-stream',
                     size: file.size || 0,
                 });
-
                 Alert.alert('Success', 'Document uploaded successfully!');
-                console.log('✅ Document uploaded successfully');
             }
         } catch (error) {
-            console.error('❌ Error picking/uploading document:', error);
+            console.error('Error picking/uploading document:', error);
             Alert.alert('Error', 'Failed to upload document. Please try again.');
         }
     };
@@ -80,12 +85,10 @@ export default function PastorDocumentsScreen() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            console.log('🗑️ Deleting document:', documentUrl);
                             await deleteDocument.mutateAsync(documentUrl);
                             Alert.alert('Success', 'Document deleted successfully!');
-                            console.log('✅ Document deleted successfully');
                         } catch (error) {
-                            console.error('❌ Error deleting document:', error);
+                            console.error('Error deleting document:', error);
                             Alert.alert('Error', 'Failed to delete document. Please try again.');
                         }
                     },
@@ -94,22 +97,16 @@ export default function PastorDocumentsScreen() {
         );
     };
 
-    const isImage = (mimeType: string) => {
-        return mimeType?.startsWith('image/');
-    };
+    const isImage = (mimeType: string) => mimeType?.startsWith('image/');
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        }).replace(/\//g, ' / ');
-    };
+    const formatDate = (dateString: string) =>
+        new Date(dateString)
+            .toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            .replace(/\//g, ' / ');
 
     const renderDocument = ({ item }: { item: Document }) => (
-        <View style={styles.documentItem}>
-            <View style={styles.documentIcon}>
+        <View style={styles.documentCard}>
+            <View style={styles.documentIconWrap}>
                 {isImage(item.fileType) && item.fileUrl ? (
                     <Image source={{ uri: item.fileUrl }} style={styles.documentThumbnail} />
                 ) : (
@@ -120,9 +117,10 @@ export default function PastorDocumentsScreen() {
                 <Text style={styles.documentName} numberOfLines={1}>
                     {item.fileName}
                 </Text>
-                <Text style={styles.documentDate}>
-                    {formatDate(item.uploadedAt)}
-                </Text>
+                <View style={styles.documentMeta}>
+                    <Ionicons name="time-outline" size={12} color={roadmapTheme.textCaption} />
+                    <Text style={styles.documentDate}>{formatDate(item.uploadedAt)}</Text>
+                </View>
             </View>
             <TouchableOpacity
                 style={styles.deleteButton}
@@ -131,90 +129,59 @@ export default function PastorDocumentsScreen() {
             >
                 <Ionicons
                     name="trash-outline"
-                    size={24}
-                    color={deleteDocument.isPending ? "rgba(255,255,255,0.5)" : "#fff"}
+                    size={18}
+                    color={deleteDocument.isPending ? roadmapTheme.textCaption : '#F87171'}
                 />
             </TouchableOpacity>
         </View>
     );
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={{ flex: 1 }}
-        >
-            <TopBar role="pastor" />
+        <GradientBackground>
+            <TopBar showUserName showNotifications />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={28} color="#fff" />
-                    </TouchableOpacity>
-                    <View>
-                        <Text style={styles.headerTitle}>Documents</Text>
-                        <Text style={styles.headerSubtitle}>
-                            {user?.firstName} {user?.lastName}
+            <ScreenBackHeader
+                title="Documents"
+                onBack={() => router.back()}
+            />
+
+            {/* Upload button + user name row */}
+            <View style={styles.actionRow}>
+                {user?.firstName ? (
+                    <View style={styles.userRow}>
+                        <Ionicons name="person-outline" size={13} color={roadmapTheme.textCaption} />
+                        <Text style={styles.userName}>
+                            {user.firstName} {user.lastName}
                         </Text>
                     </View>
-                </View>
-                <TouchableOpacity
-                    style={[
-                        styles.uploadButton,
-                        uploadDocument.isPending && styles.uploadButtonDisabled
-                    ]}
+                ) : <View />}
+
+                <Pressable
+                    style={[styles.uploadButton, uploadDocument.isPending && styles.buttonDisabled]}
                     onPress={pickDocument}
                     disabled={uploadDocument.isPending}
                 >
-                    <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
+                    <Ionicons name="cloud-upload-outline" size={16} color={roadmapTheme.textActive} />
                     <Text style={styles.uploadButtonText}>
                         {uploadDocument.isPending ? 'Uploading...' : 'Upload'}
                     </Text>
-                </TouchableOpacity>
+                </Pressable>
             </View>
 
             {/* Tabs */}
-            <View style={styles.tabContainer}>
-                <Pressable
-                    style={[
-                        styles.tab,
-                        activeTab === 'myDocuments' && styles.activeTab,
-                    ]}
-                    onPress={() => setActiveTab('myDocuments')}
-                >
-                    <Text
-                        style={[
-                            styles.tabText,
-                            activeTab === 'myDocuments' && styles.activeTabText,
-                        ]}
-                    >
-                        My Documents
-                    </Text>
-                </Pressable>
-                <Pressable
-                    style={[
-                        styles.tab,
-                        activeTab === 'mentors' && styles.activeTab,
-                    ]}
-                    onPress={() => setActiveTab('mentors')}
-                >
-                    <Text
-                        style={[
-                            styles.tabText,
-                            activeTab === 'mentors' && styles.activeTabText,
-                        ]}
-                    >
-                        Mentors
-                    </Text>
-                </Pressable>
-            </View>
+            <TabSwitcher
+                tabs={TABS}
+                activeTab={activeTab}
+                onChange={(key) => setActiveTab(key as DocTab)}
+                variant="frosted"
+            />
 
-            {/* Documents List */}
+            {/* Content */}
             {activeTab === 'myDocuments' ? (
                 isLoading ? (
-                    <View style={styles.emptyContainer}>
+                    <View style={styles.centerBox}>
                         <ActivityIndicator size="large" color="#fff" />
-                        <Text style={styles.emptyText}>Loading documents...</Text>
+                        <Text style={styles.stateText}>Loading documents...</Text>
                     </View>
                 ) : (
                     <FlatList
@@ -223,131 +190,102 @@ export default function PastorDocumentsScreen() {
                         keyExtractor={(item) => item.id || item.fileUrl}
                         contentContainerStyle={[
                             styles.listContent,
-                            { paddingBottom: bottom + 20 },
+                            { paddingBottom: bottom + 24 },
                         ]}
                         showsVerticalScrollIndicator={false}
                         refreshing={isLoading}
                         onRefresh={refetch}
                         ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                                <Ionicons name="document-outline" size={64} color="rgba(255,255,255,0.3)" />
-                                <Text style={styles.emptyText}>No documents uploaded yet</Text>
-                                <TouchableOpacity
-                                    style={styles.emptyButton}
+                            <View style={styles.centerBox}>
+                                <Ionicons name="document-outline" size={44} color="rgba(255,255,255,0.25)" />
+                                <Text style={styles.stateText}>No documents uploaded yet</Text>
+                                <Pressable
+                                    style={styles.emptyUploadButton}
                                     onPress={pickDocument}
                                     disabled={uploadDocument.isPending}
                                 >
-                                    <Text style={styles.emptyButtonText}>Upload Document</Text>
-                                </TouchableOpacity>
+                                    <Ionicons name="cloud-upload-outline" size={16} color={roadmapTheme.textActive} />
+                                    <Text style={styles.emptyUploadText}>Upload Document</Text>
+                                </Pressable>
                             </View>
                         }
                     />
                 )
             ) : (
-                <View style={styles.emptyContainer}>
-                    <Ionicons name="people-outline" size={64} color="rgba(255,255,255,0.3)" />
-                    <Text style={styles.emptyText}>No mentors documents</Text>
+                <View style={styles.centerBox}>
+                    <Ionicons name="people-outline" size={44} color="rgba(255,255,255,0.25)" />
+                    <Text style={styles.stateText}>No mentor documents</Text>
                 </View>
             )}
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    header: {
+    actionRow: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        marginBottom: 14,
     },
-    headerLeft: {
+    userRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
+        gap: 5,
     },
-    backButton: {
-        marginRight: 8,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    headerSubtitle: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.8)',
-        marginTop: 2,
+    userName: {
+        color: roadmapTheme.textCaption,
+        fontSize: 13,
+        fontWeight: '500',
     },
     uploadButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.4)',
-        gap: 8,
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: homeLayout.cardRadiusCompact,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
     },
     uploadButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
+        color: roadmapTheme.textActive,
+        fontSize: 14,
+        fontWeight: '800',
     },
-    tabContainer: {
-        flexDirection: 'row',
-        marginHorizontal: 16,
-        marginBottom: 20,
-        backgroundColor: 'transparent',
-        borderRadius: 25,
-        padding: 4,
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.6)',
-    },
-    tab: {
-        flex: 1,
-        paddingVertical: 12,
-        alignItems: 'center',
-        borderRadius: 20,
-    },
-    activeTab: {
-        backgroundColor: '#fff',
-    },
-    tabText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#fff',
-    },
-    activeTabText: {
-        color: '#1E3A5F',
-    },
+    buttonDisabled: { opacity: 0.6 },
     listContent: {
-        paddingHorizontal: 16,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        paddingTop: 4,
+        gap: 10,
     },
-    documentItem: {
+    documentCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.15)',
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
+        borderColor: roadmapTheme.frostedBorder,
+        borderRadius: homeLayout.cardRadiusCompact,
+        padding: 12,
+        gap: 12,
     },
-    documentIcon: {
-        width: 56,
-        height: 56,
-        backgroundColor: '#fff',
-        borderRadius: 8,
+    documentIconWrap: {
+        width: 48,
+        height: 48,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 12,
         overflow: 'hidden',
     },
     pdfIcon: {
-        width: 40,
-        height: 40,
+        width: 32,
+        height: 32,
         resizeMode: 'contain',
     },
     documentThumbnail: {
@@ -357,44 +295,62 @@ const styles = StyleSheet.create({
     },
     documentInfo: {
         flex: 1,
+        gap: 5,
     },
     documentName: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#fff',
-        marginBottom: 4,
+        fontSize: 14,
+        fontWeight: '700',
+        color: roadmapTheme.textPrimary,
+    },
+    documentMeta: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
     },
     documentDate: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.7)',
+        fontSize: 12,
+        color: roadmapTheme.textCaption,
     },
     deleteButton: {
-        padding: 8,
+        width: 36,
+        height: 36,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(248,113,113,0.1)',
+        borderRadius: 9,
+        borderWidth: 1,
+        borderColor: 'rgba(248,113,113,0.22)',
     },
-    emptyContainer: {
+    centerBox: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 100,
+        gap: 10,
+        paddingTop: 80,
     },
-    emptyText: {
-        fontSize: 16,
-        color: 'rgba(255,255,255,0.6)',
-        marginTop: 16,
-        marginBottom: 24,
+    stateText: {
+        fontSize: 15,
+        color: roadmapTheme.textMuted,
+        marginTop: 4,
     },
-    emptyButton: {
-        backgroundColor: '#fff',
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 12,
+    emptyUploadButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        borderRadius: homeLayout.cardRadiusCompact,
+        marginTop: 8,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.12,
+        shadowRadius: 4,
     },
-    emptyButtonText: {
-        color: '#1E3A5F',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    uploadButtonDisabled: {
-        opacity: 0.6,
+    emptyUploadText: {
+        color: roadmapTheme.textActive,
+        fontSize: 14,
+        fontWeight: '800',
     },
 });

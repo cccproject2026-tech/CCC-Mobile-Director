@@ -1,4 +1,5 @@
 import { icons } from "@/constants";
+import { homeLayout, roadmapTheme } from "@/components/ui/design-system";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
@@ -18,6 +19,13 @@ const typeIcon: Record<Notification["type"], keyof typeof Ionicons.glyphMap> = {
     profile: "document-text-outline",
 };
 
+const typeColor: Record<Notification["type"], string> = {
+    course: "#38BDF8",
+    note: roadmapTheme.accentMint,
+    assignment: "#FFB347",
+    profile: "#A78BFA",
+};
+
 type Props = { data: Notification };
 
 const NotificationCard: React.FC<Props> = ({ data }) => {
@@ -30,33 +38,34 @@ const NotificationCard: React.FC<Props> = ({ data }) => {
         return [data.description.slice(0, mid).trim(), data.description.slice(mid).trim()];
     }, [data.description]);
 
+    const accent = typeColor[data.type];
+
     return (
-        <View style={styles.wrapper}>
-            <View style={styles.card}>
+        <View style={[styles.card, !data.read && styles.cardUnread]}>
+            {/* unread dot */}
+            {!data.read && <View style={styles.unreadDot} />}
 
-                <View style={styles.leftRail}>
-                    <Ionicons name={typeIcon[data.type]} size={30} color="#EAF7FF" />
-                </View>
+            <View style={[styles.iconWrap, { backgroundColor: `${accent}18`, borderColor: `${accent}30` }]}>
+                <Ionicons name={typeIcon[data.type]} size={22} color={accent} />
+            </View>
 
+            <View style={styles.body}>
+                <Text style={styles.title} numberOfLines={2}>
+                    {data.title}
+                </Text>
 
-                <View style={styles.rightBlock}>
-
-                    <Text style={styles.title} numberOfLines={2}>
-                        {data.title}
-                    </Text>
-
-                    <View style={styles.metaRow}>
-                        <View style={styles.metaLeft}>
-                            <Image source={icons.myProfile} style={styles.metaAvatar} />
-                            <View style={{ flexShrink: 1 }}>
-                                <Text style={styles.metaLine} numberOfLines={1}>
-                                    {line1}
-                                </Text>
-                                <Text style={styles.metaLine} numberOfLines={1}>
-                                    {line2}
-                                </Text>
-                            </View>
+                <View style={styles.metaRow}>
+                    <View style={styles.metaLeft}>
+                        <Image source={icons.myProfile} style={styles.metaAvatar} />
+                        <View style={styles.metaLines}>
+                            <Text style={styles.metaLine} numberOfLines={1}>{line1}</Text>
+                            {!!line2 && (
+                                <Text style={styles.metaLine} numberOfLines={1}>{line2}</Text>
+                            )}
                         </View>
+                    </View>
+                    <View style={styles.timeBadge}>
+                        <Ionicons name="time-outline" size={11} color={roadmapTheme.textCaption} />
                         <Text style={styles.timeText}>{data.time}</Text>
                     </View>
                 </View>
@@ -68,37 +77,51 @@ const NotificationCard: React.FC<Props> = ({ data }) => {
 export default NotificationCard;
 
 const styles = StyleSheet.create({
-    wrapper: {
-        width: "100%",
-    },
     card: {
         flexDirection: "row",
-        backgroundColor: '#14517D',
-        borderRadius: 16,
+        alignItems: "flex-start",
+        backgroundColor: roadmapTheme.frostedSurfaceStrong,
+        borderRadius: homeLayout.cardRadiusCompact,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.22)",
-        paddingHorizontal: 16,
+        borderColor: roadmapTheme.frostedBorder,
+        paddingHorizontal: 14,
         paddingVertical: 14,
+        gap: 12,
     },
-    leftRail: {
-        width: 64,
+    cardUnread: {
+        backgroundColor: "rgba(255,255,255,0.10)",
+        borderColor: roadmapTheme.frostedBorderStrong,
+    },
+    unreadDot: {
+        position: "absolute",
+        top: 12,
+        right: 12,
+        width: 7,
+        height: 7,
+        borderRadius: 4,
+        backgroundColor: roadmapTheme.accentMint,
+    },
+    iconWrap: {
+        width: 42,
+        height: 42,
+        borderRadius: 11,
+        borderWidth: 1,
         alignItems: "center",
         justifyContent: "center",
-        paddingTop: 2,
+        flexShrink: 0,
     },
-    rightBlock: {
+    body: {
         flex: 1,
+        gap: 8,
     },
     title: {
-        color: "#EAF7FF",
-        fontWeight: "700",
-        fontSize: 16,
-        letterSpacing: 0.4,
-        textTransform: "uppercase",
-        lineHeight: 22,
+        color: roadmapTheme.textPrimary,
+        fontWeight: "800",
+        fontSize: 13,
+        letterSpacing: 0.2,
+        lineHeight: 19,
     },
     metaRow: {
-        marginTop: 10,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
@@ -107,7 +130,7 @@ const styles = StyleSheet.create({
     metaLeft: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
+        gap: 8,
         flexShrink: 1,
     },
     metaAvatar: {
@@ -115,16 +138,23 @@ const styles = StyleSheet.create({
         height: 22,
         borderRadius: 11,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.6)",
+        borderColor: roadmapTheme.frostedBorder,
     },
+    metaLines: { flexShrink: 1 },
     metaLine: {
-        color: "#CFE9F3",
-        fontSize: 13.5,
-        lineHeight: 18,
+        color: roadmapTheme.textMuted,
+        fontSize: 12,
+        lineHeight: 17,
+    },
+    timeBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 3,
+        flexShrink: 0,
     },
     timeText: {
-        color: "rgba(255,255,255,0.9)",
-        fontSize: 12,
-        marginLeft: 8,
+        color: roadmapTheme.textCaption,
+        fontSize: 11,
+        fontWeight: "500",
     },
 });
