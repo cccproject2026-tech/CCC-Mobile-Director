@@ -12,7 +12,7 @@ import {
     View,
 } from 'react-native';
 import React, { useState, useEffect, useMemo } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -215,28 +215,28 @@ const EditSections = () => {
 
     if (isLoading) {
         return (
-            <LinearGradient colors={['#1B5F8C', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading sections...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     if (error || !assessment || !currentSection) {
         return (
-            <LinearGradient colors={['#1B5F8C', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.errorContainer}>
-                    <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
+                    <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
                     <Text style={styles.errorText}>Failed to load assessment</Text>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                         <Text style={styles.backButtonText}>Go Back</Text>
                     </TouchableOpacity>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
@@ -247,13 +247,15 @@ const EditSections = () => {
             keyboardVerticalOffset={0}
         >
             <BottomSheetModalProvider>
-                <LinearGradient colors={['#1B5F8C', '#1D548D', '#264387']} style={styles.container}>
+                <GradientBackground>
                     <TopBar showUserName={true} showNotifications={true} />
 
                     {/* Header */}
                     <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
-                        <Ionicons name="chevron-back" size={24} color="#fff" />
+                        <View style={styles.backIconWrap}>
+                            <Ionicons name="chevron-back" size={20} color="#fff" />
+                        </View>
                     </TouchableOpacity>
                     <View style={styles.headerTitleContainer}>
                         <Text style={styles.headerTitle} numberOfLines={1}>
@@ -423,30 +425,21 @@ const EditSections = () => {
                         <View style={styles.editNextContainer}>
                             {/* Show Back button if not on the first section */}
                             {currentSectionIndex > 0 && (
-                                <LinearGradient
-                                    colors={['#6366F1', '#38BDF8']}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 0 }}
-                                    style={[styles.editNextGradient, { marginRight: 10 }]}
+                                <TouchableOpacity
+                                    style={[styles.editNextButton, { marginRight: 10 }]}
+                                    onPress={handleEditBack}
                                 >
-                                    <TouchableOpacity style={styles.editNextButton} onPress={handleEditBack}>
-                                        <Text style={styles.editNextButtonText}>&lt;&lt; Back</Text>
-                                    </TouchableOpacity>
-                                </LinearGradient>
+                                    <Text style={styles.editNextButtonText}>&lt;&lt; Back</Text>
+                                </TouchableOpacity>
                             )}
 
-                            {/* Show Edit Next if there's another section ahead */}
                             {currentSectionIndex < sections.length - 1 && (
-                                <LinearGradient
-                                    colors={['#6366F1', '#38BDF8']}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 0 }}
-                                    style={styles.editNextGradient}
+                                <TouchableOpacity
+                                    style={styles.editNextButton}
+                                    onPress={handleEditNext}
                                 >
-                                    <TouchableOpacity style={styles.editNextButton} onPress={handleEditNext}>
-                                        <Text style={styles.editNextButtonText}>Edit Next &gt;&gt;</Text>
-                                    </TouchableOpacity>
-                                </LinearGradient>
+                                    <Text style={styles.editNextButtonText}>Edit Next &gt;&gt;</Text>
+                                </TouchableOpacity>
                             )}
                         </View>
                     </View>
@@ -489,7 +482,7 @@ const EditSections = () => {
                     }
                     onSave={handleSaveRecommendations}
                 />
-                </LinearGradient>
+                </GradientBackground>
             </BottomSheetModalProvider>
         </KeyboardAvoidingView>
     );
@@ -498,32 +491,25 @@ const EditSections = () => {
 export default EditSections;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
+    container: { flex: 1 },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 14,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    headerBackButton: {
-        marginRight: 8,
+    headerBackButton: { marginRight: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerTitleContainer: {
-        flex: 1,
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#fff',
-    },
-    headerSubtitle: {
-        fontSize: 12,
-        fontWeight: '400',
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginTop: 2,
-    },
+    headerTitleContainer: { flex: 1 },
+    headerTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
+    headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 },
     progressContainer: {
         paddingVertical: 20,
         paddingHorizontal: 20,
@@ -814,17 +800,16 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         marginTop: 10,
     },
-    editNextGradient: {
-        borderRadius: 24,
-        padding: 1,
-        width: '45%',
-    },
     editNextButton: {
-        backgroundColor: '#264387', // Very dark blue/black background
+        backgroundColor: 'rgba(255,255,255,0.12)',
         paddingVertical: 10,
-        borderRadius: 22,
+        paddingHorizontal: 20,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.22)',
+        width: '45%',
     },
     editNextButtonText: {
         fontSize: 14,

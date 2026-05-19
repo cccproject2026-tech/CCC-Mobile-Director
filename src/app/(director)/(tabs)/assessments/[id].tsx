@@ -13,7 +13,7 @@ import {
     View,
 } from 'react-native';
 import React, { useState, useEffect, useMemo } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAssessment, useUpdateAssessmentMutation } from '@/hooks/useAssessments';
@@ -214,28 +214,28 @@ const AssessmentDetail = () => {
 
     if (isLoading) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading assessment...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     if (error || !assessment) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.errorContainer}>
-                    <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
+                    <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
                     <Text style={styles.errorText}>Failed to load assessment</Text>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                         <Text style={styles.backButtonText}>Go Back</Text>
                     </TouchableOpacity>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
@@ -245,13 +245,15 @@ const AssessmentDetail = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={0}
         >
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+            <GradientBackground>
                 <TopBar showUserName={true} showNotifications={true} />
 
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
-                        <Ionicons name="arrow-back" size={28} color="#fff" />
+                        <View style={styles.backIconWrap}>
+                            <Ionicons name="chevron-back" size={20} color="#fff" />
+                        </View>
                     </TouchableOpacity>
                     <View style={styles.headerTitleContainer}>
                         <Text style={styles.headerTitle} numberOfLines={1}>
@@ -407,24 +409,17 @@ const AssessmentDetail = () => {
 
                         {/* Edit Sections Button */}
                         <View style={styles.editSectionsWrapper}>
-                            <LinearGradient
-                                colors={['#7C3AED', '#38BDF8']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                                style={styles.editSectionsGradient}
+                            <TouchableOpacity
+                                style={styles.editSectionsButton}
+                                onPress={handleEditSections}
                             >
-                                <TouchableOpacity
-                                    style={styles.editSectionsButton}
-                                    onPress={handleEditSections}
-                                >
-                                    <Text style={styles.editSectionsButtonText}>Edit Sections {'>>'}</Text>
-                                </TouchableOpacity>
-                            </LinearGradient>
+                                <Text style={styles.editSectionsButtonText}>Edit Sections {'>>'}</Text>
+                            </TouchableOpacity>
                         </View>
                     </>
                 )}
                 </ScrollView>
-            </LinearGradient>
+            </GradientBackground>
         </KeyboardAvoidingView>
     );
 };
@@ -432,17 +427,24 @@ const AssessmentDetail = () => {
 export default AssessmentDetail;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
+    headerBackButton: { marginRight: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    headerTitleContainer: { flex: 1 },
+    headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff', letterSpacing: -0.2 },
+    headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 },
     heroTitleInput: {
         fontSize: 24,
         fontWeight: '700',
@@ -666,20 +668,18 @@ const styles = StyleSheet.create({
         width: '50%',
         alignSelf: 'flex-end',
     },
-    editSectionsGradient: {
-        borderRadius: 28,
-        padding: 2, // Border width
-    },
     editSectionsButton: {
-        backgroundColor: '#1B2B60',
+        backgroundColor: 'rgba(255,255,255,0.12)',
         paddingVertical: 14,
-        borderRadius: 26,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.22)',
     },
     editSectionsButtonText: {
-        fontSize: 16,
-        fontWeight: '600',
+        fontSize: 15,
+        fontWeight: '700',
         color: '#fff',
     },
     loadingContainer: {

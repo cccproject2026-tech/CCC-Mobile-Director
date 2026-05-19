@@ -1,6 +1,6 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useCallback, useMemo } from 'react'
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,32 +47,30 @@ const Assessments = (props: Props) => {
     }, [refetch]);
 
     return (
-        <LinearGradient
-            colors={['#176192', '#1D548D', '#264387']}
-            style={styles.container}
-        >
+        <GradientBackground>
             <TopBar showUserName={true} showNotifications={true} />
 
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={28} color="#fff" />
+                    <View style={styles.backIconWrap}>
+                        <Ionicons name="chevron-back" size={20} color="#fff" />
+                    </View>
                     <Text style={styles.headerTitle}>Assessments</Text>
                 </TouchableOpacity>
 
-                {/* Add both buttons */}
                 <View style={styles.headerButtons}>
                     <TouchableOpacity
-                        style={styles.selectButton}
+                        style={styles.iconButton}
                         onPress={() => router.push('/(director)/(tabs)/assessments/select-assessment')}
                     >
-                        <Ionicons name="checkmark-outline" size={24} color="#fff" />
+                        <Ionicons name="checkmark-outline" size={20} color="#fff" />
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={styles.createButton}
+                        style={styles.iconButton}
                         onPress={() => router.push('/(director)/(tabs)/assessments/create-assessment')}
                     >
-                        <Ionicons name="add-outline" size={24} color="#fff" />
+                        <Ionicons name="add" size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -147,61 +145,37 @@ const Assessments = (props: Props) => {
                     </ScrollView>
                 )}
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 }
 
 export default Assessments
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
         paddingHorizontal: 16,
-        paddingVertical: 12,
-        marginBottom: 16,
+        paddingVertical: 14,
+        marginBottom: 0,
         borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.3)",
+        borderBottomColor: "rgba(255,255,255,0.12)",
     },
-
-    backButton: {
-        flexDirection: "row",
-        alignItems: "center",
+    backButton: { flexDirection: "row", alignItems: "center", gap: 10 },
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: "rgba(255,255,255,0.12)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.18)",
+        alignItems: "center", justifyContent: "center",
     },
-
-    headerTitle: {
-        marginLeft: 8,
-        fontSize: 20,
-        fontWeight: "600",
-        color: "#fff",
-    },
-    headerButtons: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    selectButton: {
-        width: 30,
-        height: 30,
-        borderRadius: 5,
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.4)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    createButton: {
-        width: 30,
-        height: 30,
-        borderRadius: 5,
-        borderWidth: 2,
-        borderColor: 'rgba(255, 255, 255, 0.4)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    headerTitle: { fontSize: 20, fontWeight: "800", color: "#fff", letterSpacing: -0.2 },
+    headerButtons: { flexDirection: 'row', gap: 8 },
+    iconButton: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: "rgba(255,255,255,0.10)",
+        borderWidth: 1, borderColor: "rgba(255,255,255,0.16)",
+        alignItems: "center", justifyContent: "center",
     },
     searchContainer: {
         paddingHorizontal: 16,

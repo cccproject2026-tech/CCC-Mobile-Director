@@ -4,7 +4,7 @@ import { icons } from '@/constants';
 import { useCreateAssessmentMutation, useUploadBannerImageMutation } from '@/hooks/useAssessments';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -549,14 +549,16 @@ export default function CreateAssessmentPage() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={0}
         >
-            <LinearGradient colors={['#155C93', '#1B2B60']} style={{ flex: 1 }}>
+            <GradientBackground>
                 <TopBar showUserName />
 
                 {/* Header */}
                 <View style={styles.header}>
-                    <Pressable onPress={() => router.back()} hitSlop={10}>
-                        <Ionicons name="chevron-back" size={28} color="#E2E8F0" />
-                    </Pressable>
+                    <View style={styles.backIconWrap}>
+                        <Pressable onPress={() => router.back()} hitSlop={10}>
+                            <Ionicons name="chevron-back" size={20} color="#E2E8F0" />
+                        </Pressable>
+                    </View>
                     <Text style={styles.headerTitle}>Create - Assessment</Text>
                 </View>
 
@@ -897,7 +899,7 @@ export default function CreateAssessmentPage() {
                 visible={showSuccessModal}
                 onClose={handleSuccessModalClose}
             />
-        </LinearGradient>
+        </GradientBackground>
         </KeyboardAvoidingView>
     );
 }
@@ -909,16 +911,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingVertical: 14,
         gap: 12,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.2)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-    headerTitle: {
-        color: '#E2E8F0',
-        fontSize: 16,
-        fontWeight: '600',
+    backIconWrap: {
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
+    headerTitle: { color: '#E2E8F0', fontSize: 16, fontWeight: '700' },
     scrollView: {
         flex: 1,
     },

@@ -1,6 +1,6 @@
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,17 +75,22 @@ const SelectAssessment = (props: Props) => {
     };
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={styles.container}>
+        <GradientBackground>
             <TopBar showUserName={true} showNotifications={true} />
 
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="close" size={32} color="#fff" />
+                    <View style={styles.backIconWrap}>
+                        <Ionicons name="close" size={18} color="#fff" />
+                    </View>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={handleConfirm} style={styles.confirmButton}>
-                    <Ionicons name="arrow-redo-outline" size={32} color="#fff" />
+                <TouchableOpacity
+                    onPress={handleConfirm}
+                    style={[styles.confirmButton, selectedAssessments.size === 0 && { opacity: 0.35 }]}
+                >
+                    <Ionicons name="arrow-redo-outline" size={20} color="#fff" />
                 </TouchableOpacity>
             </View>
 
@@ -140,52 +145,38 @@ const SelectAssessment = (props: Props) => {
                     </ScrollView>
                 )}
             </View>
-        </LinearGradient>
+        </GradientBackground>
     );
 };
 
 export default SelectAssessment;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255, 255, 255, 0.3)',
+        borderBottomColor: 'rgba(255,255,255,0.12)',
     },
     backButton: {
-        width: 44,
-        height: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+        alignItems: 'center', justifyContent: 'center',
     },
-    headerCenter: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    headerSubtitle: {
-        fontSize: 16,
-        fontWeight: '400',
-        color: 'rgba(255, 255, 255, 0.8)',
-        marginTop: 2,
-    },
+    backIconWrap: {},
     confirmButton: {
-        width: 44,
-        height: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
+        width: 34, height: 34, borderRadius: 9,
+        backgroundColor: 'rgba(255,255,255,0.10)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+        alignItems: 'center', justifyContent: 'center',
     },
+    headerCenter: { flex: 1, alignItems: 'center' },
+    headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
+    headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 },
     searchContainer: {
         paddingHorizontal: 16,
         paddingTop: 16,
