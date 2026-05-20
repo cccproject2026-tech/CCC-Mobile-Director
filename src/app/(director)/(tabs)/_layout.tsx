@@ -55,6 +55,7 @@ export default function DirectorTabLayout() {
         "notifications",
         "assignments",
         "course-completed",
+        "discover",
         "invite-field-mentor",
         "videos",
         "contact-details",
@@ -85,23 +86,13 @@ export default function DirectorTabLayout() {
                 },
             }}
         >
-            {/* Visible tabs — footer shows only these 3 */}
+            {/* Visible tabs — footer shows only Dashboard and Profile */}
             <Tabs.Screen
                 name="index"
                 options={{
                     title: "Dashboard",
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="home" size={24} color={color} />
-                    ),
-                }}
-            />
-
-            <Tabs.Screen
-                name="discover"
-                options={{
-                    title: "Discover",
-                    tabBarIcon: ({ color }) => (
-                        <Ionicons name="analytics" size={24} color={color} />
                     ),
                 }}
             />
