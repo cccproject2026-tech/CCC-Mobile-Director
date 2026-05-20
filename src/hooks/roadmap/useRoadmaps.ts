@@ -178,23 +178,10 @@ export function useAssignedRoadmaps(userId?: string) {
     const roadmapsQuery = useQuery({
         queryKey: roadmapKeys.assigned(userId),
         queryFn: async () => {
-            console.log('📤 Fetching assigned roadmaps for user:', userId);
-            console.log('📋 Assigned roadmap IDs:', roadmapIds);
-
-            // Fetch all roadmaps
             const allRoadmaps = await roadmapService.getAllRoadmaps();
-
-            // Filter to only assigned roadmaps
             const assignedRoadmaps = allRoadmaps.filter((roadmap) =>
-                roadmapIds.includes(roadmap._id)
+                roadmapIds.includes(roadmap._id),
             );
-
-            console.log(
-                '✅ Roadmaps filtered.',
-                'Total:', allRoadmaps.length,
-                'Assigned:', assignedRoadmaps.length
-            );
-
             return assignedRoadmaps;
         },
         enabled: !isIdsLoading && !isIdsError && roadmapIds.length > 0,
@@ -208,8 +195,6 @@ export function useAssignedRoadmaps(userId?: string) {
         if (!roadmapsQuery.data || !progressData?.roadmaps.items) {
             return roadmapsQuery.data || [];
         }
-
-        console.log('🔄 Merging roadmaps with progress data...');
 
         const merged = roadmapsQuery.data.map((roadmap) => {
             // Find matching progress item
@@ -248,7 +233,6 @@ export function useAssignedRoadmaps(userId?: string) {
             return mergedRoadmap;
         });
 
-        console.log('✅ Roadmaps merged with progress status');
         return merged;
     }, [roadmapsQuery.data, progressData]);
 

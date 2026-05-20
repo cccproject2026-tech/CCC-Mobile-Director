@@ -19,6 +19,7 @@ import { getRoadmapCard } from '@/utils/roadmapMapper';
 import { useMentees } from '@/hooks/useMentees';
 import { Mentee } from '@/types/user.types';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
+import { Routes } from '@/navigation/routes';
 
 type TabKey = 'All' | 'Due' | 'Not Started' | 'Completed';
 
@@ -98,10 +99,7 @@ export default function MenteeRoadmapPathsScreen() {
     };
 
     const handleRoadmapPress = (roadmapId: string) => {
-        router.push({
-            pathname: '/(director)/(tabs)/roadmaps/phase-list',
-            params: { roadmapId },
-        });
+        router.push(Routes.roadmaps.phaseListFor(roadmapId, menteeId, true));
     };
 
     const tabItems = [

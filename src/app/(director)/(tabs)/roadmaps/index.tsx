@@ -11,6 +11,7 @@ import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
 import CreateRoadmapSheet, { RoadmapFormData } from '@/components/Sheets/CreateRoadmapSheet';
 import { useMentees } from '@/hooks/useMentees';
 import { useMentors } from '@/hooks/useMentors';
+import { useOverallProgressList } from '@/hooks/useProgress';
 import { useAllRoadmaps, useDeleteRoadmap } from '@/hooks/roadmap/useRoadmaps';
 import { Mentee, Mentor } from '@/types/user.types';
 import { getRoadmapCard } from '@/utils/roadmapMapper';
@@ -39,6 +40,7 @@ import {
     openWhatsApp,
     sendEmail,
 } from '@/utils/contactActions';
+import { Routes } from '@/navigation/routes';
 
 const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 
@@ -72,7 +74,7 @@ export default function RevitalizationRoadmap() {
         fetchNextPage: fetchNextMentors,
         hasNextPage: hasNextMentors,
         isFetchingNextPage: isFetchingNextMentors,
-    } = useMentors();
+    } = useMentors(100);
 
     // ✅ Destructure pagination methods for mentees
     const {
@@ -82,6 +84,8 @@ export default function RevitalizationRoadmap() {
         hasNextPage: hasNextMentees,
         isFetchingNextPage: isFetchingNextMentees,
     } = useMentees();
+
+    const { data: pastorsOverview = [] } = useOverallProgressList(['pastor']);
 
     // Flatten data for lists
     // const mentees: Mentee[] = menteesData?.pages.flatMap(page => page.mentees) ?? [];
@@ -246,11 +250,11 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'clipboard-outline',
             label: 'Roadmaps of Mentees',
-            onPress: () =>
-                router.push({
-                    pathname: '/mentors/mentor-mentees' as any,
-                    params: { id: selectedMentor?.id },
-                }),
+            onPress: () => {
+                if (selectedMentor?.id) {
+                    router.push(Routes.roadmaps.mentorPastorsFor(selectedMentor.id));
+                }
+            },
         },
         {
             icon: 'checkmark-done-outline',
@@ -600,14 +604,44 @@ export default function RevitalizationRoadmap() {
         return filtered;
     }, [roadmapLibrary, search]);
 
-    // Transform mentors to ProfileItem format
     const mentorProfiles: ProfileItem[] = useMemo(() => {
         return filteredMentors.map(m => ({
             id: m.id,
-            name: `${m.firstName} ${m.lastName ?? ''}`,
+            name: `${m.firstName} ${m.lastName ?? ''}`.trim(),
             image: m.profilePicture,
         }));
     }, [filteredMentors]);
+
+    const pastorProfiles: ProfileItem[] = useMemo(() => {
+        let rows = pastorsOverview;
+        if (search) {
+            const q = search.toLowerCase();
+            rows = rows.filter(p => {
+                const name = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim().toLowerCase();
+                const email = (p.email ?? '').toLowerCase();
+                return name.includes(q) || email.includes(q);
+            });
+        }
+        return rows.map((p, idx) => {
+            const id = String(p.userId ?? p.id ?? p._id ?? idx);
+            const name =
+                `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() ||
+                p.email ||
+                'Pastor';
+            return { id, name, image: p.profilePicture };
+        });
+    }, [pastorsOverview, search]);
+
+    const swiperProfiles = useMemo((): ProfileItem[] => {
+        switch (activeTab) {
+            case 'mentors':
+                return mentorProfiles;
+            case 'mentees':
+                return pastorProfiles;
+            default:
+                return [];
+        }
+    }, [activeTab, mentorProfiles, pastorProfiles]);
 
     const tabData = [
         { key: 'roadmap-library', label: 'Roadmap Library' },
@@ -618,15 +652,20 @@ export default function RevitalizationRoadmap() {
     // ✅ List Header Component
     const renderListHeader = () => (
         <View>
-            {/* Profile Swiper */}
-            <View style={styles.swiperContainer}>
-                <ProfileSwiper
-                    profiles={mentorProfiles}
-                    onProfilePress={profile =>
-                        router.push(`/mentors/${profile.id}`)
-                    }
-                />
-            </View>
+            {swiperProfiles.length > 0 ? (
+                <View style={styles.swiperContainer}>
+                    <ProfileSwiper
+                        profiles={swiperProfiles}
+                        onProfilePress={profile => {
+                            if (activeTab === 'mentees') {
+                                router.push(Routes.roadmaps.pathsForMentee(profile.id));
+                            } else {
+                                router.push(`/mentors/${profile.id}`);
+                            }
+                        }}
+                    />
+                </View>
+            ) : null}
 
             {/* Tabs */}
             <TabSwitcher

@@ -174,8 +174,79 @@ export interface DatePickerField {
 export interface AssessmentField {
     id: string;
     type: 'assessment';
-    selectedAssessment?: string; // ✅ Optional
-    assessmentId?: string; // ✅ Added
-    buttonName?: string; // ✅ Optional
+    selectedAssessment?: string;
+    assessmentId?: string;
+    buttonName?: string;
     scheduleMeeting?: boolean;
+}
+
+// ─── Task runtime (comments, queries, extras) ───────────────────────────────
+
+export interface RoadmapComment {
+    _id: string;
+    text: string;
+    addedDate: string;
+    mentorId?: {
+        _id?: string;
+        firstName?: string;
+        lastName?: string;
+        profilePicture?: string;
+        role?: string;
+    };
+}
+
+export interface RoadmapQuery {
+    _id: string;
+    actualQueryText: string;
+    createdDate?: string;
+    status?: 'pending' | 'answered';
+    repliedAnswer?: string;
+    repliedDate?: string;
+    nestedRoadMapItemId?: string;
+    repliedMentorId?: {
+        _id?: string;
+        firstName?: string;
+        lastName?: string;
+        profilePicture?: string;
+        role?: string;
+    };
+}
+
+export interface RoadmapExtraAnswer {
+    type?: string;
+    name?: string;
+    key?: string;
+    value?: unknown;
+    signatureData?: string;
+}
+
+export interface RoadmapExtrasDocumentFile {
+    fileName: string;
+    fileUrl: string;
+    fileType?: string;
+    fileSize?: number;
+}
+
+export interface RoadmapExtrasDocument {
+    uploadBatchId: string;
+    uploadedAt: string;
+    name?: string;
+    files: RoadmapExtrasDocumentFile[];
+}
+
+export interface AddRoadmapCommentPayload {
+    text: string;
+    userId: string;
+    mentorId: string;
+}
+
+export interface CreateRoadmapQueryPayload {
+    actualQueryText: string;
+    userId: string;
+    nestedRoadMapItemId?: string;
+}
+
+export interface ReplyRoadmapQueryPayload {
+    repliedAnswer: string;
+    repliedMentorId: string;
 }

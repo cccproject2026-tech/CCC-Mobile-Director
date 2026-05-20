@@ -286,7 +286,12 @@ export default function TrackProgressDetailScreen() {
           ) : (
             filteredRoadmaps.map((roadmap) => (
               <View key={roadmap._id} style={styles.cardGap}>
-                <RoadmapCard data={getRoadmapCard(roadmap)} />
+                <RoadmapCard
+                  data={getRoadmapCard(roadmap)}
+                  onPress={() =>
+                    router.push(Routes.roadmaps.phaseListFor(roadmap._id, userId, true))
+                  }
+                />
               </View>
             ))
           )}

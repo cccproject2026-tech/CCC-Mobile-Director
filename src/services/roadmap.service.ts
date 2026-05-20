@@ -14,6 +14,14 @@ import {
     RoadmapApiResponse,
     SingleRoadmapApiResponse,
     Roadmap,
+    NestedRoadmap,
+    AddRoadmapCommentPayload,
+    CreateRoadmapQueryPayload,
+    ReplyRoadmapQueryPayload,
+    RoadmapComment,
+    RoadmapQuery,
+    RoadmapExtraAnswer,
+    RoadmapExtrasDocument,
 } from '@/types/roadmap.types';
 
 // Helper to build FormData
@@ -274,6 +282,119 @@ export const roadmapService = {
             throw new Error(response.data.message || 'Failed to delete roadmap');
         }
 
+        return response.data;
+    },
+
+    async getNestedRoadmapItem(
+        roadmapId: string,
+        nestedItemId: string,
+    ): Promise<NestedRoadmap> {
+        const response = await apiClient.get<SingleRoadmapApiResponse>(
+            ENDPOINTS.ROADMAPS.GET_NESTED(roadmapId, nestedItemId),
+            { params: { t: Date.now() } },
+        );
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch task');
+        }
+        return response.data.data as unknown as NestedRoadmap;
+    },
+
+    async getUserRoadmaps(userId: string): Promise<Roadmap[]> {
+        const response = await apiClient.get<RoadmapApiResponse>(
+            ENDPOINTS.ROADMAPS.GET_USER_ROADMAPS(userId),
+            { params: { t: Date.now() } },
+        );
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Failed to fetch assigned roadmaps');
+        }
+        return response.data.data;
+    },
+
+    async getExtras(
+        roadmapId: string,
+        userId: string,
+        nestedRoadMapItemId?: string,
+    ): Promise<RoadmapExtraAnswer[]> {
+        const response = await apiClient.get(ENDPOINTS.ROADMAPS.GET_EXTRAS(roadmapId), {
+            params: {
+                userId,
+                ...(nestedRoadMapItemId ? { nestedRoadMapItemId } : {}),
+            },
+        });
+        return response.data;
+    },
+
+    async getExtrasDocuments(
+        roadmapId: string,
+        userId: string,
+        nestedRoadMapItemId?: string,
+    ): Promise<RoadmapExtrasDocument[]> {
+        const response = await apiClient.get(ENDPOINTS.ROADMAPS.GET_EXTRAS_DOCUMENTS(roadmapId), {
+            params: {
+                userId,
+                ...(nestedRoadMapItemId ? { nestedRoadMapItemId } : {}),
+            },
+        });
+        return response.data;
+    },
+
+    async getComments(roadmapId: string, userId: string): Promise<RoadmapComment[]> {
+        const response = await apiClient.get(
+            ENDPOINTS.ROADMAPS.GET_COMMENTS(roadmapId, userId),
+        );
+        return response.data;
+    },
+
+    async addComment(
+        roadmapId: string,
+        payload: AddRoadmapCommentPayload,
+    ): Promise<unknown> {
+        const response = await apiClient.post(
+            ENDPOINTS.ROADMAPS.ADD_COMMENT(roadmapId),
+            payload,
+        );
+        return response.data;
+    },
+
+    async getQueries(
+        roadmapId: string,
+        userId: string,
+        status?: 'pending' | 'answered',
+        nestedRoadMapItemId?: string,
+    ): Promise<RoadmapQuery[]> {
+        const response = await apiClient.get(
+            ENDPOINTS.ROADMAPS.GET_QUERIES(roadmapId, userId),
+            {
+                params: {
+                    userId,
+                    ...(status ? { status } : {}),
+                    ...(nestedRoadMapItemId ? { nestedRoadMapItemId } : {}),
+                },
+            },
+        );
+        return response.data;
+    },
+
+    async submitQuery(
+        roadmapId: string,
+        payload: CreateRoadmapQueryPayload,
+    ): Promise<unknown> {
+        const response = await apiClient.post(
+            ENDPOINTS.ROADMAPS.SUBMIT_QUERY(roadmapId),
+            payload,
+        );
+        return response.data;
+    },
+
+    async replyToQuery(
+        roadmapId: string,
+        queryId: string,
+        payload: ReplyRoadmapQueryPayload,
+    ): Promise<unknown> {
+        const response = await apiClient.patch(
+            ENDPOINTS.ROADMAPS.REPLY_QUERY(roadmapId, queryId),
+            payload,
+        );
         return response.data;
     },
 };

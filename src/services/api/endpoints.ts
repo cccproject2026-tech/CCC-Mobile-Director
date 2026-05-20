@@ -130,6 +130,14 @@ export const ENDPOINTS = {
     UPDATE_NESTED: (roadmapId: string, nestedId: string) =>
       `/roadmaps/${roadmapId}/nested/${nestedId}`,
     DELETE_ROADMAP: (roadmapId: string) => `/roadmaps/${roadmapId}`,
+    GET_NESTED: (roadmapId: string, nestedId: string) =>
+      `/roadmaps/${roadmapId}/nested/${nestedId}`,
+    GET_USER_ROADMAPS: (userId: string) => `/roadmaps/user/${userId}`,
+    GET_EXTRAS: (roadmapId: string) => `/roadmaps/${roadmapId}/extras`,
+    GET_EXTRAS_DOCUMENTS: (roadmapId: string) =>
+      `/roadmaps/${roadmapId}/extras/documents`,
+    DELETE_QUERY_REPLY: (roadmapId: string, queryId: string) =>
+      `/roadmaps/${roadmapId}/queries/${queryId}/reply`,
   },
 
   INTERESTS: {

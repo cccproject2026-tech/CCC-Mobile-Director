@@ -67,13 +67,11 @@ export const menteesService = {
         menteeIds: string[],
         roadmapIds: string[],
     ): Promise<void> => {
-        console.log('Assigning roadmaps', roadmapIds, 'to mentees', menteeIds);
-        await apiClient.post(
-            ENDPOINTS.PROGRESS.ASSIGN_ROADMAP,
-            {
+        for (const roadmapId of roadmapIds) {
+            await apiClient.post(ENDPOINTS.PROGRESS.ASSIGN_ROADMAP, {
                 userIds: menteeIds,
-                roadMapIds: roadmapIds
-            },
-        );
+                roadMapIds: [roadmapId],
+            });
+        }
     },
 };

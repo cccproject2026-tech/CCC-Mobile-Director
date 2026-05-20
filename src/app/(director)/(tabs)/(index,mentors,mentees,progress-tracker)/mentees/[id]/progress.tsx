@@ -23,6 +23,7 @@ import { RefreshControl, ScrollView } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getRoadmapCard } from "@/utils/roadmapMapper";
 import RoadmapCard from "@/components/Cards/RoadmapCard";
+import { Routes } from "@/navigation/routes";
 import AssessmentCard from "@/components/Cards/AssessmentCard";
 import { useAssignedRoadmaps } from "@/hooks/roadmap/useRoadmaps";
 import { Mentee } from "@/types/user.types";
@@ -165,21 +166,11 @@ export default function MenteeProgressScreen() {
     }, [refetchRoadmaps, refetchAssessments]);
 
     const handleRoadmapPress = useCallback(
-        (
-            roadmapId: string,
-            hasNested: boolean,
-            nestedCount: number,
-            firstNestedId?: string,
-        ) => {
-            if (!hasNested || nestedCount === 0) return;
-
-            if (nestedCount === 1 && firstNestedId)
-                router.push(`/roadmaps`);
-            else router.push(`/roadmaps`);
-            //     router.push(`/roadmap/${roadmapId}/${firstNestedId}`);
-            // else router.push(`/roadmap/${roadmapId}`);
+        (roadmapId: string) => {
+            if (!menteeId) return;
+            router.push(Routes.roadmaps.phaseListFor(roadmapId, menteeId, true));
         },
-        [],
+        [menteeId],
     );
 
     const isLoading =
@@ -309,14 +300,7 @@ export default function MenteeProgressScreen() {
                                                 ]}
                                             >
                                                 <Pressable
-                                                    onPress={() =>
-                                                        handleRoadmapPress(
-                                                            roadmap._id,
-                                                            roadmap.haveNextedRoadMaps,
-                                                            roadmap.roadmaps.length,
-                                                            roadmap.roadmaps[0]?._id,
-                                                        )
-                                                    }
+                                                    onPress={() => handleRoadmapPress(roadmap._id)}
                                                 >
                                                     <RoadmapCard
                                                         data={{ ...cardData, phaseNumber: undefined }}

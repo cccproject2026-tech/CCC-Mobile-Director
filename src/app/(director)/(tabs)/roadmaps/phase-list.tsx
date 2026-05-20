@@ -18,6 +18,7 @@ import TopBar from '@/components/Header/TopBar';
 import RoadmapCard from '@/components/Cards/RoadmapCard';
 import { RoadmapCardData } from '@/types/roadmap.types';
 import SearchBar from '@/components/Header/SearchBar';
+import { Routes } from '@/navigation/routes';
 
 export default function PhaseListScreen() {
     const router = useRouter();
@@ -25,6 +26,8 @@ export default function PhaseListScreen() {
     const params = useLocalSearchParams();
 
     const roadmapId = params.roadmapId as string;
+    const userId = (params.userId as string) || undefined;
+    const pastorView = params.pastorView === 'true';
     const { data: roadmap, isLoading } = useRoadmap(roadmapId);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -33,9 +36,13 @@ export default function PhaseListScreen() {
         const phase = roadmap?.roadmaps?.find((r) => r._id === nestedRoadmapId);
         if (!phase) return;
 
-        // Navigate to roadmap-form in edit mode
+        if (pastorView && userId) {
+            router.push(Routes.roadmaps.taskFor(roadmapId, nestedRoadmapId, userId));
+            return;
+        }
+
         router.push({
-            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+            pathname: '/roadmaps/(creation)/roadmap-form',
             params: {
                 roadmapId,
                 nestedRoadmapId,
@@ -47,18 +54,18 @@ export default function PhaseListScreen() {
                 selectedDivision: phase.phase || '',
                 bannerImage: phase.imageUrl || '',
             },
-        });
+        } as never);
     };
 
     const handleAddTask = () => {
         router.push({
-            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
+            pathname: '/roadmaps/(creation)/roadmap-creation',
             params: {
                 roadmapId,
                 type: 'phase',
                 isEditMode: 'false',
             },
-        });
+        } as never);
     };
 
     const handleBack = () => {
@@ -91,6 +98,11 @@ export default function PhaseListScreen() {
         image: phase.imageUrl || require('@/assets/images/app/jumpstart.png'),
         completionTime: phase.duration ? `Months ${phase.duration}` : undefined,
         showArrow: false,
+        status: phase.status === 'completed'
+            ? 'completed'
+            : phase.status === 'in progress'
+              ? 'in-progress'
+              : 'initial',
     }));
 
     // ✅ Filter phases based on search query

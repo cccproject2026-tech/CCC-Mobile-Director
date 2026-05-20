@@ -40,4 +40,49 @@ export const Routes = {
     report: "/progress-tracker/report" as Href,
   },
   courseCompleted: "/course-completed" as Href,
+  roadmaps: {
+    index: "/roadmaps" as Href,
+    select: "/roadmaps/select-roadmap" as Href,
+    assign: "/roadmaps/assign-roadmaps" as Href,
+    paths: "/roadmaps/roadmap-paths" as Href,
+    phaseList: "/roadmaps/phase-list" as Href,
+    task: "/roadmaps/task" as Href,
+    mentorPastors: "/roadmaps/mentor-pastors" as Href,
+    detail: (id: string): Href =>
+      ({ pathname: "/roadmaps/[id]", params: { id } }) as Href,
+    assignWithIds: (roadmapIds: string[]): Href =>
+      ({
+        pathname: "/roadmaps/assign-roadmaps",
+        params: { roadmapIds: JSON.stringify(roadmapIds) },
+      }) as Href,
+    pathsForMentee: (menteeId: string): Href =>
+      ({
+        pathname: "/roadmaps/roadmap-paths",
+        params: { id: menteeId },
+      }) as Href,
+    phaseListFor: (roadmapId: string, userId?: string, pastorView?: boolean): Href =>
+      ({
+        pathname: "/roadmaps/phase-list",
+        params: {
+          roadmapId,
+          ...(userId ? { userId } : {}),
+          ...(pastorView ? { pastorView: 'true' } : {}),
+        },
+      }) as Href,
+    taskFor: (roadmapId: string, taskId: string, userId: string): Href =>
+      ({
+        pathname: "/roadmaps/task",
+        params: { roadmapId, taskId, userId },
+      }) as Href,
+    mentorPastorsFor: (mentorId: string): Href =>
+      ({
+        pathname: "/roadmaps/mentor-pastors",
+        params: { mentorId },
+      }) as Href,
+    indexWithPastor: (pastorId: string): Href =>
+      ({
+        pathname: "/roadmaps/roadmap-paths",
+        params: { id: pastorId },
+      }) as Href,
+  },
 } as const;

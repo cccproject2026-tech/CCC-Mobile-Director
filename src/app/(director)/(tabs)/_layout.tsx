@@ -31,6 +31,8 @@ export default function DirectorTabLayout() {
             /assessments\/create-assessment$/,
             /assessments\/result$/,
             /assessments\/mentor-pastors$/,
+            /roadmaps\/task$/,
+            /roadmaps\/mentor-pastors$/,
         ];
 
         return !hideWhenMatches.some((p) => p.test(pathname));
