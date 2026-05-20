@@ -1,4 +1,4 @@
-import MenteeCard from '@/components/Cards/MenteeCard';
+import MenteeProgressCard from '@/components/Cards/MenteeCard/MenteeProgressCard';
 import { UserCardSkeleton } from '@/components/Cards/MentorCard/UserCardSkeleton';
 import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
@@ -132,7 +132,7 @@ export default function Mentees() {
             label: 'View Progress Report',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/progress-report'), 300);
+                setTimeout(() => router.push('/(director)/(tabs)/progress-tracker/report' as any), 300);
             },
         },
         {
@@ -295,7 +295,7 @@ export default function Mentees() {
                             data={filteredMentees}
                             keyExtractor={item => item.id}
                             renderItem={({ item: mentee }) => (
-                                <MenteeCard
+                                <MenteeProgressCard
                                     data={mentee}
                                     layout={viewMode}
                                     showMenu={true}
@@ -305,7 +305,6 @@ export default function Mentees() {
                                     onMail={() => sendEmail(mentee.email)}
                                     onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                     onMenuPress={() => handleMenuPress(mentee)}
-                                    onMarkComplete={() => featureNotAvailableYet('Mark complete')}
                                     onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
                                     onInviteAsFieldMentor={() => router.push('/(director)/(tabs)/invite-field-mentor')}
                                 />

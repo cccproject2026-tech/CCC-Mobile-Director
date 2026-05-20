@@ -7,7 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import SearchBar from '@/components/Header/SearchBar';
 import { useAssessments } from '@/hooks/useAssessments';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AssessmentCard from '@/components/Cards/AssessmentCard'; // Same component!
+import AssessmentCard from '@/components/Cards/AssessmentCard';
+import { Routes } from '@/navigation/routes';
 
 type Props = {}
 
@@ -66,12 +67,7 @@ const SelectAssessment = (props: Props) => {
         const selected = Array.from(selectedAssessments);
 
         // Navigate to assign page with selected assessment IDs
-        router.push({
-            pathname: '/(director)/(tabs)/assessments/assign-assessments',
-            params: {
-                assessmentIds: JSON.stringify(selected)
-            }
-        });
+        router.push(Routes.assessments.assignWithIds(selected));
     };
 
     return (

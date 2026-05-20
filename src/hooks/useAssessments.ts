@@ -1,98 +1,141 @@
 import { assessmentService } from '@/services/assessments.service';
-import { ApiAssessment, ApiAssessmentSection, Assessment, CreateAssessmentRequest } from '@/types/assessment.types';
+import {
+    ApiAssessment,
+    ApiAssessmentSection,
+    AssignedAssessmentView,
+    CreateAssessmentRequest,
+    SubmittedAnswersResponse,
+} from '@/types/assessment.types';
+import {
+    hasCdpPayload,
+    mapProgressStatus,
+} from '@/utils/assignedAssessmentParser';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useAssessmentProgress } from './useProgress';
-import { mapApiToFrontend } from '@/utils/assessmentMapper';
 
+export const assessmentKeys = {
+    all: ['assessments'] as const,
+    list: () => [...assessmentKeys.all, 'list'] as const,
+    detail: (id: string) => [...assessmentKeys.all, 'detail', id] as const,
+    assigned: (userId: string) => [...assessmentKeys.all, 'assigned', userId] as const,
+    answers: (assessmentId: string, userId: string) =>
+        [...assessmentKeys.all, 'answers', assessmentId, userId] as const,
+    recommendations: (assessmentId: string, userId: string) =>
+        [...assessmentKeys.all, 'recommendations', assessmentId, userId] as const,
+};
 
+function extractProgressItems(
+    items: unknown,
+): Array<{
+    assessmentId: string;
+    status?: string;
+    progressPercentage?: number;
+    completedSections?: number;
+    totalSections?: number;
+}> {
+    if (!Array.isArray(items)) return [];
+    return items
+        .map((item) => {
+            const row = item as Record<string, unknown>;
+            const assessmentId = String(
+                row.assessmentId ?? row._id ?? row.id ?? '',
+            ).trim();
+            if (!assessmentId) return null;
+            return {
+                assessmentId,
+                status: typeof row.status === 'string' ? row.status : undefined,
+                progressPercentage:
+                    typeof row.progressPercentage === 'number'
+                        ? row.progressPercentage
+                        : undefined,
+                completedSections:
+                    typeof row.completedSections === 'number'
+                        ? row.completedSections
+                        : undefined,
+                totalSections:
+                    typeof row.totalSections === 'number'
+                        ? row.totalSections
+                        : undefined,
+            };
+        })
+        .filter(Boolean) as Array<{
+        assessmentId: string;
+        status?: string;
+        progressPercentage?: number;
+        completedSections?: number;
+        totalSections?: number;
+    }>;
+}
+
+function mergeAssignedWithProgress(
+    rows: Awaited<ReturnType<typeof assessmentService.getAssignedAssessments>>,
+    progressItems?: Array<{
+        assessmentId: string;
+        status?: string;
+        progressPercentage?: number;
+        completedSections?: number;
+        totalSections?: number;
+    }>,
+): AssignedAssessmentView[] {
+    const progressMap = new Map(
+        (progressItems ?? []).map((item) => [item.assessmentId, item]),
+    );
+
+    return rows.map((row) => {
+        const progress = progressMap.get(row.assessmentId);
+        return {
+            ...row.assessment,
+            assignmentId: row.assignmentId,
+            dueDate: row.dueDate,
+            meetingDate: row.meetingDate,
+            progressStatus: mapProgressStatus(progress?.status),
+            progressPercentage: progress?.progressPercentage,
+            completedSections: progress?.completedSections,
+            totalSections: progress?.totalSections,
+        };
+    });
+}
 
 export const useAssessments = () => {
     return useQuery<ApiAssessment[]>({
-        queryKey: ['assessments'],
+        queryKey: assessmentKeys.list(),
         queryFn: () => assessmentService.getAssessments(),
-        staleTime: 30 * 1000, // 30 seconds
+        staleTime: 30 * 1000,
         retry: 2,
     });
 };
 
+export const useAssignedAssessmentsForUser = (userId: string | undefined) => {
+    const { data: assessmentProgress, isLoading: progressLoading } =
+        useAssessmentProgress(userId);
 
+    const query = useQuery({
+        queryKey: assessmentKeys.assigned(userId ?? ''),
+        queryFn: () => assessmentService.getAssignedAssessments(userId!),
+        enabled: !!userId,
+        staleTime: 30 * 1000,
+        retry: 2,
+    });
 
-/**
- * Hook to get only assessments assigned to the current user with progress status
- */
-export const useAssignedAssessments = (userId: string) => {
-    // Fetch all assessments
-    const { data: allAssessments, isLoading, error, refetch, isRefetching } = useAssessments();
-
-    // Fetch user's progress data
-    const { data: assessmentProgress, isLoading: isLoadingProgress } = useAssessmentProgress(userId);
-
-    // Get array of assigned assessment progress items
-    const progressMap = useMemo(() => {
-        const map = new Map();
-        assessmentProgress?.items?.forEach(item => {
-            map.set(item.assessmentId, item);
-        });
-        return map;
-    }, [assessmentProgress]);
-
-    // Get array of assigned assessment IDs
-    const assignedAssessmentIds = useMemo(() => {
-        return Array.from(progressMap.keys());
-    }, [progressMap]);
-
-    // Map progress status to frontend status
-    const mapProgressToStatus = (progressStatus?: string): Assessment['status'] => {
-        switch (progressStatus) {
-            case 'completed':
-                return 'Completed';
-            case 'in_progress':
-                return 'Submitted'; // Or 'In Progress' if you want to add that status
-            case 'not_started':
-            default:
-                return 'Not Started';
-        }
-    };
-
-    // Filter and map assessments with progress data
-    const assignedAssessments = useMemo(() => {
-        if (!allAssessments) return [];
-
-        // Filter only assigned assessments
-        const filtered = allAssessments.filter(assessment =>
-            assignedAssessmentIds.includes(assessment._id)
+    const data = useMemo(() => {
+        if (!query.data) return [];
+        return mergeAssignedWithProgress(
+            query.data,
+            extractProgressItems(assessmentProgress?.items),
         );
-
-        // Map to frontend format and merge with progress data
-        return filtered.map(apiAssessment => {
-            const frontendAssessment = mapApiToFrontend(apiAssessment);
-            const progress = progressMap.get(apiAssessment._id);
-
-            // Override status with progress data
-            if (progress) {
-                return {
-                    ...frontendAssessment,
-                    status: mapProgressToStatus(progress.status),
-                    // You can also add progress percentage if needed
-                    progressPercentage: progress.progressPercentage,
-                    completedSections: progress.completedSections,
-                    totalSections: progress.totalSections,
-                };
-            }
-
-            return frontendAssessment;
-        });
-    }, [allAssessments, assignedAssessmentIds, progressMap]);
+    }, [query.data, assessmentProgress?.items]);
 
     return {
-        data: assignedAssessments,
-        isLoading: isLoading || isLoadingProgress,
-        error,
-        refetch,
-        isRefetching,
-        assignedCount: assignedAssessmentIds.length,
+        ...query,
+        data,
+        isLoading: query.isLoading || progressLoading,
     };
+};
+
+/** Assigned assessments for a user — uses GET /assessment/assigned/:userId (web parity). */
+export const useAssignedAssessments = (userId: string | undefined) => {
+    return useAssignedAssessmentsForUser(userId);
 };
 
 export const useCreateAssessmentMutation = () => {
@@ -101,21 +144,83 @@ export const useCreateAssessmentMutation = () => {
         mutationFn: (newAssessment: CreateAssessmentRequest) =>
             assessmentService.createAssessment(newAssessment),
         onSuccess: () => {
-            // Invalidate and refetch assessments query
-            queryClient.invalidateQueries({ queryKey: ['assessments'] });
-            // Invalidate progress cache
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.all });
             queryClient.invalidateQueries({ queryKey: ['progress'] });
         },
     });
-}
+};
 
 export const useAssessment = (assessmentId: string | undefined) => {
     return useQuery<ApiAssessment>({
-        queryKey: ['assessment', assessmentId],
+        queryKey: assessmentKeys.detail(assessmentId ?? ''),
         queryFn: () => assessmentService.getAssessmentById(assessmentId!),
         enabled: !!assessmentId,
-        staleTime: 30 * 1000, // 30 seconds
+        staleTime: 30 * 1000,
         retry: 2,
+    });
+};
+
+export const useAssessmentAnswers = (
+    assessmentId: string | undefined,
+    userId: string | undefined,
+) => {
+    return useQuery<SubmittedAnswersResponse>({
+        queryKey: assessmentKeys.answers(assessmentId ?? '', userId ?? ''),
+        queryFn: () => assessmentService.fetchAnswers(assessmentId!, userId!),
+        enabled: !!assessmentId && !!userId,
+        staleTime: 30 * 1000,
+        retry: 1,
+    });
+};
+
+export const useAssessmentRecommendations = (
+    assessmentId: string | undefined,
+    userId: string | undefined,
+) => {
+    return useQuery({
+        queryKey: assessmentKeys.recommendations(assessmentId ?? '', userId ?? ''),
+        queryFn: () => assessmentService.getRecommendations(assessmentId!, userId!),
+        enabled: !!assessmentId && !!userId,
+        staleTime: 60 * 1000,
+        retry: 1,
+        select: (body) => ({
+            raw: body,
+            hasCdp: hasCdpPayload(body),
+        }),
+    });
+};
+
+export const useAssignAssessmentMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            userIds,
+            assessmentIds,
+            dueDate,
+        }: {
+            userIds: string[];
+            assessmentIds: string[];
+            dueDate?: string;
+        }) => {
+            const isoDue = dueDate
+                ? new Date(`${dueDate}T23:59:59`).toISOString()
+                : undefined;
+            for (const assessmentId of assessmentIds) {
+                await assessmentService.assignAssessment({
+                    userIds,
+                    assessmentIds: [assessmentId],
+                    dueDate: isoDue,
+                });
+            }
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.all });
+            queryClient.invalidateQueries({ queryKey: ['progress'] });
+            queryClient.invalidateQueries({ queryKey: ['mentees'] });
+            variables.userIds.forEach((uid) => {
+                queryClient.invalidateQueries({ queryKey: assessmentKeys.assigned(uid) });
+            });
+        },
     });
 };
 
@@ -125,11 +230,11 @@ export const useUpdateAssessmentMutation = (assessmentId: string) => {
         mutationFn: (updates: { name?: string; description?: string; instructions?: string[] }) =>
             assessmentService.updateAssessmentDetails(assessmentId, updates),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['assessment', assessmentId] });
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.detail(assessmentId) });
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.list() });
         },
     });
-}
-
+};
 
 export const useUpdateSectionsMutation = (assessmentId: string) => {
     const queryClient = useQueryClient();
@@ -137,18 +242,18 @@ export const useUpdateSectionsMutation = (assessmentId: string) => {
         mutationFn: (sections: ApiAssessmentSection[]) =>
             assessmentService.updateSections(assessmentId, sections),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['assessment', assessmentId] });
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.detail(assessmentId) });
         },
     });
-}
+};
 
-export const useUploadBannerImageMutation = () => { // Removed ID from here
+export const useUploadBannerImageMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, imageUri }: { id: string, imageUri: string }) =>
+        mutationFn: ({ id, imageUri }: { id: string; imageUri: string }) =>
             assessmentService.uploadBannerImage(id, imageUri),
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['assessment', variables.id] });
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.detail(variables.id) });
         },
     });
-}
+};

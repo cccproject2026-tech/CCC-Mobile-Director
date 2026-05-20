@@ -1,12 +1,20 @@
 import PlaceholderRouteScreen from "@/components/navigation/PlaceholderRouteScreen";
-import React from "react";
+import { useRouter } from "expo-router";
+import React, { useEffect } from "react";
 
-export default function InviteFieldMentorScreen() {
+/** Redirects to Course Completed where field mentor invites are managed. */
+export default function InviteFieldMentorRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/(director)/(tabs)/course-completed" as any);
+  }, [router]);
+
   return (
     <PlaceholderRouteScreen
       title="Invite Field Mentor"
-      message="Inviting field mentors from the Director mobile app is not available yet."
-      icon="person-add-outline"
+      message="Opening course completed list..."
+      icon="school-outline"
     />
   );
 }

@@ -1,14 +1,17 @@
 // components/Cards/AssessmentCard.tsx
-import { ApiAssessment } from '@/types/assessment.types';
+import { ApiAssessment, AssignedAssessmentView } from '@/types/assessment.types';
+import {
+    formatDueDateLabel,
+    isOverdue,
+} from '@/utils/assignedAssessmentParser';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
-    data: ApiAssessment;
+    data: ApiAssessment | AssignedAssessmentView;
     onPress?: () => void;
     onDevelopmentPlanPress?: () => void;
-    // Selection mode props
     selectionMode?: boolean;
     isSelected?: boolean;
     onToggleSelection?: () => void;
@@ -27,6 +30,13 @@ export const AssessmentCard: React.FC<Props> = ({
     const preSurvey = data.preSurvey ?? [];
     const displayName = data.name ?? (data as { title?: string }).title ?? '';
     const createdAt = data.createdAt ?? (data as { completedOn?: string }).completedOn;
+    const extended = data as AssignedAssessmentView;
+    const dueDate = extended.dueDate;
+    const progressStatus = extended.progressStatus;
+    const overdue = isOverdue(dueDate, progressStatus);
+    const statusLabel = progressStatus
+        ? progressStatus.replace(/_/g, ' ')
+        : undefined;
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '—';
@@ -122,6 +132,26 @@ export const AssessmentCard: React.FC<Props> = ({
                         </Text>
                     )}
                     {renderStats()}
+                    {dueDate ? (
+                        <View style={styles.chipRow}>
+                            <View style={[styles.dueChip, overdue && styles.dueChipOverdue]}>
+                                <Ionicons
+                                    name={overdue ? 'alert-circle' : 'calendar-outline'}
+                                    size={12}
+                                    color={overdue ? '#ffb3b3' : 'rgba(255,255,255,0.85)'}
+                                />
+                                <Text style={[styles.dueChipText, overdue && styles.dueChipTextOverdue]}>
+                                    Due: {formatDueDateLabel(dueDate)}
+                                    {overdue ? ' (Overdue)' : ''}
+                                </Text>
+                            </View>
+                            {statusLabel ? (
+                                <View style={styles.statusChip}>
+                                    <Text style={styles.statusChipText}>{statusLabel}</Text>
+                                </View>
+                            ) : null}
+                        </View>
+                    ) : null}
                     {createdAt ? (
                         <Text style={styles.dateText}>
                             Created on: {formatDate(createdAt)}
@@ -239,6 +269,46 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         color: 'rgba(255, 255, 255, 0.68)',
         marginTop: 2,
+    },
+    chipRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginBottom: 6,
+    },
+    dueChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+    },
+    dueChipOverdue: {
+        backgroundColor: 'rgba(255,80,80,0.25)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,120,120,0.4)',
+    },
+    dueChipText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.85)',
+    },
+    dueChipTextOverdue: {
+        color: '#ffb3b3',
+    },
+    statusChip: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backgroundColor: 'rgba(94,179,209,0.25)',
+    },
+    statusChipText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.9)',
+        textTransform: 'capitalize',
     },
 });
 

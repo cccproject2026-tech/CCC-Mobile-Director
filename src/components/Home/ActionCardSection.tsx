@@ -1,10 +1,11 @@
 import { CommonCard, HomeSectionHeader } from "@/components/ui/design-system";
+import { useCompletedPastorsCount } from "@/hooks/useCompletionWorkflow";
 import { useRouter } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { ActionCard, Icons } from "../Cards/ActionCard";
-
 const ActionCardSection: React.FC = () => {
     const router = useRouter();
+    const { data: completedCount, isLoading } = useCompletedPastorsCount();
 
     return (
         <CommonCard>
@@ -17,7 +18,7 @@ const ActionCardSection: React.FC = () => {
                 <ActionCard
                     icon={Icons.ribbon}
                     title="Course Completed"
-                    count={5}
+                    count={isLoading ? undefined : (completedCount ?? 0)}
                     onPress={() =>
                         router.push("/(director)/(tabs)/course-completed" as any)
                     }
@@ -26,7 +27,7 @@ const ActionCardSection: React.FC = () => {
                     icon={Icons.school}
                     title="Invite to be a Field Mentor"
                     onPress={() =>
-                        router.push("/(director)/(tabs)/invite-field-mentor" as any)
+                        router.push("/(director)/(tabs)/course-completed" as any)
                     }
                 />
             </View>

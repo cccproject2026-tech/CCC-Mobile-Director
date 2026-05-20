@@ -1,5 +1,5 @@
 // app/(director)/(tabs)/progress-tracker/index.tsx
-import MenteeCard from '@/components/Cards/MenteeCard';
+import MenteeProgressCard from '@/components/Cards/MenteeCard/MenteeProgressCard';
 import MentorCard from '@/components/Cards/MentorCard';
 import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
@@ -87,7 +87,7 @@ export default function ProgressTrackerIndex() {
                 handleCloseModal();
                 setTimeout(() => {
                     router.push({
-                        pathname: '/(director)/(tabs)/mentees/assign-mentors',
+                        pathname: '/(director)/(tabs)/mentees/assign-mentors' as any,
                         params: { id: selectedMentee?.id ?? '' },
                     });
                 }, 300);
@@ -100,7 +100,7 @@ export default function ProgressTrackerIndex() {
                 handleCloseModal();
                 setTimeout(() => {
                     router.push({
-                        pathname: '/(director)/(tabs)/mentees/remove-mentors',
+                        pathname: '/(director)/(tabs)/mentees/remove-mentors' as any,
                         params: { id: selectedMentee?.id ?? '' },
                     });
                 }, 300);
@@ -122,17 +122,17 @@ export default function ProgressTrackerIndex() {
                 handleCloseModal();
                 setTimeout(() => {
                     if (!selectedMentee?.id) return;
-                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress`);
+                    router.push(`/(director)/(tabs)/progress-tracker/${selectedMentee.id}` as any);
                 }, 300);
             },
         },
-        { icon: 'checkmark-done-outline', label: 'Mentor Notes', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/notes'), 300); } },
+        { icon: 'checkmark-done-outline', label: 'Mentor Notes', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/notes' as any), 300); } },
         {
             icon: 'book-outline',
             label: 'View Progress Report',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/progress-report'), 300);
+                setTimeout(() => router.push('/(director)/(tabs)/progress-tracker/report' as any), 300);
             },
         },
         {
@@ -162,7 +162,7 @@ export default function ProgressTrackerIndex() {
     const isLoading = menteesLoading || mentorsLoading;
 
     const handleMentorPress = (mentor: Mentor) => {
-        router.push(`/(director)/(tabs)/progress-tracker/mentors/${mentor.id}`);
+        router.push(`/(director)/(tabs)/progress-tracker/mentors/${mentor.id}` as any);
     };
 
     const filteredMentees: Mentee[] = useMemo(() => {
@@ -256,18 +256,21 @@ export default function ProgressTrackerIndex() {
                                         <Text style={styles.emptyText}>No pastors found</Text>
                                     </View>
                                 ) : filteredMentees.map(mentee => (
-                                    <MenteeCard
+                                    <MenteeProgressCard
                                         key={mentee.id}
                                         data={mentee as Mentee}
                                         layout={viewMode}
                                         showMenu={true}
-                                        onPress={() => router.push(`/(director)/(tabs)/mentees/${mentee.id}/progress`)}
+                                        onPress={() =>
+                                            router.push(
+                                                `/(director)/(tabs)/progress-tracker/${mentee.id}` as any
+                                            )
+                                        }
                                         onCall={() => dialPhone(mentee.phoneNumber)}
                                         onChat={() => chatNotAvailableYet()}
                                         onMail={() => sendEmail(mentee.email)}
                                         onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                         onMenuPress={() => handleMenuPress(mentee)}
-                                        onMarkComplete={() => featureNotAvailableYet('Mark complete')}
                                     />
                                 ))
                             }

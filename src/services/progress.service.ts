@@ -10,9 +10,16 @@ import {
     DirectorOverviewData,
     DirectorOverviewResponse,
     GetFinalCommentsApiResponse,
+    OverallProgressListResponse,
     UpdateFinalCommentApiResponse,
     UpdateFinalCommentRequest,
+    UserOverallProgress,
 } from '@/types/progress.types';
+import {
+    aggregateDirectorOverviewFromUsers,
+    mergeDirectorOverviewWithUserAggregate,
+    unwrapOverallProgressList,
+} from '@/utils/progressOverviewMerge';
 import { apiClient } from './api/client';
 import { ENDPOINTS } from './api/endpoints';
 
@@ -133,9 +140,62 @@ export const progressService = {
     /** Get Director Overview */
     async getDirectorOverview(period: string = 'yearly', year?: number): Promise<DirectorOverviewData> {
         const response = await apiClient.get<DirectorOverviewResponse>(ENDPOINTS.PROGRESS.DIRECTOR_OVERVIEW, {
-            params: { period, year, t: Date.now() },
+            params: { period, year, includeUsers: true, t: Date.now() },
         });
         return response.data.data;
+    },
+
+    /** GET /progress/overview/all */
+    async getOverallProgress(roles: string[] = ['mentor', 'pastor']): Promise<UserOverallProgress[]> {
+        const response = await apiClient.get<OverallProgressListResponse>(
+            ENDPOINTS.PROGRESS.OVERVIEW_ALL,
+            {
+                params: {
+                    roles: roles.join(','),
+                    t: Date.now(),
+                },
+            }
+        );
+        return unwrapOverallProgressList(response.data.data ?? response.data);
+    },
+
+    /** Merged director overview (web parity) */
+    async getMergedDirectorOverview(
+        period: string = 'yearly',
+        year?: number
+    ): Promise<DirectorOverviewData | null> {
+        const [directorRes, overallRes] = await Promise.allSettled([
+            this.getDirectorOverview(period, year),
+            this.getOverallProgress(['mentor', 'pastor']),
+        ]);
+
+        const apiOverview =
+            directorRes.status === 'fulfilled' ? directorRes.value : null;
+        let progressRows =
+            overallRes.status === 'fulfilled' ? overallRes.value : [];
+
+        if (apiOverview && (apiOverview as DirectorOverviewData & { users?: UserOverallProgress[] }).users?.length) {
+            const fromApiUsers = (apiOverview as DirectorOverviewData & { users?: UserOverallProgress[] }).users!;
+            const seen = new Set(progressRows.map((r) => r.userId ?? r.id ?? r._id));
+            for (const u of fromApiUsers) {
+                const id = u.userId ?? u.id ?? u._id;
+                if (id && !seen.has(id)) {
+                    progressRows = [...progressRows, u];
+                }
+            }
+        }
+
+        const synthetic = progressRows.length
+            ? aggregateDirectorOverviewFromUsers(progressRows)
+            : null;
+
+        return mergeDirectorOverviewWithUserAggregate(apiOverview, synthetic);
+    },
+
+    /** PATCH /users/:userId/mark-completed */
+    async markProgramComplete(userId: string) {
+        const { usersService } = await import('./users.service');
+        return usersService.markProgramComplete(userId);
     },
 
 };

@@ -174,15 +174,27 @@ export const useAssignAssignmentsToMentee = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ menteeIds, assessmentIds }: { menteeIds: string[]; assessmentIds: string[] }) => {
-            await menteesService.assignAssessmentsToMentee(menteeIds, assessmentIds);
+        mutationFn: async ({
+            menteeIds,
+            assessmentIds,
+            dueDate,
+        }: {
+            menteeIds: string[];
+            assessmentIds: string[];
+            dueDate?: string;
+        }) => {
+            await menteesService.assignAssessmentsToMentee(menteeIds, assessmentIds, dueDate);
         },
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['mentees'] });
             queryClient.invalidateQueries({ queryKey: ['progress'] });
+            queryClient.invalidateQueries({ queryKey: ['assessments'] });
+            variables.menteeIds.forEach((uid) => {
+                queryClient.invalidateQueries({ queryKey: ['assessments', 'assigned', uid] });
+            });
         },
     });
-}
+};
 
 export const useAssignRoadmapsToMentee = () => {
     const queryClient = useQueryClient();

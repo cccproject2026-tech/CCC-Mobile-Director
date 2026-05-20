@@ -41,6 +41,7 @@ export interface AssessmentProgress {
 
 export interface ProgressData {
     overallProgress: number;
+    overallCompleted?: boolean;
     roadmaps: {
         total: number;
         completed: number;
@@ -198,4 +199,58 @@ export interface DirectorOverviewResponse {
     success: boolean;
     message: string;
     data: DirectorOverviewData;
+}
+
+/** Row from GET /progress/overview/all */
+export interface UserOverallProgress {
+    userId?: string;
+    id?: string;
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    role?: string;
+    profilePicture?: string;
+    totalRoadmaps?: number;
+    completedRoadmaps?: number;
+    totalAssessments?: number;
+    completedAssessments?: number;
+    overallProgress?: number;
+    overallCompleted?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    completedAt?: string;
+    [key: string]: unknown;
+}
+
+export interface OverallProgressListResponse {
+    success: boolean;
+    message?: string;
+    data: UserOverallProgress[] | { users?: UserOverallProgress[]; data?: UserOverallProgress[] };
+}
+
+export type CourseCompletedStatus = "completed" | "certificate_issued" | "invited";
+
+export interface CourseCompletedUser {
+    id: string;
+    name: string;
+    email?: string;
+    profilePicture?: string;
+    createdAt?: string;
+    status: CourseCompletedStatus;
+    invitationDate?: string;
+    response?: "Accepted" | "Waiting" | "Not Interested";
+    hasCompleted?: boolean;
+    hasIssuedCertificate?: boolean;
+}
+
+export interface InviteFieldMentorPayload {
+    email: string;
+    invitedBy: string;
+}
+
+export interface InviteFieldMentorResponse {
+    success: boolean;
+    message: string;
+    data?: unknown;
 }

@@ -35,7 +35,6 @@ const fetchProgressForUser = async (userId: string): Promise<ProgressData> => {
     }
   });
 
-  console.log('Progress response for user', userId, response.data);
   if (!response.data.success || !response.data.data) {
     return {
       overallProgress: 0,
@@ -58,7 +57,8 @@ const fetchProgressForUser = async (userId: string): Promise<ProgressData> => {
   const data = response.data.data;
 
   const progressData: ProgressData = {
-    overallProgress: data.overallRoadmapProgress ?? 0,
+    overallProgress: data.overallProgress ?? data.overallRoadmapProgress ?? 0,
+    overallCompleted: data.overallCompleted ?? false,
     roadmaps: {
       total: data.totalRoadmaps ?? 0,
       completed: data.completedRoadmaps ?? 0,
@@ -259,6 +259,13 @@ export const useDeleteFinalComment = () => {
 export const useDirectorOverview = (period: string = 'yearly', year?: number) => {
   return useQuery({
     queryKey: ['directorOverview', period, year],
-    queryFn: () => progressService.getDirectorOverview(period, year),
+    queryFn: () => progressService.getMergedDirectorOverview(period, year),
+  });
+};
+
+export const useOverallProgressList = (roles: string[] = ['pastor']) => {
+  return useQuery({
+    queryKey: ['progress', 'overview', 'all', roles.join(',')],
+    queryFn: () => progressService.getOverallProgress(roles),
   });
 };

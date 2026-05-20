@@ -1,5 +1,5 @@
 // app/(director)/(tabs)/progress-tracker/mentors/[id].tsx
-import MenteeCard from '@/components/Cards/MenteeCard';
+import MenteeProgressCard from '@/components/Cards/MenteeCard/MenteeProgressCard';
 import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
@@ -132,7 +132,7 @@ export default function MentorProgressTracker() {
             label: 'View Progress Report',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/progress-report' as any), 300);
+                setTimeout(() => router.push('/(director)/(tabs)/progress-tracker/report' as any), 300);
             },
         },
         {
@@ -271,7 +271,7 @@ export default function MentorProgressTracker() {
                             showsVerticalScrollIndicator={false}
                         >
                             {filteredMentees.map(mentee => (
-                                <MenteeCard
+                                <MenteeProgressCard
                                     key={mentee.id}
                                     data={mentee as Mentee}
                                     layout={viewMode}
@@ -282,7 +282,6 @@ export default function MentorProgressTracker() {
                                     onMail={() => sendEmail(mentee.email)}
                                     onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                     onMenuPress={() => handleMenuPress(mentee)}
-                                    onMarkComplete={() => featureNotAvailableYet('Mark complete')}
                                 />
                             ))}
                         </ScrollView>

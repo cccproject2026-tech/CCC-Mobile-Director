@@ -40,9 +40,8 @@ export default function SharedStackLayout({ segment }: { segment: string }) {
 
             <Stack.Screen name="progress-tracker/index" />
             <Stack.Screen name="progress-tracker/mentors/[id]" />
-
-
-
+            <Stack.Screen name="progress-tracker/[userId]" />
+            <Stack.Screen name="progress-tracker/report" />
         </Stack>
     );
 }

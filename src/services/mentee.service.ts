@@ -49,14 +49,18 @@ export const menteesService = {
     assignAssessmentsToMentee: async (
         menteeIds: string[],
         assessmentIds: string[],
+        dueDate?: string,
     ): Promise<void> => {
-        await apiClient.post(
-            ENDPOINTS.PROGRESS.ASSIGN_ASSESSMENT,
-            {
+        const isoDue = dueDate
+            ? new Date(`${dueDate}T23:59:59`).toISOString()
+            : undefined;
+        for (const assessmentId of assessmentIds) {
+            await apiClient.post(ENDPOINTS.PROGRESS.ASSIGN_ASSESSMENT, {
                 userIds: menteeIds,
-                assessmentIds: assessmentIds
-            },
-        );
+                assessmentIds: [assessmentId],
+                dueDate: isoDue,
+            });
+        }
     },
 
     assignRoadmapsToMentee: async (

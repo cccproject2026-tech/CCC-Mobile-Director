@@ -72,6 +72,9 @@ export const ENDPOINTS = {
         SUBMIT_ASSESSMENT_PRESURVEY: (id: string) => `/assessment/${id}/pre-survey`,
         FETCH_ANSWERS: (assessmentId: string, userId: string) =>
             `/assessment/${assessmentId}/answers/${userId}`,
+        GET_ASSIGNED: (userId: string) => `/assessment/assigned/${userId}`,
+        GET_RECOMMENDATIONS: (assessmentId: string, userId: string) =>
+            `/assessment/${assessmentId}/recommendations/${userId}`,
         DELETE_ASSESSMENT: '/assessment',
         UPDATE_INSTRUCTIONS: (assessmentId: string) => `/assessment/${assessmentId}/instructions`,
         UPDATE_SECTIONS: (assessmentId: string) => `/assessment/${assessmentId}/sections`,
@@ -148,6 +151,14 @@ export const ENDPOINTS = {
     GET_FINAL_COMMENTS: (userId: string) =>
       `/progress/${userId}/final-comments`,
     DIRECTOR_OVERVIEW: "/progress/overview/director",
+    OVERVIEW_ALL: "/progress/overview/all",
+  },
+
+  USERS_COMPLETION: {
+    MARK_COMPLETED: (userId: string) => `/users/${userId}/mark-completed`,
+    ISSUE_CERTIFICATE: (userId: string) => `/users/${userId}/issue-certificate`,
+    INVITE_FIELD_MENTOR: "/users/invite-field-mentor",
+    LIST: "/users",
   },
 
   // Directors

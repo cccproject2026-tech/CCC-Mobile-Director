@@ -17,6 +17,7 @@ import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAssessment, useUpdateAssessmentMutation } from '@/hooks/useAssessments';
+import { Routes } from '@/navigation/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 const AssessmentDetail = () => {
@@ -185,10 +186,7 @@ const AssessmentDetail = () => {
                         text: 'Discard',
                         style: 'destructive',
                         onPress: () => {
-                            router.push({
-                                pathname: '/(director)/(tabs)/assessments/edit-sections',
-                                params: { id },
-                            });
+                            router.push(Routes.assessments.editSectionsFor(id!));
                         },
                     },
                     { text: 'Cancel', style: 'cancel' },
@@ -196,19 +194,13 @@ const AssessmentDetail = () => {
                         text: 'Save',
                         onPress: async () => {
                             await handleSaveChanges();
-                            router.push({
-                                pathname: '/(director)/(tabs)/assessments/edit-sections',
-                                params: { id },
-                            });
+                            router.push(Routes.assessments.editSectionsFor(id!));
                         },
                     },
                 ]
             );
         } else {
-            router.push({
-                pathname: '/(director)/(tabs)/assessments/edit-sections',
-                params: { id },
-            });
+            router.push(Routes.assessments.editSectionsFor(id!));
         }
     };
 
@@ -462,23 +454,6 @@ const styles = StyleSheet.create({
         padding: 12,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    headerBackButton: {
-        marginRight: 12,
-    },
-    headerTitleContainer: {
-        flex: 1,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    headerSubtitle: {
-        fontSize: 14,
-        fontWeight: '400',
-        color: 'rgba(255, 255, 255, 0.8)',
-        marginTop: 2,
     },
     scrollView: {
         flex: 1,

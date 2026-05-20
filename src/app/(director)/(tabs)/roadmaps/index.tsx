@@ -1,4 +1,4 @@
-import MenteeCard from '@/components/Cards/MenteeCard';
+import MenteeProgressCard from '@/components/Cards/MenteeCard/MenteeProgressCard';
 import MentorCard from '@/components/Cards/MentorCard';
 import RoadmapCard from '@/components/Cards/RoadmapCard';
 import RoadmapHeader from '@/components/Header/RoadmapHeader';
@@ -733,7 +733,7 @@ export default function RevitalizationRoadmap() {
             const mentee = item as Mentee;
             return (
                  <View style={styles.cardWrapper}>
-                    <MenteeCard
+                    <MenteeProgressCard
                         data={mentee}
                         layout={viewMode}
                         showMenu={true}
@@ -748,7 +748,6 @@ export default function RevitalizationRoadmap() {
                         onMail={() => sendEmail(mentee.email)}
                         onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                         onMenuPress={() => handleMenuPress(mentee)}
-                        onMarkComplete={() => featureNotAvailableYet('Mark complete')}
                         onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
                         onInviteAsFieldMentor={() =>
                             router.push('/(director)/(tabs)/invite-field-mentor')

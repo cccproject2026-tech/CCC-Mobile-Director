@@ -1,5 +1,5 @@
 // app/(director)/(tabs)/assessments/assign-assessments.tsx
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo, useState } from 'react';
 import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
@@ -10,6 +10,8 @@ import { useMentees, useAssignAssignmentsToMentee } from '@/hooks/useMentees';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MenteeCard from '@/components/Cards/MenteeCard';
 import { Mentee } from '@/types/user.types';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { Routes } from '@/navigation/routes';
 
 const AssignAssessments = () => {
     const router = useRouter();
@@ -27,6 +29,8 @@ const AssignAssessments = () => {
 
     const [search, setSearch] = useState('');
     const [selectedMentees, setSelectedMentees] = useState<Set<string>>(new Set());
+    const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     // Fetch mentees with pagination
     const { 
@@ -118,6 +122,9 @@ const AssignAssessments = () => {
             await assignMutation.mutateAsync({
                 menteeIds: menteeIdArray,
                 assessmentIds: selectedAssessmentIds,
+                dueDate: dueDate
+                    ? dueDate.toISOString().slice(0, 10)
+                    : undefined,
             });
 
             Alert.alert(
@@ -126,12 +133,11 @@ const AssignAssessments = () => {
                 [
                     {
                         text: 'OK',
-                        onPress: () => router.replace('/(director)/(tabs)/assessments'),
+                        onPress: () => router.replace(Routes.assessments.index),
                     },
                 ]
             );
         } catch (err) {
-            console.error('Failed to assign assessments:', err);
             Alert.alert('Error', 'Failed to assign assessments. Please check your connection.');
         }
     };
@@ -195,6 +201,43 @@ const AssignAssessments = () => {
             <View style={styles.searchContainer}>
                 <SearchBar value={search} onChangeValue={setSearch} placeholder="Search" />
             </View>
+
+            {/* Due date */}
+            <View style={styles.dueDateRow}>
+                <Text style={styles.dueDateLabel}>Due date (optional)</Text>
+                <TouchableOpacity
+                    style={styles.dueDateButton}
+                    onPress={() => setShowDatePicker(true)}
+                >
+                    <Ionicons name="calendar-outline" size={18} color="#fff" />
+                    <Text style={styles.dueDateText}>
+                        {dueDate
+                            ? dueDate.toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                              })
+                            : 'Select due date'}
+                    </Text>
+                </TouchableOpacity>
+                {dueDate ? (
+                    <TouchableOpacity onPress={() => setDueDate(undefined)}>
+                        <Text style={styles.clearDateText}>Clear</Text>
+                    </TouchableOpacity>
+                ) : null}
+            </View>
+            {showDatePicker ? (
+                <DateTimePicker
+                    value={dueDate ?? new Date()}
+                    mode="date"
+                    minimumDate={new Date()}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(_, date) => {
+                        setShowDatePicker(Platform.OS === 'ios');
+                        if (date) setDueDate(date);
+                    }}
+                />
+            ) : null}
 
             {/* Select All */}
             <View style={styles.selectAllContainer}>
@@ -324,6 +367,32 @@ const styles = StyleSheet.create({
         paddingTop: 16,
         paddingBottom: 8,
     },
+    dueDateRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingBottom: 8,
+        gap: 10,
+        flexWrap: 'wrap',
+    },
+    dueDateLabel: {
+        color: 'rgba(255,255,255,0.75)',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    dueDateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
+    },
+    dueDateText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+    clearDateText: { color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '600' },
     selectAllContainer: {
         paddingHorizontal: 16,
         paddingVertical: 8,

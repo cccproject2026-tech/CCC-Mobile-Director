@@ -27,8 +27,10 @@ export default function DirectorTabLayout() {
             /^\/new-interests\/.+/,
             /modal/,
             /overlay/,
-            /assessments\/assign-mentee$/,
+            /assessments\/assign-assessments$/,
             /assessments\/create-assessment$/,
+            /assessments\/result$/,
+            /assessments\/mentor-pastors$/,
         ];
 
         return !hideWhenMatches.some((p) => p.test(pathname));
@@ -50,7 +52,6 @@ export default function DirectorTabLayout() {
         "assessments",
         "notifications",
         "assignments",
-        "progress-report",
         "course-completed",
         "invite-field-mentor",
         "videos",

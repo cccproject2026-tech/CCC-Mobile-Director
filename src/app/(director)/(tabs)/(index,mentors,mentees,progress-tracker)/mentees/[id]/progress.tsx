@@ -86,11 +86,11 @@ export default function MenteeProgressScreen() {
     const openPMPSheet = useCallback(() => pmpSheetRef.current?.present(), []);
     const handleNext = () => {
         closePMPSheet();
-        router.push("/(director)/(tabs)/progress-report");
+        router.push("/(director)/(tabs)/progress-tracker/report" as any);
     };
     const handleDownload = () => {
         closePMPSheet();
-        router.push("/(director)/(tabs)/progress-report");
+        router.push("/(director)/(tabs)/progress-tracker/report" as any);
     };
 
     // TabSwitcher config
@@ -121,9 +121,17 @@ export default function MenteeProgressScreen() {
         if (!assessments) return [];
         switch (assessmentTabs) {
             case "Completed":
-                return assessments.filter(a => a.status === "Completed");
+                return assessments.filter(
+                    (a) =>
+                        a.progressStatus === "completed" ||
+                        a.progressStatus === "submitted",
+                );
             case "Remaining":
-                return assessments.filter(a => a.status !== "Completed");
+                return assessments.filter(
+                    (a) =>
+                        a.progressStatus !== "completed" &&
+                        a.progressStatus !== "submitted",
+                );
             default:
                 return assessments;
         }

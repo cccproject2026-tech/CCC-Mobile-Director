@@ -41,6 +41,11 @@ export interface Mentee extends User {
     phoneNumber?: string | null;
     hasCompleted?: boolean;
     hasIssuedCertificate?: boolean;
+    fieldMentorInvitation?: {
+        invitedAt?: string;
+        invitedBy?: string;
+        response?: string;
+    } | null;
     scholarshipAmount?: number | null;
     dateOfApproval?: string | null;
     completedOn?: string | null;
@@ -95,6 +100,12 @@ export interface UserWithInterest extends User {
     status: UserStatus;
     hasCompleted: boolean;
     hasIssuedCertificate: boolean;
+    isFieldMentor?: boolean;
+    fieldMentorInvitation?: {
+        invitedAt?: string;
+        invitedBy?: string;
+        response?: string;
+    } | null;
     assignedId: string[];
     interest: InterestItem | null; // embedded interest object
 }

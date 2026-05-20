@@ -161,7 +161,7 @@ export default function ProductAndServices() {
             label: 'View Progress Report',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/progress-report'), 300);
+                setTimeout(() => router.push('/(director)/(tabs)/progress-tracker/report' as any), 300);
             },
         },
         {

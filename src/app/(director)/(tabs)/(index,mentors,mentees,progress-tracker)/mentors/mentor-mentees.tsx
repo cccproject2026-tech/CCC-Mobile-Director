@@ -1,4 +1,4 @@
-import MenteeCard from '@/components/Cards/MenteeCard';
+import MenteeProgressCard from '@/components/Cards/MenteeCard/MenteeProgressCard';
 import { UserCardSkeleton } from '@/components/Cards/MentorCard/UserCardSkeleton';
 import SearchBar from '@/components/Header/SearchBar';
 import TopBar from '@/components/Header/TopBar';
@@ -111,7 +111,7 @@ export default function MentorMentees() {
             label: 'View Progress Report',
             onPress: () => {
                 handleCloseModal();
-                router.push('/(director)/(tabs)/progress-report' as any);
+                router.push('/(director)/(tabs)/progress-tracker/report' as any);
             },
         },
         {
@@ -306,7 +306,7 @@ export default function MentorMentees() {
                         data={filteredMentees}
                         keyExtractor={item => item.id}
                         renderItem={({ item: mentee }) => (
-                            <MenteeCard
+                            <MenteeProgressCard
                                 data={mentee}
                                 showMenu={true}
                                 layout={viewMode}
@@ -314,7 +314,6 @@ export default function MentorMentees() {
                                     router.push(`/(director)/(tabs)/mentees/${mentee.id}` as any)
                                 }
                                 onMenuPress={() => handleMenuPress(mentee)}
-                                onMarkComplete={() => featureNotAvailableYet('Mark complete')}
                                 onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
                                 onInviteAsFieldMentor={() =>
                                     router.push('/(director)/(tabs)/invite-field-mentor' as any)

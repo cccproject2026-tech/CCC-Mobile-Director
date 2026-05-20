@@ -176,6 +176,23 @@ export interface SubmitAnswersPayload {
     }>;
 }
 
+export interface AssignAssessmentPayload {
+    userIds: string[];
+    assessmentIds: string[];
+    dueDate?: string;
+}
+
+export interface AssignedAssessmentView extends ApiAssessment {
+    assignmentId?: string;
+    dueDate?: string;
+    meetingDate?: string;
+    progressStatus?: "not_started" | "in_progress" | "completed" | "submitted" | "reviewed";
+    progressPercentage?: number;
+    completedSections?: number;
+    totalSections?: number;
+    hasCdp?: boolean;
+}
+
 // ==================== Submitted Answers Response ====================
 export interface SubmittedAnswersResponse {
     _id: string;
