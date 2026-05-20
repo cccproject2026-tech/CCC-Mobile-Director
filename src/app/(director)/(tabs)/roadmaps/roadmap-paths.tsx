@@ -25,15 +25,27 @@ type TabKey = 'All' | 'Due' | 'Not Started' | 'Completed';
 export default function MenteeRoadmapPathsScreen() {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
-    const { id: menteeIdParam } = useLocalSearchParams();
-    const menteeId = Array.isArray(menteeIdParam) ? menteeIdParam[0] : menteeIdParam;
+    const { id: menteeIdParam, email: menteeEmailParam } = useLocalSearchParams();
+    const menteeIdRaw = Array.isArray(menteeIdParam) ? menteeIdParam[0] : menteeIdParam;
+    const menteeEmailRaw = Array.isArray(menteeEmailParam)
+        ? menteeEmailParam[0]
+        : menteeEmailParam;
 
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<TabKey>('All');
 
     // Fetch mentee details for header name
     const { data: menteesData } = useMentees();
-    const mentee = menteesData?.pages.flatMap(page => page.mentees).find((m: Mentee) => m.id === menteeId);
+    const allMenteesFlat = menteesData?.pages.flatMap((page) => page.mentees) ?? [];
+    const mentee = menteeIdRaw
+        ? allMenteesFlat.find((m: Mentee) => m.id === menteeIdRaw)
+        : menteeEmailRaw
+          ? allMenteesFlat.find(
+                (m: Mentee) =>
+                    m.email?.toLowerCase() === String(menteeEmailRaw).toLowerCase()
+            )
+          : undefined;
+    const menteeId = mentee?.id ?? menteeIdRaw;
     const menteeName = mentee ? `${mentee.firstName} ${mentee.lastName ?? ''}` : 'Mentee';
 
     // Fetch assigned roadmaps
@@ -86,9 +98,10 @@ export default function MenteeRoadmapPathsScreen() {
     };
 
     const handleRoadmapPress = (roadmapId: string) => {
-         // Navigate to detailed view if needed, or phase list
-         // For now, maybe just log or go to generic roadmap detail
-         console.log('Pressed roadmap', roadmapId);
+        router.push({
+            pathname: '/(director)/(tabs)/roadmaps/phase-list',
+            params: { roadmapId },
+        });
     };
 
     const tabItems = [

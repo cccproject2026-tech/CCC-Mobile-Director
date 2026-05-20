@@ -86,11 +86,11 @@ export default function MenteeProgressScreen() {
     const openPMPSheet = useCallback(() => pmpSheetRef.current?.present(), []);
     const handleNext = () => {
         closePMPSheet();
-        router.push("/progress/report");
+        router.push("/(director)/(tabs)/progress-report");
     };
     const handleDownload = () => {
         closePMPSheet();
-        router.push("/progress/report");
+        router.push("/(director)/(tabs)/progress-report");
     };
 
     // TabSwitcher config

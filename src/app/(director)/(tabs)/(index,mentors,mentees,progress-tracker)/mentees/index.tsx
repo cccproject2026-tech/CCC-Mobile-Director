@@ -21,6 +21,13 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    featureNotAvailableYet,
+    openWhatsApp,
+    sendEmail,
+} from '@/utils/contactActions';
 
 export default function Mentees() {
     const router = useRouter();
@@ -41,8 +48,6 @@ export default function Mentees() {
         hasNextPage,
         isFetchingNextPage,
     } = useMentees();
-
-    if (isError) console.log('Error : ', error);
 
     const menteeList = useMemo(() => {
         return mentees?.pages.flatMap(page => page.mentees) || [];
@@ -91,12 +96,29 @@ export default function Mentees() {
             label: 'List of Mentors',
             onPress: () => {
                 handleCloseModal();
-                setTimeout(() => router.push({ pathname: '/(director)/(tabs)/(mentors)/mentors' }), 300);
+                setTimeout(() => router.push({ pathname: '/(director)/(tabs)/mentors' }), 300);
             },
         },
         { icon: 'person-add-outline', label: 'Assessments', onPress: () => router.push('/(director)/(tabs)/assessments') },
-        { icon: 'person-remove-outline', label: 'Assignments', onPress: () => console.log('Assignments') },
-        { icon: 'clipboard-outline', label: 'Roadmaps of Mentees', onPress: () => console.log('Roadmaps of Mentees') },
+        {
+            icon: 'person-remove-outline',
+            label: 'Assignments',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
+            },
+        },
+        {
+            icon: 'clipboard-outline',
+            label: 'Roadmaps of Mentees',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    if (!selectedMentee?.id) return;
+                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress`);
+                }, 300);
+            },
+        },
         {
             icon: 'checkmark-done-outline',
             label: 'Mentor Notes',
@@ -105,9 +127,30 @@ export default function Mentees() {
                 setTimeout(() => router.push('/mentees/notes'), 300);
             },
         },
-        { icon: 'book-outline', label: 'View Progress Report', onPress: () => console.log('View Progress Report') },
-        { icon: 'stats-chart-outline', label: 'Micro Grant', onPress: () => console.log('Micro Grant') },
-        { icon: 'calendar-outline', label: 'Product and Services', onPress: () => console.log('Product and Services') },
+        {
+            icon: 'book-outline',
+            label: 'View Progress Report',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/progress-report'), 300);
+            },
+        },
+        {
+            icon: 'stats-chart-outline',
+            label: 'Micro Grant',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/micro-grant'), 300);
+            },
+        },
+        {
+            icon: 'calendar-outline',
+            label: 'Product and Services',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/product-and-services'), 300);
+            },
+        },
     ];
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -257,14 +300,14 @@ export default function Mentees() {
                                     layout={viewMode}
                                     showMenu={true}
                                     onPress={() => router.push(`/mentees/${mentee.id}`)}
-                                    onCall={() => console.log('Call', (mentee as any).name)}
-                                    onChat={() => console.log('Chat', (mentee as any).name)}
-                                    onMail={() => console.log('Mail', (mentee as any).name)}
-                                    onWhatsApp={() => console.log('WhatsApp', (mentee as any).name)}
+                                    onCall={() => dialPhone(mentee.phoneNumber)}
+                                    onChat={() => chatNotAvailableYet()}
+                                    onMail={() => sendEmail(mentee.email)}
+                                    onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                     onMenuPress={() => handleMenuPress(mentee)}
-                                    onMarkComplete={() => console.log('Mark complete', (mentee as any).name)}
-                                    onIssueCertificate={() => console.log('Issue certificate', (mentee as any).name)}
-                                    onInviteAsFieldMentor={() => console.log('Invite as field mentor', (mentee as any).name)}
+                                    onMarkComplete={() => featureNotAvailableYet('Mark complete')}
+                                    onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
+                                    onInviteAsFieldMentor={() => router.push('/(director)/(tabs)/invite-field-mentor')}
                                 />
                             )}
                             contentContainerStyle={styles.flatListContent}

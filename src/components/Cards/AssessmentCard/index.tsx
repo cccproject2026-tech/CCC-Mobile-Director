@@ -22,8 +22,16 @@ export const AssessmentCard: React.FC<Props> = ({
     isSelected = false,
     onToggleSelection,
 }) => {
-    const formatDate = (dateString: string) => {
+    const sections = data.sections ?? [];
+    const assignments = data.assignments ?? [];
+    const preSurvey = data.preSurvey ?? [];
+    const displayName = data.name ?? (data as { title?: string }).title ?? '';
+    const createdAt = data.createdAt ?? (data as { completedOn?: string }).completedOn;
+
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return '—';
         const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) return '—';
         return date.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -52,29 +60,33 @@ export const AssessmentCard: React.FC<Props> = ({
         <View style={styles.statsContainer}>
             <View style={styles.statItem}>
                 <Text style={styles.statText}>
-                    {data.sections.length} {data.sections.length === 1 ? 'Section' : 'Sections'}
+                    {sections.length} {sections.length === 1 ? 'Section' : 'Sections'}
                 </Text>
             </View>
-            {data.preSurvey && data.preSurvey.length > 0 && (
+            {preSurvey.length > 0 && (
                 <View style={styles.statDot}>
                     <Text style={styles.statText}>•</Text>
                 </View>
             )}
-            {data.preSurvey && data.preSurvey.length > 0 && (
+            {preSurvey.length > 0 && (
                 <View style={styles.statItem}>
                     <Text style={styles.statText}>
-                        {data.preSurvey.length} Pre-Survey
+                        {preSurvey.length} Pre-Survey
                     </Text>
                 </View>
             )}
-            <View style={styles.statDot}>
-                <Text style={styles.statText}>•</Text>
-            </View>
-            <View style={styles.statItem}>
-                <Text style={styles.statText}>
-                    {data.assignments.length} Assigned
-                </Text>
-            </View>
+            {assignments.length > 0 && (
+                <>
+                    <View style={styles.statDot}>
+                        <Text style={styles.statText}>•</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statText}>
+                            {assignments.length} Assigned
+                        </Text>
+                    </View>
+                </>
+            )}
         </View>
     );
 
@@ -103,16 +115,18 @@ export const AssessmentCard: React.FC<Props> = ({
                 </View>
 
                 <View style={styles.textContent}>
-                    <Text style={styles.title} numberOfLines={2}>{data.name}</Text>
+                    <Text style={styles.title} numberOfLines={2}>{displayName}</Text>
                     {data.description && (
                         <Text style={styles.description} numberOfLines={2}>
                             {data.description}
                         </Text>
                     )}
                     {renderStats()}
-                    <Text style={styles.dateText}>
-                        Created on: {formatDate(data.createdAt)}
-                    </Text>
+                    {createdAt ? (
+                        <Text style={styles.dateText}>
+                            Created on: {formatDate(createdAt)}
+                        </Text>
+                    ) : null}
                 </View>
             </View>
         </TouchableOpacity>

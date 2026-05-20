@@ -21,24 +21,26 @@ export const MENU_ITEMS: MenuItem[] = [
         route: '/(director)/(tabs)/directors',
         roles: ['super admin']
     },
-    { id: 'course-completed', label: 'Course Completed', icon: 'ribbon-outline', route: '/(director)/(tabs)', badge: 6 },
+    // Stability: keep menu honest. This screen exists but is intentionally a placeholder until mobile flow is built.
+    { id: 'course-completed', label: 'Course Completed', icon: 'ribbon-outline', route: '/(director)/(tabs)/course-completed', badge: 6 },
     { id: 'track-progress', label: 'Track Progress', icon: 'bar-chart-outline', route: '/(director)/(tabs)/progress-tracker' },
     { id: 'schedule', label: 'Schedule', icon: 'calendar-outline', route: '/(director)/(tabs)/appointments' },
     { id: 'roadmaps', label: 'Revitalization Roadmaps', icon: 'clipboard-outline', route: '/(director)/(tabs)/roadmaps' },
     { id: 'assessments', label: 'Assessments', icon: 'checkmark-done-outline', route: '/(director)/(tabs)/assessments' },
-    { id: 'courses', label: 'Courses', icon: 'book-outline', route: '/(director)/(tabs)' },
+    // Courses are not implemented on mobile (avoid routing to dashboard).
+    // { id: 'courses', label: 'Courses', icon: 'book-outline', route: '/(director)/(tabs)' },
     {
         id: 'ccc',
         label: 'CCC',
         icon: 'flame-outline',
         children: [
             { id: 'micro-grant', label: 'Micro Grant', icon: 'trophy-outline', route: '/(director)/(tabs)/micro-grant' },
-            { id: 'invite-mentor', label: 'Invite to be a Field Mentor', icon: 'person-add-outline', route: '/(director)/(tabs)' },
+            { id: 'invite-mentor', label: 'Invite to be a Field Mentor', icon: 'person-add-outline', route: '/(director)/(tabs)/invite-field-mentor' },
             { id: 'interest-form', label: 'Interest Form', icon: 'document-text-outline', route: '/(director)/(tabs)/ccc/interest-form' },
             { id: 'products', label: 'Product and Services', icon: 'cart-outline', route: '/(director)/(tabs)/product-and-services', showChevron: true },
-            { id: 'videos', label: 'CCC - Videos', icon: 'videocam-outline', route: '/(director)/(tabs)', showChevron: true },
-            { id: 'contact-details', label: 'CCC - Contact Details', icon: 'call-outline', route: '/(director)/(tabs)', showChevron: true },
-            { id: 'reports', label: 'Reports', icon: 'document-outline', route: '/(director)/(tabs)' },
+            { id: 'videos', label: 'CCC - Videos', icon: 'videocam-outline', route: '/(director)/(tabs)/videos', showChevron: true },
+            { id: 'contact-details', label: 'CCC - Contact Details', icon: 'call-outline', route: '/(director)/(tabs)/contact-details', showChevron: true },
+            { id: 'reports', label: 'Reports', icon: 'document-outline', route: '/(director)/(tabs)/reports' },
         ],
     },
     {
@@ -48,19 +50,21 @@ export const MENU_ITEMS: MenuItem[] = [
         children: [
             { id: 'my-profile', label: 'My Profile', icon: 'profile-outline', iconType: 'image', route: '/(director)/(tabs)/profile' },
             { id: 'documents', label: 'Documents', icon: 'folder-outline', route: '/(director)/(tabs)/profile/documents' },
-            { id: 'notes', label: 'Notes', icon: 'document-text-outline', route: '/(director)/(tabs)/profile/documents' },
+            // Notes should not open Documents. Route to Personal Notes for now.
+            { id: 'notes', label: 'Notes', icon: 'document-text-outline', route: '/(director)/(tabs)/profile/personal-notes' },
             { id: 'personal-notes', label: 'Personal Notes', icon: 'journal-outline', route: '/(director)/(tabs)/profile/personal-notes' },
         ],
     },
-    {
-        id: 'settings',
-        label: 'Settings',
-        icon: 'settings-outline',
-        children: [
-            { id: 'change-password', label: 'Change Password', icon: 'lock-closed-outline', route: '/(director)/(tabs)' },
-            { id: 'notifications', label: 'Turn Off Notifications', icon: 'notifications-off-outline', route: '/(director)/(tabs)' },
-        ],
-    },
+    // Settings screens are not implemented yet; avoid misleading navigation.
+    // {
+    //     id: 'settings',
+    //     label: 'Settings',
+    //     icon: 'settings-outline',
+    //     children: [
+    //         { id: 'change-password', label: 'Change Password', icon: 'lock-closed-outline', route: '/(director)/(tabs)/change-password' },
+    //         { id: 'notifications', label: 'Turn Off Notifications', icon: 'notifications-off-outline', route: '/(director)/(tabs)/notification-settings' },
+    //     ],
+    // },
     { id: 'logout', label: 'Log out', icon: 'log-out-outline', route: '/' },
 ];
 

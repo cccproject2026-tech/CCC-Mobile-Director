@@ -22,6 +22,13 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    featureNotAvailableYet,
+    openWhatsApp,
+    sendEmail,
+} from '@/utils/contactActions';
 
 type TabKey = 'all' | 'mentor-wise' | 'in-progress';
 
@@ -59,16 +66,91 @@ export default function ProgressTrackerIndex() {
     }, []);
 
     const menuItems = [
-        { icon: 'people-outline', label: 'Revitalization Roadmaps', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentors/mentor-mentees'), 300); } },
-        { icon: 'person-add-outline', label: 'Assign Mentor', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/assign-mentors'), 300); } },
-        { icon: 'person-remove-outline', label: 'Remove Mentor', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/remove-mentors'), 300); } },
+        {
+            icon: 'people-outline',
+            label: 'Revitalization Roadmaps',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    if (!selectedMentee?.id) return;
+                    router.push({
+                        pathname: '/(director)/(tabs)/roadmaps',
+                        params: { id: selectedMentee.id },
+                    });
+                }, 300);
+            },
+        },
+        {
+            icon: 'person-add-outline',
+            label: 'Assign Mentor',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentees/assign-mentors',
+                        params: { id: selectedMentee?.id ?? '' },
+                    });
+                }, 300);
+            },
+        },
+        {
+            icon: 'person-remove-outline',
+            label: 'Remove Mentor',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentees/remove-mentors',
+                        params: { id: selectedMentee?.id ?? '' },
+                    });
+                }, 300);
+            },
+        },
         { icon: 'person-add-outline', label: 'Assessments', onPress: () => router.push('/(director)/(tabs)/assessments') },
-        { icon: 'person-remove-outline', label: 'Assignments', onPress: () => console.log('Assignments') },
-        { icon: 'clipboard-outline', label: 'Roadmaps of Mentees', onPress: () => console.log('Roadmaps of Mentees') },
+        {
+            icon: 'person-remove-outline',
+            label: 'Assignments',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
+            },
+        },
+        {
+            icon: 'clipboard-outline',
+            label: 'Roadmaps of Mentees',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    if (!selectedMentee?.id) return;
+                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress`);
+                }, 300);
+            },
+        },
         { icon: 'checkmark-done-outline', label: 'Mentor Notes', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/notes'), 300); } },
-        { icon: 'book-outline', label: 'View Progress Report', onPress: () => console.log('View Progress Report') },
-        { icon: 'stats-chart-outline', label: 'Micro Grant', onPress: () => console.log('Micro Grant') },
-        { icon: 'calendar-outline', label: 'Product and Services', onPress: () => console.log('Product and Services') },
+        {
+            icon: 'book-outline',
+            label: 'View Progress Report',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/progress-report'), 300);
+            },
+        },
+        {
+            icon: 'stats-chart-outline',
+            label: 'Micro Grant',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/micro-grant'), 300);
+            },
+        },
+        {
+            icon: 'calendar-outline',
+            label: 'Product and Services',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/product-and-services'), 300);
+            },
+        },
     ];
 
     const tabs = [
@@ -161,10 +243,10 @@ export default function ProgressTrackerIndex() {
                                             profilePicture: item.profilePicture,
                                         }}
                                         layout={viewMode}
-                                        onCall={() => console.log('CALL', item.phoneNumber)}
-                                        onWhatsApp={() => console.log('WHATSAPP', item.phoneNumber)}
-                                        onMail={() => console.log('MAIL', item.email)}
-                                        onChat={() => console.log('CHAT')}
+                                        onCall={() => dialPhone(item.phoneNumber)}
+                                        onWhatsApp={() => openWhatsApp(item.phoneNumber)}
+                                        onMail={() => sendEmail(item.email)}
+                                        onChat={() => chatNotAvailableYet()}
                                         onPress={() => handleMentorPress(item)}
                                     />
                                 ))
@@ -180,12 +262,12 @@ export default function ProgressTrackerIndex() {
                                         layout={viewMode}
                                         showMenu={true}
                                         onPress={() => router.push(`/(director)/(tabs)/mentees/${mentee.id}/progress`)}
-                                        onCall={() => console.log('Call', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
-                                        onChat={() => console.log('Chat', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
-                                        onMail={() => console.log('Mail', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
-                                        onWhatsApp={() => console.log('WhatsApp', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
+                                        onCall={() => dialPhone(mentee.phoneNumber)}
+                                        onChat={() => chatNotAvailableYet()}
+                                        onMail={() => sendEmail(mentee.email)}
+                                        onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                         onMenuPress={() => handleMenuPress(mentee)}
-                                        onMarkComplete={() => console.log('Mark complete', mentee.firstName)}
+                                        onMarkComplete={() => featureNotAvailableYet('Mark complete')}
                                     />
                                 ))
                             }

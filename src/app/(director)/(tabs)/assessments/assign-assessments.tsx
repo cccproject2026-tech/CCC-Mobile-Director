@@ -177,7 +177,6 @@ const AssignAssessments = () => {
         );
     };
 
-    console.log('Selected User IDs:', Array.from(selectedMentees));
     return (
         <GradientBackground>
             <TopBar showUserName={true} showNotifications={true} />

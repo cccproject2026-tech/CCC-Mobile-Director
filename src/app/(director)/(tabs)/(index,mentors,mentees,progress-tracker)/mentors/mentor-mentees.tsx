@@ -21,6 +21,7 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { featureNotAvailableYet } from '@/utils/contactActions';
 
 const PHASES = ['All Phases', 'Phase 1', 'Phase 2', 'Phase 3'];
 
@@ -40,9 +41,6 @@ export default function MentorMentees() {
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const { mentor, mentees, isLoading, isError } = useMentorMentees(id);
-    console.log('Mentees: ', mentees);
-    console.log('Mentor: ', mentor);
-    console.log('Mentor ID: ', id);
     const mentorName = mentor
         ? `${mentor.firstName} ${mentor.lastName ?? ''}`
         : 'Mentor';
@@ -79,35 +77,58 @@ export default function MentorMentees() {
         {
             icon: 'people-outline',
             label: 'Revitalization Roadmaps',
-            onPress: () => router.push('/mentors/mentor-mentees'),
+            onPress: () => {
+                handleCloseModal();
+                if (selectedMentee?.id) {
+                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress` as any);
+                }
+            },
         },
         {
             icon: 'person-add-outline',
-            label: 'Assessments',
-            onPress: () => router.push({
-                pathname: '/mentees/assign-mentors',
-                params: { id: selectedMentee?.id || '' },
-            }),
+            label: 'Assign Mentor',
+            onPress: () => {
+                handleCloseModal();
+                router.push({
+                    pathname: '/mentees/assign-mentors',
+                    params: { id: selectedMentee?.id || '' },
+                });
+            },
         },
         {
             icon: 'checkmark-done-outline',
             label: 'Mentor Notes',
-            onPress: () => console.log('Assessments of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                router.push({
+                    pathname: '/mentees/notes',
+                    params: { id: selectedMentee?.id || '' },
+                } as any);
+            },
         },
         {
             icon: 'book-outline',
             label: 'View Progress Report',
-            onPress: () => console.log('Assignments of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                router.push('/(director)/(tabs)/progress-report' as any);
+            },
         },
         {
             icon: 'stats-chart-outline',
             label: 'Micro Grant',
-            onPress: () => console.log('Progress of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                router.push('/(director)/(tabs)/micro-grant' as any);
+            },
         },
         {
             icon: 'calendar-outline',
             label: 'Product and Services',
-            onPress: () => console.log('Schedule a Meeting'),
+            onPress: () => {
+                handleCloseModal();
+                router.push('/(director)/(tabs)/product-and-services' as any);
+            },
         },
     ];
 
@@ -123,7 +144,6 @@ export default function MentorMentees() {
     const filteredMentees = useMemo(() => {
         if (!mentees) return [];
         let list = mentees;
-        console.log('Mentees: ', mentees);
         if (search) {
             const q = search.toLowerCase();
             list = list.filter(
@@ -230,9 +250,7 @@ export default function MentorMentees() {
                             <TouchableOpacity
                                 style={styles.iconButton}
                                 onPress={() =>
-                                    router.push(
-                                        '/(director)/(tabs)/mentors/mentor-mentee-locations' as any,
-                                    )
+                                    router.push('/mentees/mentees-location' as any)
                                 }
                             >
                                 <Ionicons name="location-outline" size={20} color="#fff" />
@@ -293,17 +311,13 @@ export default function MentorMentees() {
                                 showMenu={true}
                                 layout={viewMode}
                                 onPress={() =>
-                                    router.push(`/mentees/${mentee.id}`)
+                                    router.push(`/(director)/(tabs)/mentees/${mentee.id}` as any)
                                 }
                                 onMenuPress={() => handleMenuPress(mentee)}
-                                onMarkComplete={() =>
-                                    console.log('Mark complete', mentee.firstName)
-                                }
-                                onIssueCertificate={() =>
-                                    console.log('Issue certificate', mentee.firstName)
-                                }
+                                onMarkComplete={() => featureNotAvailableYet('Mark complete')}
+                                onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
                                 onInviteAsFieldMentor={() =>
-                                    console.log('Invite as field mentor', mentee.firstName)
+                                    router.push('/(director)/(tabs)/invite-field-mentor' as any)
                                 }
                             />
                         )}

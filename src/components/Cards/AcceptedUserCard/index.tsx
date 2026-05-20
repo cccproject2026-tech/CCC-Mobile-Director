@@ -1,6 +1,12 @@
 import { roadmapTheme } from "@/components/ui/design-system";
 import { InterestItem } from "@/types/interest.types";
 import { Mentee } from "@/types/user.types";
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    openWhatsApp,
+    sendEmail,
+} from "@/utils/contactActions";
 import { Ionicons } from "@expo/vector-icons";
 import React, { memo, useCallback } from "react";
 import {
@@ -34,6 +40,21 @@ const formatDate = (dateString?: string) => {
     });
 };
 
+function contactFromCardData(data: InterestItem | Mentee) {
+    const email =
+        "email" in data && data.email ? String(data.email).trim() : undefined;
+    if ("churchDetails" in data && data.churchDetails?.length) {
+        const phone =
+            (data as InterestItem).phoneNumber?.trim() ||
+            data.churchDetails[0]?.churchPhone?.trim() ||
+            undefined;
+        return { phone, email };
+    }
+    const phone =
+        "phoneNumber" in data ? data.phoneNumber?.trim() || undefined : undefined;
+    return { phone, email };
+}
+
 const AcceptedUserCard = memo(
     ({
         data,
@@ -58,6 +79,8 @@ const AcceptedUserCard = memo(
             `${data.firstName ?? ""} ${data.lastName ?? ""}`.trim() || "Unknown";
 
         const country = ('churchDetails' in data) ? (data.churchDetails?.[0]?.country || "Unknown") : "Unknown";
+
+        const { phone: contactPhone, email: contactEmail } = contactFromCardData(data);
 
         return (
             <Wrapper
@@ -120,28 +143,28 @@ const AcceptedUserCard = memo(
                     <View style={styles.contactIcons}>
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={(e) => stopPropagation(e, () => console.log("Call"))}
+                            onPress={(e) => stopPropagation(e, () => dialPhone(contactPhone))}
                         >
                             <Ionicons name="call-outline" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={(e) => stopPropagation(e, () => console.log("Chat"))}
+                            onPress={(e) => stopPropagation(e, chatNotAvailableYet)}
                         >
                             <Ionicons name="chatbubble-outline" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={(e) => stopPropagation(e, () => console.log("Mail"))}
+                            onPress={(e) => stopPropagation(e, () => sendEmail(contactEmail))}
                         >
                             <Ionicons name="mail-outline" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={(e) => stopPropagation(e, () => console.log("WhatsApp"))}
+                            onPress={(e) => stopPropagation(e, () => openWhatsApp(contactPhone))}
                         >
                             <Ionicons name="logo-whatsapp" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>

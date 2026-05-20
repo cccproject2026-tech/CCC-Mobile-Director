@@ -220,7 +220,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
 
                         {!isEditing && (
                             <View style={styles.actionButtons}>
-                                <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/profile/documents' as any)}>
+                                <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(director)/(tabs)/profile/documents' as any)}>
                                     <Text style={styles.actionButtonText}>Documents</Text>
                                     <Image source={icons.attachmentIcon} style={styles.smallIcon} />
                                 </TouchableOpacity>

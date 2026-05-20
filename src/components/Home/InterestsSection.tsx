@@ -1,5 +1,12 @@
 import { useInterests } from '@/hooks/useInterest';
 import { CommonCard, HomeSectionHeader, roadmapTheme } from '@/components/ui/design-system';
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    openWhatsApp,
+    sendEmail,
+} from '@/utils/contactActions';
+import { InterestItem } from '@/types/interest.types';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -11,14 +18,16 @@ const InterestsSection = () => {
     const { data, isLoading } = useInterests();
 
     const interests = Array.isArray(data) ? data : data || [];
-    console.log('InterestsSection - interests:', interests);
     const latestThree = interests
         .filter((item: any) => item.status === 'pending' || item.status === 'new')
         .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 3);
     const pendingInterestsLength = interests.filter((item: any) => item.status === 'pending' || item.status === 'new').length;
 
-    console.log('InterestsSection - latestThree:', latestThree);
+    const interestPhone = (item: InterestItem) =>
+        item.phoneNumber?.trim() ||
+        item.churchDetails?.[0]?.churchPhone?.trim() ||
+        undefined;
 
     const badge = (
         <View style={styles.badge}>
@@ -54,14 +63,20 @@ const InterestsSection = () => {
                         <InterestCardSkeleton />
                     </>
                 ) : latestThree.length > 0 ? (
-                    latestThree.map((item: any) => (
+                    latestThree.map((item: InterestItem) => (
                         <InterestCard
                             key={item.id}
                             data={item}
-                            onCall={() => console.log("Call", item.firstName)}
-                            onChat={() => console.log("Chat", item.firstName)}
-                            onMail={() => console.log("Mail", item.firstName)}
-                            onPress={() => console.log("Open", item.id)}
+                            onCall={() => dialPhone(interestPhone(item))}
+                            onChat={chatNotAvailableYet}
+                            onMail={() => sendEmail(item.email)}
+                            onWhatsApp={() => openWhatsApp(interestPhone(item))}
+                            onPress={() =>
+                                router.push({
+                                    pathname: '/(director)/(tabs)/new-interests/interest-details',
+                                    params: { interestId: item.id },
+                                })
+                            }
                         />
                     ))
                 ) : (

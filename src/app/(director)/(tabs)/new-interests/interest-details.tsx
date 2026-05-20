@@ -26,6 +26,7 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { chatNotAvailableYet, dialPhone, openWhatsApp, sendEmail } from '@/utils/contactActions';
 
 /* -------------------------------------------------------
    Extract & Normalize Form Data from InterestItem
@@ -64,7 +65,6 @@ export default function InterestFormScreen() {
     const router = useRouter();
     const { top, bottom } = useSafeAreaInsets();
     const { interestId } = useLocalSearchParams<{ interestId: string }>();
-console.log("Interest ID:--------", interestId);
     const { data: interestsData, isLoading } = useInterests();
     const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateInterestStatus();
 
@@ -75,7 +75,6 @@ console.log("Interest ID:--------", interestId);
         return interestsData?.find(i => i.id === interestId);
     }, [interestsData, interestId]);
 
-    console.log("Interest ID:", interestId, "Found Interest status:", interest?.status);
     const formData = useMemo(() => (interest ? extractFormData(interest) : null), [interest]);
 
     const userName = interest
@@ -92,12 +91,10 @@ console.log("Interest ID:--------", interestId);
     -------------------------------------------------------- */
     const handleAccept = () => {
         if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
-        console.log("Accepting interest ID:", interest);
         updateStatus(
             { interestId: interest.user?._id as string, status: "accepted" },
             {
-                onSuccess: (e) => {
-                    console.log("Success:", e);
+                onSuccess: () => {
                     Alert.alert("Success", "Request accepted", [
                         {
                             text: "OK",
@@ -114,7 +111,6 @@ console.log("Interest ID:--------", interestId);
                     ]);
                 },
                 onError: (error) => {
-                    console.log("Error:", error);
                     Alert.alert("Error", error.message || "Failed to accept the request");
                 },
             }
@@ -221,25 +217,25 @@ console.log("Interest ID:--------", interestId);
                                 <View style={styles.contactIcons}>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => console.log("Call:", interest.phoneNumber)}
+                                        onPress={() => dialPhone(interest.phoneNumber)}
                                     >
                                         <Ionicons name="call-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => console.log("Chat:", interest.email)}
+                                        onPress={() => chatNotAvailableYet()}
                                     >
                                         <Ionicons name="chatbubble-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => console.log("Email:", interest.email)}
+                                        onPress={() => sendEmail(interest.email)}
                                     >
                                         <Ionicons name="mail-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => console.log("WhatsApp:", interest.phoneNumber)}
+                                        onPress={() => openWhatsApp(interest.phoneNumber)}
                                     >
                                         <Ionicons name="logo-whatsapp" size={20} color="#fff" />
                                     </TouchableOpacity>

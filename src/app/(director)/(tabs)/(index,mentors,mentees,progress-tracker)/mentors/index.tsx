@@ -25,6 +25,13 @@ import {
     View,
     RefreshControl,
 } from "react-native";
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    featureNotAvailableYet,
+    openWhatsApp,
+    sendEmail,
+} from "@/utils/contactActions";
 
 export default function Mentors() {
     const router = useRouter();
@@ -90,7 +97,14 @@ export default function Mentors() {
         {
             icon: "clipboard-outline",
             label: "Roadmaps of Mentees",
-            onPress: () => console.log("Roadmaps of Mentees"),
+            onPress: () => {
+                if (selectedMentor?.id) {
+                    router.push({
+                        pathname: "/mentors/mentor-mentees",
+                        params: { id: selectedMentor.id },
+                    });
+                }
+            },
         },
         {
             icon: "checkmark-done-outline",
@@ -100,28 +114,31 @@ export default function Mentors() {
         {
             icon: "book-outline",
             label: "Assignments of Mentees",
-            onPress: () => console.log("Assignments of Mentees"),
+            onPress: () => router.push("/(director)/(tabs)/assignments"),
         },
         {
             icon: "stats-chart-outline",
             label: "Progress of Mentees",
             onPress: () => {
-                console.log(selectedMentor, "progreess");
                 if (selectedMentor?.id) {
                     bottomSheetRef.current?.dismiss();
-                    router.push({ pathname: "/progress-tracker/mentors" as any, params: { id: selectedMentor.id } });
+                    router.push(`/(director)/(tabs)/progress-tracker/mentors/${selectedMentor.id}` as any);
                 }
             },
         },
         {
             icon: "calendar-outline",
             label: "Schedule a Meeting",
-            onPress: () => console.log("Schedule a Meeting"),
+            onPress: () => router.push("/(director)/(tabs)/appointments"),
         },
         {
             icon: "create-outline",
             label: "Edit Profile",
-            onPress: () => router.push({ pathname: "/mentors/" as any, params: { id: selectedMentor?.id } }),
+            onPress: () => {
+                if (selectedMentor?.id) {
+                    router.push(`/(director)/(tabs)/mentors/${selectedMentor.id}` as any);
+                }
+            },
         },
     ];
 
@@ -130,7 +147,10 @@ export default function Mentors() {
             icon: "people-outline",
             label: "List of Mentees",
             onPress: () =>
-                router.push("/mentors/mentor-mentees"),
+                router.push({
+                    pathname: "/mentors/mentor-mentees",
+                    params: { id: selectedMentor?.id ?? "" },
+                }),
         },
         {
             icon: "person-add-outline",
@@ -148,22 +168,29 @@ export default function Mentors() {
             icon: "person-remove-outline",
             label: "Remove a Mentee",
             onPress: () =>
-                router.push("/mentors/remove-mentee"),
+                router.push({
+                    pathname: "/mentors/remove-mentee",
+                    params: { id: selectedMentor?.id ?? "" },
+                }),
         },
         {
             icon: "calendar-outline",
             label: "Schedule a Meeting",
-            onPress: () => console.log("Schedule a Meeting"),
+            onPress: () => router.push("/(director)/(tabs)/appointments"),
         },
         {
             icon: "create-outline",
             label: "Edit Profile",
-            onPress: () => console.log("Edit Profile"),
+            onPress: () => {
+                if (selectedMentor?.id) {
+                    router.push(`/(director)/(tabs)/mentors/${selectedMentor.id}` as any);
+                }
+            },
         },
         {
             icon: "person-remove-outline",
             label: "Remove as Field Mentor",
-            onPress: () => console.log("Remove as Field Mentor"),
+            onPress: () => featureNotAvailableYet("Removing a field mentor"),
         },
     ];
 
@@ -199,7 +226,7 @@ export default function Mentors() {
     const renderItem = ({ item }: { item: Mentor }) => (
         <MentorCard
             onPress={() =>
-                router.push(`/mentors/${item.id}`)
+                router.push(`/(director)/(tabs)/mentors/${item.id}` as any)
             }
             showMenu={true}
             mentor={{
@@ -211,10 +238,10 @@ export default function Mentors() {
                 profilePicture: item.profilePicture,
             }}
             layout={viewMode}
-            onCall={() => console.log("CALL", item.phoneNumber)}
-            onWhatsApp={() => console.log("WHATSAPP", item.phoneNumber)}
-            onMail={() => console.log("MAIL", item.email)}
-            onChat={() => console.log("CHAT")}
+            onCall={() => dialPhone(item.phoneNumber)}
+            onWhatsApp={() => openWhatsApp(item.phoneNumber)}
+            onMail={() => sendEmail(item.email)}
+            onChat={() => chatNotAvailableYet()}
             onMenu={() => openMenu(item)}
         />
     );

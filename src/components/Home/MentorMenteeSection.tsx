@@ -16,8 +16,6 @@ const MentorMenteeSection: React.FC = () => {
 
     const { data: allMentors, isLoading: isLoadingMentors, error: isErrorMentors } = useMentors(10);
     const { data: menteesData, isLoading: isLoadingMentees, isError: isErrorMentees } = useMentees(10);
-    console.log(menteesData, 'menteesData');
-    console.log(allMentors, 'allMentors');
 
     const mentors = useMemo(() => {
         const allMentor = allMentors?.pages.flatMap((page: any) => page.mentors) ?? [];

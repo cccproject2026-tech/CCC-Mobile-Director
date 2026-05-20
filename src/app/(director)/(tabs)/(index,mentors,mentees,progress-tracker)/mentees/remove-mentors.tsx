@@ -17,6 +17,7 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { chatNotAvailableYet, dialPhone, openWhatsApp, sendEmail } from '@/utils/contactActions';
 
 const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 
@@ -162,10 +163,10 @@ export default function RemoveMentorsFromMenteeScreen() {
                                     }}
                                     showMenu={true}
                                     layout={viewMode}
-                                    onCall={() => console.log('Call', item.id)}
-                                    onChat={() => console.log('Chat', item.id)}
-                                    onMail={() => console.log('Mail', item.id)}
-                                    onWhatsApp={() => console.log('WhatsApp', item.id)}
+                                    onCall={() => dialPhone(item.phoneNumber)}
+                                    onChat={() => chatNotAvailableYet()}
+                                    onMail={() => sendEmail(item.email)}
+                                    onWhatsApp={() => openWhatsApp(item.phoneNumber)}
                                 />
                             </View>
                         </View>

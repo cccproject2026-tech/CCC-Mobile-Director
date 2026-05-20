@@ -19,8 +19,6 @@ const ApplicationReview = () => {
     const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(applicationId as string);
     const updateStatusMutation = useUpdateApplicationStatus();
 
-
-    console.log('Application Id: ', application?.application._id);
     const handleCheckboxToggle = (option: string) => {
         setSelectedOptions(prev =>
             prev.includes(option) ? prev.filter(o => o !== option) : [...prev, option]
@@ -31,21 +29,21 @@ const ApplicationReview = () => {
     const handleReject = () => {
         updateStatusMutation.mutate(
             { userId: application?.application._id as string, status: 'pending' },
-            { onSuccess: () => router.push('/micro-grant') }
+            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
 
     const handleAccept = () => {
         updateStatusMutation.mutate(
             { userId: application?.application._id as string, status: 'accepted' },
-            { onSuccess: () => router.push('/micro-grant') }
+            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
 
     const handleAddToPending = () => {
         updateStatusMutation.mutate(
             { userId: application?.application._id as string, status: 'pending' },
-            { onSuccess: () => router.push('/micro-grant') }
+            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
 

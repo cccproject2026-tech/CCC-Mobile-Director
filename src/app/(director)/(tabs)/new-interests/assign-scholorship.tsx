@@ -16,6 +16,7 @@ import {
 import { useRouter, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useMemo, useRef, useState } from 'react';
 import {
+    Alert,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -110,10 +111,11 @@ export default function AssignScholarshipScreen() {
     };
 
     const handleAccept = () => {
-        console.log('handleAccept clicked', { menteeId, selectedScholarship });
-
         if (!menteeId || !selectedScholarship) {
-            console.log('Blocking accept because of missing data');
+            Alert.alert(
+                'Cannot assign',
+                'Please select a scholarship and ensure the mentee ID is available.'
+            );
             return;
         }
 
@@ -123,8 +125,6 @@ export default function AssignScholarshipScreen() {
             academicYear: new Date().getFullYear().toString(),
             awardStatus: 'active' as const,
         };
-
-        console.log('Awarding scholarship with payload:', payload);
 
         addAwardedUser.mutate(
             {
@@ -143,7 +143,6 @@ export default function AssignScholarshipScreen() {
                 onError: (error) => {
                     setErrorMsg(error?.message);
                     setShowErrorModal(true);
-                    console.log('Award failed', error);
                 },
             }
         );
@@ -168,12 +167,6 @@ export default function AssignScholarshipScreen() {
         //     params: { id: menteeId },
         // });
     };
-
-    console.log('Current Selection:', {
-        key: selectedScholarshipKey,
-        hasData: scholarships.length > 0,
-        found: !!selectedScholarship
-    });
 
     return (
         <>

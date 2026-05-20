@@ -32,6 +32,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RoadmapCardData } from '@/types/roadmap.types';
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    featureNotAvailableYet,
+    openWhatsApp,
+    sendEmail,
+} from '@/utils/contactActions';
 
 const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 
@@ -121,7 +128,10 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/mentors/mentor-mentees');
+                    router.push({
+                        pathname: '/(director)/(tabs)/roadmaps',
+                        params: { id: selectedMentee?.id ?? '' },
+                    });
                 }, 300);
             },
         },
@@ -158,12 +168,26 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'person-remove-outline',
             label: 'Assignments',
-            onPress: () => console.log('Assignments'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
+            },
         },
         {
             icon: 'clipboard-outline',
             label: 'Roadmaps of Mentees',
-            onPress: () => console.log('Roadmaps of Mentees'),
+            onPress: () => {
+                if (!selectedMentee?.id) return;
+                handleCloseModal();
+                setTimeout(
+                    () =>
+                        router.push({
+                            pathname: '/(director)/(tabs)/mentees/[id]/progress',
+                            params: { id: selectedMentee.id },
+                        } as any),
+                    300,
+                );
+            },
         },
         {
             icon: 'checkmark-done-outline',
@@ -183,12 +207,18 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'stats-chart-outline',
             label: 'Micro Grant',
-            onPress: () => console.log('Progress of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/micro-grant'), 300);
+            },
         },
         {
             icon: 'calendar-outline',
             label: 'Product and Services',
-            onPress: () => console.log('Schedule a Meeting'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/product-and-services'), 300);
+            },
         },
     ];
 
@@ -198,7 +228,6 @@ export default function RevitalizationRoadmap() {
             icon: 'people-outline',
             label: 'List of Mentees',
             onPress: () => {
-                console.log('List of Mentees: ', selectedMentor?.id);
                 router.push({ pathname: '/mentors/mentor-mentees' as any, params: { id: selectedMentor?.id } })
             },
         },
@@ -206,7 +235,6 @@ export default function RevitalizationRoadmap() {
             icon: 'person-add-outline',
             label: 'Assign New Mentee',
             onPress: () => {
-                console.log('Assign New Mentee: ', selectedMentor?.id);
                 router.push({ pathname: '/mentors/assign-mentees' as any, params: { id: selectedMentor?.id } })
             },
         },
@@ -218,7 +246,11 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'clipboard-outline',
             label: 'Roadmaps of Mentees',
-            onPress: () => router.push({ pathname: '/mentors/roadmaps-of-mentees' as any, params: { id: selectedMentor?.id } }),
+            onPress: () =>
+                router.push({
+                    pathname: '/mentors/mentor-mentees' as any,
+                    params: { id: selectedMentor?.id },
+                }),
         },
         {
             icon: 'checkmark-done-outline',
@@ -233,18 +265,23 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'book-outline',
             label: 'Assignments of Mentees',
-            onPress: () => console.log('Assignments of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
+            },
         },
         {
             icon: 'stats-chart-outline',
             label: 'Progress of Mentees',
-            onPress: () => router.push({ pathname: "/mentors/progress" as any, params: { id: selectedMentor?.id } }),
+            onPress: () => {
+                if (!selectedMentor?.id) return;
+                router.push(`/(director)/(tabs)/progress-tracker/mentors/${selectedMentor.id}` as any);
+            },
         },
         {
             icon: 'calendar-outline',
             label: 'Schedule a Meeting',
-            onPress: () => console.log("Schedule a Meeting"),
-            // onPress: () => router.push({ pathname: "/mentors/meeting" as any, params: { id: selectedMentor?.id } }),
+            onPress: () => router.push('/(director)/(tabs)/appointments'),
         },
         {
             icon: 'create-outline',
@@ -257,32 +294,48 @@ export default function RevitalizationRoadmap() {
         {
             icon: 'people-outline',
             label: 'List of Mentees',
-            onPress: () => router.push('/mentors/mentor-mentees'),
+            onPress: () =>
+                router.push({
+                    pathname: '/mentors/mentor-mentees' as any,
+                    params: { id: selectedMentor?.id },
+                }),
         },
         {
             icon: 'person-add-outline',
             label: 'Assign New Mentee',
-            onPress: () => router.push('/mentors/assign-mentees'),
+            onPress: () =>
+                router.push({
+                    pathname: '/mentors/assign-mentees' as any,
+                    params: { id: selectedMentor?.id },
+                }),
         },
         {
             icon: 'person-remove-outline',
             label: 'Remove a Mentee',
-            onPress: () => router.push('/mentors/remove-mentee'),
+            onPress: () =>
+                router.push({
+                    pathname: '/mentors/remove-mentee' as any,
+                    params: { id: selectedMentor?.id },
+                }),
         },
         {
             icon: 'calendar-outline',
             label: 'Schedule a Meeting',
-            onPress: () => router.push({ pathname: "/mentors/meeting" as any, params: { id: selectedMentor?.id } }),
+            onPress: () => router.push('/(director)/(tabs)/appointments'),
         },
         {
             icon: 'create-outline',
             label: 'Edit Profile',
-            onPress: () => router.push({ pathname: "/mentors/" as any, params: { id: selectedMentor?.id } }),
+            onPress: () =>
+                router.push({
+                    pathname: `/(director)/(tabs)/mentors/${selectedMentor?.id}` as any,
+                    params: { id: selectedMentor?.id },
+                }),
         },
         {
             icon: 'person-remove-outline',
             label: 'Remove as Field Mentor',
-            onPress: () => router.push({ pathname: "/mentors/remove-mentee" as any, params: { id: selectedMentor?.id } }),
+            onPress: () => featureNotAvailableYet('Removing a field mentor'),
         },
     ];
 
@@ -294,7 +347,6 @@ export default function RevitalizationRoadmap() {
             onPress: () => {
                 if (!selectedRoadmap) return;
                 const roadmap = roadmaps.find(r => r.name === selectedRoadmap.title);
-                console.log("Roadmap:", roadmap);
                 if (!roadmap) return;
 
                 handleCloseModal();
@@ -433,7 +485,7 @@ export default function RevitalizationRoadmap() {
 
     const handleCreateRoadmapNext = useCallback(
         (data: RoadmapFormData) => {
-            console.log('Create Roadmap Data:', data);
+            void data;
             handleCloseCreateRoadmapModal();
 
             // TODO: Navigate to appropriate screen based on roadmap type
@@ -460,9 +512,6 @@ export default function RevitalizationRoadmap() {
                 return;
             }
 
-            console.log('Selected Roadmap:', roadmap);
-            console.log('Roadmap Type:', roadmap.type);
-            console.log('Has Nested Roadmaps:', roadmap.haveNextedRoadMaps);
             // ✅ For single roadmaps: Open roadmap form in edit mode
             if (roadmap.type === 'single') {
                 router.push({
@@ -483,7 +532,6 @@ export default function RevitalizationRoadmap() {
 
             // ✅ For phase roadmaps: Navigate to phase details page (shows list of nested roadmaps)
             if (roadmap.type === 'phase') {
-                console.log('Routing to here : ')
                 router.push({
                     pathname: `/(director)/(tabs)/roadmaps/phase-list`,
                     params: { roadmapId: roadmap._id },
@@ -673,10 +721,10 @@ export default function RevitalizationRoadmap() {
                             profilePicture: mentor.profilePicture,
                         }}
                         layout={viewMode}
-                        onCall={() => console.log('Call', mentor.phoneNumber)}
-                        onChat={() => console.log('Chat', mentor.id)}
-                        onMail={() => console.log('Mail', mentor.email)}
-                        onWhatsApp={() => console.log('WhatsApp', mentor.phoneNumber)}
+                        onCall={() => dialPhone(mentor.phoneNumber)}
+                        onChat={() => chatNotAvailableYet()}
+                        onMail={() => sendEmail(mentor.email)}
+                        onWhatsApp={() => openWhatsApp(mentor.phoneNumber)}
                         onMenu={() => handleMentorMenuPress(mentor)}
                     />
                 </TouchableOpacity>
@@ -688,22 +736,23 @@ export default function RevitalizationRoadmap() {
                     <MenteeCard
                         data={mentee}
                         layout={viewMode}
-                        showMenu={false}
                         showMenu={true}
                         onPress={() =>
                             router.push({
                                 pathname: `/(director)/(tabs)/roadmaps/roadmap-paths` as any,
-                                params: { email: mentee.email },
+                                params: { id: mentee.id },
                             })
                         }
-                        onCall={() => console.log('Call', mentee.phoneNumber)}
-                        onChat={() => console.log('Chat', mentee.id)}
-                        onMail={() => console.log('Mail', mentee.email)}
-                        onWhatsApp={() => console.log('WhatsApp', mentee.phoneNumber)}
+                        onCall={() => dialPhone(mentee.phoneNumber)}
+                        onChat={() => chatNotAvailableYet()}
+                        onMail={() => sendEmail(mentee.email)}
+                        onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                         onMenuPress={() => handleMenuPress(mentee)}
-                        onMarkComplete={() => console.log('Mark complete', mentee.firstName)}
-                        onIssueCertificate={() => console.log('Issue certificate', mentee.firstName)}
-                        onInviteAsFieldMentor={() => console.log('Invite as field mentor', mentee.firstName)}
+                        onMarkComplete={() => featureNotAvailableYet('Mark complete')}
+                        onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
+                        onInviteAsFieldMentor={() =>
+                            router.push('/(director)/(tabs)/invite-field-mentor')
+                        }
                     />
                 </View>
             );

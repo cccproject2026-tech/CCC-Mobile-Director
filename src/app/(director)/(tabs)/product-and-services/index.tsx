@@ -21,6 +21,12 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    openWhatsApp,
+    sendEmail,
+} from '@/utils/contactActions';
 
 const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 
@@ -82,7 +88,8 @@ export default function ProductAndServices() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentors/mentor-mentees');
+                    if (!selectedMentee?.id) return;
+                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress`);
                 }, 300);
             },
         },
@@ -92,7 +99,10 @@ export default function ProductAndServices() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/assign-mentors');
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentees/assign-mentors',
+                        params: { id: selectedMentee?.id ?? '' },
+                    });
                 }, 300);
             },
         },
@@ -102,7 +112,10 @@ export default function ProductAndServices() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push('/(director)/(tabs)/mentees/remove-mentors');
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentees/remove-mentors',
+                        params: { id: selectedMentee?.id ?? '' },
+                    });
                 }, 300);
             },
         },
@@ -114,12 +127,21 @@ export default function ProductAndServices() {
         {
             icon: 'person-remove-outline',
             label: 'Assignments',
-            onPress: () => console.log('Assignments'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
+            },
         },
         {
             icon: 'clipboard-outline',
             label: 'Roadmaps of Mentees',
-            onPress: () => console.log('Roadmaps of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    if (!selectedMentee?.id) return;
+                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress`);
+                }, 300);
+            },
         },
         {
             icon: 'checkmark-done-outline',
@@ -127,24 +149,36 @@ export default function ProductAndServices() {
             onPress: () => {
                 handleCloseModal();
                 setTimeout(() => {
-                    router.push(`/(director)/(tabs)/mentees/notes`);
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentees/notes',
+                        params: { id: selectedMentee?.id ?? '' },
+                    } as any);
                 }, 300);
             },
         },
         {
             icon: 'book-outline',
             label: 'View Progress Report',
-            onPress: () => console.log('Assignments of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/progress-report'), 300);
+            },
         },
         {
             icon: 'stats-chart-outline',
             label: 'Micro Grant',
-            onPress: () => console.log('Progress of Mentees'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/micro-grant'), 300);
+            },
         },
         {
             icon: 'calendar-outline',
             label: 'Product and Services',
-            onPress: () => console.log('Schedule a Meeting'),
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/appointments'), 300);
+            },
         },
     ];
 
@@ -303,10 +337,10 @@ export default function ProductAndServices() {
                                     onPress={() =>
                                         router.push(`/(director)/(tabs)/mentees/${mentee.id}`)
                                     }
-                                    onCall={() => console.log('Call', mentee.name)}
-                                    onChat={() => console.log('Chat', mentee.name)}
-                                    onMail={() => console.log('Mail', mentee.name)}
-                                    onWhatsApp={() => console.log('WhatsApp', mentee.name)}
+                                    onCall={() => dialPhone((mentee as any).phoneNumber)}
+                                    onChat={() => chatNotAvailableYet()}
+                                    onMail={() => sendEmail((mentee as any).email)}
+                                    onWhatsApp={() => openWhatsApp((mentee as any).phoneNumber)}
                                     onMenuPress={() => handleMenuPress(mentee)}
                                 />
                             ))

@@ -161,8 +161,6 @@ const Appointments: React.FC = () => {
       return;
     }
 
-    console.log("Scheduling meeting:", data);
-
     createAppointment(
       {
         userId: user.id,

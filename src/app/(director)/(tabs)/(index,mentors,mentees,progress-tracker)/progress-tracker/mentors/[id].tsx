@@ -11,7 +11,7 @@ import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
@@ -20,12 +20,20 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    featureNotAvailableYet,
+    openWhatsApp,
+    sendEmail,
+} from '@/utils/contactActions';
 
 type TabKey = 'all' | 'in-progress' | 'completed';
 
 export default function MentorProgressTracker() {
     const router = useRouter();
-    const { id: mentorId } = useLocalSearchParams<{ id: string }>();
+    const { id: mentorIdParam } = useLocalSearchParams<{ id: string }>();
+    const mentorId = Array.isArray(mentorIdParam) ? mentorIdParam[0] : mentorIdParam;
 
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<TabKey>('all');
@@ -38,17 +46,6 @@ export default function MentorProgressTracker() {
 
     const mentorData = mentorProfile;
     const assignedMenteeIds: string[] = Array.isArray(mentorData?.assignedId) ? mentorData.assignedId : [];
-
-    useEffect(() => {
-        if (mentorData) {
-            console.log('🔍 Mentor Data:', { id: mentorData.id, name: `${mentorData.firstName} ${mentorData.lastName}`, assignedIds: assignedMenteeIds, assignedCount: assignedMenteeIds.length });
-        }
-    }, [mentorData, assignedMenteeIds]);
-
-    useEffect(() => {
-        console.log('👥 Total Mentees:', allMentees.length);
-        console.log('🎯 Assigned Mentee IDs:', assignedMenteeIds);
-    }, [allMentees, assignedMenteeIds]);
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
@@ -63,16 +60,97 @@ export default function MentorProgressTracker() {
     }, []);
 
     const menuItems = [
-        { icon: 'people-outline', label: 'Revitalization Roadmaps', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentors/mentor-mentees' as any), 300); } },
-        { icon: 'person-add-outline', label: 'Assign Mentor', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/assign-mentors' as any), 300); } },
-        { icon: 'person-remove-outline', label: 'Remove Mentor', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/remove-mentors' as any), 300); } },
+        {
+            icon: 'people-outline',
+            label: 'Revitalization Roadmaps',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentors/mentor-mentees',
+                        params: { id: mentorId ?? '' },
+                    } as any);
+                }, 300);
+            },
+        },
+        {
+            icon: 'person-add-outline',
+            label: 'Assign Mentor',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentees/assign-mentors',
+                        params: { id: selectedMentee?.id ?? '' },
+                    } as any);
+                }, 300);
+            },
+        },
+        {
+            icon: 'person-remove-outline',
+            label: 'Remove Mentor',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/mentees/remove-mentors',
+                        params: { id: selectedMentee?.id ?? '' },
+                    } as any);
+                }, 300);
+            },
+        },
         { icon: 'person-add-outline', label: 'Assessments', onPress: () => router.push('/(director)/(tabs)/assessments' as any) },
-        { icon: 'person-remove-outline', label: 'Assignments', onPress: () => console.log('Assignments') },
-        { icon: 'clipboard-outline', label: 'Roadmaps of Mentees', onPress: () => console.log('Roadmaps of Mentees') },
-        { icon: 'checkmark-done-outline', label: 'Mentor Notes', onPress: () => { handleCloseModal(); setTimeout(() => router.push('/(director)/(tabs)/mentees/notes' as any), 300); } },
-        { icon: 'book-outline', label: 'View Progress Report', onPress: () => console.log('View Progress Report') },
-        { icon: 'stats-chart-outline', label: 'Micro Grant', onPress: () => console.log('Micro Grant') },
-        { icon: 'calendar-outline', label: 'Product and Services', onPress: () => console.log('Product and Services') },
+        {
+            icon: 'person-remove-outline',
+            label: 'Assignments',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/assignments' as any), 300);
+            },
+        },
+        {
+            icon: 'clipboard-outline',
+            label: 'Roadmaps of Mentees',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => {
+                    if (!selectedMentee?.id) return;
+                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress` as any);
+                }, 300);
+            },
+        },
+        {
+            icon: 'checkmark-done-outline',
+            label: 'Mentor Notes',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/mentees/notes' as any), 300);
+            },
+        },
+        {
+            icon: 'book-outline',
+            label: 'View Progress Report',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/progress-report' as any), 300);
+            },
+        },
+        {
+            icon: 'stats-chart-outline',
+            label: 'Micro Grant',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/micro-grant' as any), 300);
+            },
+        },
+        {
+            icon: 'calendar-outline',
+            label: 'Product and Services',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push('/(director)/(tabs)/product-and-services' as any), 300);
+            },
+        },
     ];
 
     const tabs = [
@@ -84,27 +162,17 @@ export default function MentorProgressTracker() {
     const isLoading = menteesLoading || mentorLoading;
 
     const filteredMentees: Mentee[] = useMemo(() => {
-        console.log('🔄 Starting filtering...');
         let list = allMentees;
 
         if (!assignedMenteeIds || assignedMenteeIds.length === 0) {
-            console.log('⚠️ No assigned mentees for this mentor');
             return [];
         }
 
-        list = list.filter(mentee => {
-            const isAssigned = assignedMenteeIds.includes(mentee.id);
-            if (!isAssigned) console.log(`❌ Mentee ${mentee.firstName} ${mentee.lastName} (${mentee.id}) - NOT assigned`);
-            else console.log(`✅ Mentee ${mentee.firstName} ${mentee.lastName} (${mentee.id}) - ASSIGNED`);
-            return isAssigned;
-        });
-
-        console.log(`📊 After assignedId filter: ${list.length} mentees`);
+        list = list.filter(mentee => assignedMenteeIds.includes(mentee.id));
 
         if (search) {
             const q = search.toLowerCase();
             list = list.filter(m => `${m.firstName} ${m.lastName ?? ''}`.toLowerCase().includes(q));
-            console.log(`🔍 After search filter: ${list.length} mentees`);
         }
 
         if (activeTab === 'completed') {
@@ -113,7 +181,6 @@ export default function MentorProgressTracker() {
             list = list.filter(m => !m.hasCompleted && (m.progress ?? 0) < 100);
         }
 
-        console.log(`🎯 Final filtered list: ${list.length} mentees`);
         return list;
     }, [allMentees, search, activeTab, assignedMenteeIds]);
 
@@ -210,12 +277,12 @@ export default function MentorProgressTracker() {
                                     layout={viewMode}
                                     showMenu={true}
                                     onPress={() => router.push(`/(director)/(tabs)/mentees/${mentee.id}/progress` as any)}
-                                    onCall={() => console.log('Call', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
-                                    onChat={() => console.log('Chat', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
-                                    onMail={() => console.log('Mail', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
-                                    onWhatsApp={() => console.log('WhatsApp', `${mentee.firstName} ${mentee.lastName ?? ''}`)}
+                                    onCall={() => dialPhone(mentee.phoneNumber)}
+                                    onChat={() => chatNotAvailableYet()}
+                                    onMail={() => sendEmail(mentee.email)}
+                                    onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                     onMenuPress={() => handleMenuPress(mentee)}
-                                    onMarkComplete={() => console.log('Mark complete', mentee.firstName)}
+                                    onMarkComplete={() => featureNotAvailableYet('Mark complete')}
                                 />
                             ))}
                         </ScrollView>

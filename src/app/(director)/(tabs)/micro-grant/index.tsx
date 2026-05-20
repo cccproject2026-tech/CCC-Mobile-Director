@@ -10,6 +10,7 @@ import SearchBar from '@/components/Header/SearchBar';
 import ApplicationCard from '@/components/Cards/ApplicationCard';
 import { useMicroGrantApplicationWithProfiles } from '@/hooks/useMicroGrant';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
+import { chatNotAvailableYet, dialPhone, openWhatsApp, sendEmail } from '@/utils/contactActions';
 
 const MicroGrant = () => {
     const router = useRouter();
@@ -39,20 +40,20 @@ const MicroGrant = () => {
         setActiveTab(tab as 'new' | 'pending' | 'accepted');
     };
 
-    const handleCall = (email?: string) => {
-        console.log('Call:', email);
+    const handleCall = (phone?: string) => {
+        dialPhone(phone);
     };
 
-    const handleChat = (userId?: string) => {
-        console.log('Chat:', userId);
+    const handleChat = (_userId?: string) => {
+        chatNotAvailableYet();
     };
 
     const handleMail = (email?: string) => {
-        console.log('Mail:', email);
+        sendEmail(email);
     };
 
-    const handleWhatsApp = (email?: string) => {
-        console.log('WhatsApp:', email);
+    const handleWhatsApp = (phone?: string) => {
+        openWhatsApp(phone);
     };
 
     return (
@@ -109,10 +110,10 @@ const MicroGrant = () => {
                                     profilePicture={item.userProfile?.profilePicture}
                                     title={item.userProfile?.role}
                                     createdAt={item.createdAt}
-                                    onCall={() => handleCall(item.userId?.email)}
+                                    onCall={() => handleCall((item.userProfile as any)?.phoneNumber)}
                                     onChat={() => handleChat(item.userId?._id)}
                                     onMail={() => handleMail(item.userId?.email)}
-                                    onWhatsApp={() => handleWhatsApp(item.userId?.email)}
+                                    onWhatsApp={() => handleWhatsApp((item.userProfile as any)?.phoneNumber)}
                                 />
                             )}
                         />

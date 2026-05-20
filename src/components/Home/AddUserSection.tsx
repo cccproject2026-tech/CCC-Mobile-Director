@@ -15,8 +15,6 @@ const AddUserSection = (props: Props) => {
     const addUserMutation = useAddUser();
 
     const handleUserAdded = (firstName: string, lastName: string, role: UserRole, email: string) => {
-        console.log("[AddUserSection.handleUserAdded] input:", { firstName, lastName, role, email });
-
         const payload = {
             firstName: firstName.trim(),
             lastName: lastName.trim(),
@@ -25,11 +23,8 @@ const AddUserSection = (props: Props) => {
             createdBy: 'admin'
         };
 
-        console.log("[AddUserSection.handleUserAdded] payload to mutate:", payload);
-
         addUserMutation.mutate(payload, {
             onSuccess: (res) => {
-                console.log("[AddUserSection.onSuccess] res:", res);
                 const created = res.data;
                 const createdName = `${created.firstName} ${created.lastName}`.trim();
 
@@ -40,7 +35,6 @@ const AddUserSection = (props: Props) => {
                 setShowConfirmation(true);
             },
             onError: (error: any) => {
-                console.log("[AddUserSection.onError] error:", error);
                 Alert.alert(
                     "Error",
                     error?.response?.data?.message ||

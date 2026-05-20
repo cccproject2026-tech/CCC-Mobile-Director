@@ -27,8 +27,6 @@ export default function AssignNewPastorsScreen() {
     const { top, bottom } = useSafeAreaInsets();
     const { id: mentorIdParam } = useLocalSearchParams<{ id: string }>();
     const mentorId = Array.isArray(mentorIdParam) ? mentorIdParam[0] : mentorIdParam;
-    console.log('Mentor id: ', mentorId);
-
     const [search, setSearch] = useState('');
     const [selectedPastors, setSelectedPastors] = useState<string[]>([]);
     const [filterModalVisible, setFilterModalVisible] = useState(false);

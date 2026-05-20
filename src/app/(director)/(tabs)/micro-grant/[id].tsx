@@ -16,14 +16,13 @@ const ApplicationDetails = () => {
     const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(applicationId as string);
 
     const handleViewProfile = () => {
-        console.log('View Profile clicked', application?.application.userId);
         if (application?.application.userId) {
-            router.push(`/mentees/${application.application.userId}`);
+            router.push(`/(director)/(tabs)/mentees/${application.application.userId}` as any);
         }
     };
 
     const handleNext = () => {
-        router.push(`/micro-grant/review/${applicationId}`);
+        router.push(`/(director)/(tabs)/micro-grant/review/${applicationId}` as any);
     };
 
     if (isLoading) {

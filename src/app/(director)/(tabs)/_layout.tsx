@@ -6,6 +6,11 @@ import { useMemo } from "react";
 import { Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+/** Hide route from tab bar (Expo Router — use href only, not tabBarButton). */
+const hiddenTab = {
+    href: null,
+} as const;
+
 export default function DirectorTabLayout() {
     const pathname = usePathname();
     const { bottom } = useSafeAreaInsets();
@@ -29,6 +34,30 @@ export default function DirectorTabLayout() {
         return !hideWhenMatches.some((p) => p.test(pathname));
     }, [pathname]);
 
+    const hiddenRoutes = [
+        // Array group `(index,mentors,mentees,progress-tracker)` registers as 4 tab slots
+        "(index)",
+        "(mentors)",
+        "(mentees)",
+        "(progress-tracker)",
+        "directors",
+        "new-interests",
+        "micro-grant",
+        "product-and-services",
+        "roadmaps",
+        "appointments",
+        "ccc",
+        "assessments",
+        "notifications",
+        "assignments",
+        "progress-report",
+        "course-completed",
+        "invite-field-mentor",
+        "videos",
+        "contact-details",
+        "reports",
+    ];
+
     return (
         <Tabs
             screenOptions={{
@@ -37,15 +66,15 @@ export default function DirectorTabLayout() {
                 tabBarInactiveTintColor: "#BFC6DF",
                 tabBarStyle: isTabBarVisible
                     ? {
-                        backgroundColor: "#221C70",
-                        borderTopWidth: 0,
-                        height: 60 + bottom,
-                        paddingBottom: bottom,
-                        paddingTop: 8,
-                    }
+                          backgroundColor: "#221C70",
+                          borderTopWidth: 0,
+                          height: 60 + bottom,
+                          paddingBottom: bottom,
+                          paddingTop: 8,
+                      }
                     : {
-                        display: "none",
-                    },
+                          display: "none",
+                      },
                 tabBarLabelStyle: {
                     fontSize: 12,
                     fontWeight: "600",
@@ -53,7 +82,7 @@ export default function DirectorTabLayout() {
                 },
             }}
         >
-            {/* VISIBLE TABS */}
+            {/* Visible tabs — footer shows only these 3 */}
             <Tabs.Screen
                 name="index"
                 options={{
@@ -75,7 +104,7 @@ export default function DirectorTabLayout() {
             />
 
             <Tabs.Screen
-                name="profile/index"
+                name="profile"
                 options={{
                     title: "Profile",
                     tabBarIcon: ({ color }) => (
@@ -87,49 +116,13 @@ export default function DirectorTabLayout() {
                 }}
             />
 
-            {/* HIDDEN SCREENS - Use href: null */}
-            <Tabs.Screen name="profile/documents" options={{ href: null }} />
-            <Tabs.Screen name="profile/personal-notes" options={{ href: null }} />
-
-            {/* Hide all route groups and standalone routes from tab bar */}
-            <Tabs.Screen
-                name="(index)"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="(mentors)"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="(mentees)"
-                options={{ href: null }}
-            />
-            <Tabs.Screen
-                name="(progress-tracker)"
-                options={{ href: null }}
-            />
-
-            {/* OR if using combined route group */}
-            {/* <Tabs.Screen
-                name="(index,mentors,mentees,progress-tracker)"
-                options={{ href: null }}
-            /> */}
-
-            {/* Hide other routes */}
-            {[
-                "notification",
-                "directors",
-                "documents",
-                "new-interests",
-                "micro-grant",
-                "product-and-services",
-                "roadmaps",
-                "appointments",
-                "ccc",
-                "assessments",
-                "notifications",
-            ].map((route) => (
-                <Tabs.Screen key={route} name={route} options={{ href: null }} />
+            {/* Hidden routes — not shown in footer */}
+            {hiddenRoutes.map((route) => (
+                <Tabs.Screen
+                    key={route}
+                    name={route}
+                    options={hiddenTab}
+                />
             ))}
         </Tabs>
     );

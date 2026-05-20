@@ -29,18 +29,17 @@ export default function SharedStackLayout({ segment }: { segment: string }) {
             <Stack.Screen name="mentees/[id]/progress" />
             <Stack.Screen name="mentees/assign-mentors" />
             <Stack.Screen name="mentees/remove-mentors" />
-            <Stack.Screen name="mentees/mentee-location" />
+            <Stack.Screen name="mentees/mentees-location" />
             <Stack.Screen name="mentees/notes" />
 
             <Stack.Screen name="mentors/index" />
             <Stack.Screen name="mentors/[id]/index" />
             <Stack.Screen name="mentors/assign-mentees" />
-            <Stack.Screen name="mentors/remove-mentees" />
+            <Stack.Screen name="mentors/remove-mentee" />
             <Stack.Screen name="mentors/mentor-mentees" />
 
             <Stack.Screen name="progress-tracker/index" />
             <Stack.Screen name="progress-tracker/mentors/[id]" />
-            <Stack.Screen name="progress-tracker/report" />
 
 
 

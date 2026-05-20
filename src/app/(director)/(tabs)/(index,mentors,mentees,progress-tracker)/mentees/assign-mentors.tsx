@@ -19,6 +19,7 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { chatNotAvailableYet, dialPhone, openWhatsApp, sendEmail } from '@/utils/contactActions';
 
 const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 
@@ -27,7 +28,6 @@ export default function AssignMentorsToMenteeScreen() {
     const { top, bottom } = useSafeAreaInsets();
     const { id: menteeIdParam } = useLocalSearchParams();
     const menteeId = Array.isArray(menteeIdParam) ? menteeIdParam[0] : menteeIdParam;
-    console.log(menteeId, '------');
 
     const [search, setSearch] = useState('');
     const [selectedMentors, setSelectedMentors] = useState<string[]>([]);
@@ -76,8 +76,6 @@ export default function AssignMentorsToMenteeScreen() {
             .map(m => `${m.firstName} ${m.lastName ?? ''}`)
             .join(', ');
 
-        console.log('Assigning mentors:', { menteeId, mentorIds: selectedMentors, names: selectedNames });
-
         Alert.alert('Assign Mentors', `Are you sure you want to assign: ${selectedNames}?`, [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -88,8 +86,10 @@ export default function AssignMentorsToMenteeScreen() {
                         {
                             onSuccess: () => setShowSuccessModal(true),
                             onError: (error) => {
-                                console.log('Error Assigning Mentor', error);
-                                Alert.alert('Error', 'Failed to assign mentors. Please try again.');
+                                Alert.alert(
+                                    'Error',
+                                    (error as Error)?.message || 'Failed to assign mentors. Please try again.',
+                                );
                             },
                         },
                     );
@@ -180,10 +180,10 @@ export default function AssignMentorsToMenteeScreen() {
                                         }}
                                         showMenu={true}
                                         layout={viewMode}
-                                        onCall={() => console.log('Call', item.id)}
-                                        onChat={() => console.log('Chat', item.id)}
-                                        onMail={() => console.log('Mail', item.id)}
-                                        onWhatsApp={() => console.log('WhatsApp', item.id)}
+                                        onCall={() => dialPhone(item.phoneNumber)}
+                                        onChat={() => chatNotAvailableYet()}
+                                        onMail={() => sendEmail(item.email)}
+                                        onWhatsApp={() => openWhatsApp(item.phoneNumber)}
                                     />
                                 </View>
                             </View>

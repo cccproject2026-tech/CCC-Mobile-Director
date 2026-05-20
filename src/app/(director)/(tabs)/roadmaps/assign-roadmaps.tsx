@@ -37,8 +37,7 @@ const AssignRoadmaps = () => {
         isFetchingNextPage 
     } = useMentees();
     const mentees = data?.pages.flatMap((page) => page.mentees) ?? [];
-    let isRoadmapavailable=mentees.some((mentee) => mentee.assignedRoadmapIds?.length > 0);
-    console.log("isRoadmapavailable:----->>>>>>>>>>>>>>", isRoadmapavailable,mentees[0].assignedRoadmapIds?.length);
+    let isRoadmapavailable = mentees.some((mentee) => mentee.assignedRoadmapIds?.length > 0);
     const handleLoadMore = () => {
         if (hasNextPage && !isFetchingNextPage) {
             fetchNextPage();

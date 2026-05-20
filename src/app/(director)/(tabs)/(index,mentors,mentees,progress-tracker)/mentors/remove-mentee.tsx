@@ -18,6 +18,7 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { chatNotAvailableYet, dialPhone, openWhatsApp, sendEmail } from '@/utils/contactActions';
 
 const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 
@@ -26,7 +27,6 @@ export default function RemoveMenteeScreen() {
     const { top, bottom } = useSafeAreaInsets();
     const { id: mentorIdParam } = useLocalSearchParams();
     const mentorId = Array.isArray(mentorIdParam) ? mentorIdParam[0] : mentorIdParam;
-    console.log('Mentor ID:', mentorId);
     const [search, setSearch] = useState('');
     const [selectedMentees, setSelectedMentees] = useState<string[]>([]);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -34,7 +34,6 @@ export default function RemoveMenteeScreen() {
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
     const { mentees, isLoading } = useMentorMentees(mentorId);
-    console.log('Mentees:', mentees);
 
     const removeMutation = useRemoveMenteesFromMentor();
 
@@ -192,18 +191,10 @@ export default function RemoveMenteeScreen() {
                             showMenu={true}
                             isSelected={selectedMentees.includes(item.id)}
                             onToggleSelect={() => toggleSelectMentee(item.id)}
-                            onWhatsApp={() =>
-                                console.log('WhatsApp', `${item.firstName} ${item.lastName ?? ''}`)
-                            }
-                            onCall={() =>
-                                console.log('Call', `${item.firstName} ${item.lastName ?? ''}`)
-                            }
-                            onChat={() =>
-                                console.log('Chat', `${item.firstName} ${item.lastName ?? ''}`)
-                            }
-                            onMail={() =>
-                                console.log('Mail', `${item.firstName} ${item.lastName ?? ''}`)
-                            }
+                            onWhatsApp={() => openWhatsApp(item.phoneNumber)}
+                            onCall={() => dialPhone(item.phoneNumber)}
+                            onChat={() => chatNotAvailableYet()}
+                            onMail={() => sendEmail(item.email)}
                         />
                     )}
                     contentContainerStyle={[styles.listContent, { paddingBottom: 120 + bottom }]}

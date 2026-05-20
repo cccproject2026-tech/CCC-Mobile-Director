@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo } from 'react';
 import {
-    View,
-    Text,
-    TouchableOpacity,
+    ActivityIndicator,
     ScrollView,
     StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { GradientBackground } from '@/components/ui/design-system';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -50,11 +51,6 @@ export default function PhaseListScreen() {
     };
 
     const handleAddTask = () => {
-        // Navigate to roadmap-creation for new phase
-        console.log('Routing to here : roadmap-creation for new phase')
-        console.log('roadmapId', roadmapId);
-        console.log('type', 'phase');
-        console.log('isEditMode', 'false');
         router.push({
             pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
             params: {
@@ -69,9 +65,8 @@ export default function PhaseListScreen() {
         router.back();
     };
 
-    const handleMenuPress = (phaseId: string) => {
-        // Handle menu actions (edit, delete, etc.)
-        console.log('Menu pressed for phase:', phaseId);
+    const handleMenuPress = (_phaseId: string) => {
+        // Phase row menu — no secondary actions wired in mobile yet
     };
 
     if (isLoading) {
@@ -110,7 +105,6 @@ export default function PhaseListScreen() {
         );
     }, [phaseCards, searchQuery]);
 
-    console.log('Filtered Phases images :', filteredPhases.map(p => p.image));
     return (
         <GradientBackground>
             <TopBar showUserName />
