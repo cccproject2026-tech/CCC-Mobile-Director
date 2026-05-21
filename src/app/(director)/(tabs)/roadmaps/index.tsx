@@ -373,18 +373,53 @@ export default function RevitalizationRoadmap() {
                 handleCloseModal();
 
                 // ✅ For phase roadmaps: Navigate to phase details page
-                if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
+                // if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
+                //     setTimeout(() => {
+                //         router.push({
+                //             pathname: `/(director)/(tabs)/roadmaps/phase-list`,
+                //             params: { roadmapId: roadmap._id },
+                //         });
+                //     }, 300);
+                // } else {
+                //     // ✅ For single roadmaps: Open roadmap form in edit mode
+                //     setTimeout(() => {
+                //         router.push({
+                //             pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+                //             params: {
+                //                 isEditMode: 'true',
+                //                 roadmapId: roadmap._id,
+                //                 type: 'single',
+                //                 name: roadmap.name || '',
+                //                 subheading: roadmap.roadMapDetails || roadmap.description || '',
+                //                 completionTime: roadmap.duration || '',
+                //                 bannerImage: roadmap.imageUrl || '',
+                //             },
+                //         });
+                //     }, 300);
+                // }
+
+
+       if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
                     setTimeout(() => {
                         router.push({
-                            pathname: `/(director)/(tabs)/roadmaps/phase-list`,
-                            params: { roadmapId: roadmap._id },
+                            // pathname: `/(director)/(tabs)/roadmaps/phase-list`,
+                            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-edit',
+                            params: {
+                                  isEditMode: 'true',
+                                roadmapId: roadmap._id,
+                                type: 'single',
+                                name: roadmap.name || '',
+                                subheading: roadmap.roadMapDetails || roadmap.description || '',
+                                completionTime: roadmap.duration || '',
+                                bannerImage: roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl|| '',
+                                 },
                         });
                     }, 300);
                 } else {
                     // ✅ For single roadmaps: Open roadmap form in edit mode
                     setTimeout(() => {
                         router.push({
-                            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+                            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-edit',
                             params: {
                                 isEditMode: 'true',
                                 roadmapId: roadmap._id,
@@ -392,11 +427,13 @@ export default function RevitalizationRoadmap() {
                                 name: roadmap.name || '',
                                 subheading: roadmap.roadMapDetails || roadmap.description || '',
                                 completionTime: roadmap.duration || '',
-                                bannerImage: roadmap.imageUrl || '',
+                                bannerImage:  roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl||  '',
                             },
                         });
                     }, 300);
                 }
+
+
             },
         },
         {

@@ -31,7 +31,7 @@ const ActionBottomSheet = forwardRef<BottomSheetModal, ActionBottomSheetProps>(
         actions,
         onClose,
         colorScheme = {
-            background: "#1E3A6F",
+            background: "#06577C",
             text: "#FFFFFF",
             accent: "#FFC107",
         }

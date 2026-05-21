@@ -693,7 +693,7 @@ export default AddFieldSheet;
 
 const styles = StyleSheet.create({
     bottomSheetBackground: {
-        backgroundColor: "#1E2F5C",
+        backgroundColor: "#06577C",
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
     },
