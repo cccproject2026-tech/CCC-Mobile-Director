@@ -407,7 +407,7 @@ export default function RevitalizationRoadmap() {
                             params: {
                                   isEditMode: 'true',
                                 roadmapId: roadmap._id,
-                                type: 'single',
+                                type: 'phase',
                                 name: roadmap.name || '',
                                 subheading: roadmap.roadMapDetails || roadmap.description || '',
                                 completionTime: roadmap.duration || '',
