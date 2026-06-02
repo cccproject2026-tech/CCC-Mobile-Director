@@ -26,6 +26,7 @@ type Props = {
     onCall?: () => void;
     onChat?: () => void;
     onMail?: () => void;
+    onJoinMeeting?: () => void;
 };
 
 const AppointmentCard: React.FC<Props> = ({
@@ -43,13 +44,24 @@ const AppointmentCard: React.FC<Props> = ({
     onCall,
     onChat,
     onMail,
+    onJoinMeeting
 }) => {
     return (
         <View style={styles.card}>
             <View style={styles.cardInner}>
-                <View style={styles.thumbnailWrap}>
+                {/* <View style={styles.thumbnailWrap}>
                     <Image source={platformIcon} resizeMode="cover" style={styles.thumbnail} />
-                </View>
+                </View> */}
+<Pressable
+    style={styles.thumbnailWrap}
+    onPress={onJoinMeeting}
+>
+    <Image
+        source={platformIcon}
+        resizeMode="cover"
+        style={styles.thumbnail}
+    />
+</Pressable>
 
                 <View style={styles.content}>
                     <View style={styles.topRow}>

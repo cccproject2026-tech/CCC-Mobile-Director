@@ -13,6 +13,7 @@ interface Props {
     selectionMode?: boolean;
     isSelected?: boolean;
     onToggleSelection?: () => void;
+    paramsData?:any
 }
 
 export const RoadmapCard: React.FC<Props> = ({

@@ -12,6 +12,8 @@ interface Props {
     data: ApiAssessment | AssignedAssessmentView;
     onPress?: () => void;
     onDevelopmentPlanPress?: () => void;
+    showMenu?: boolean;
+    onMenuPress?: () => void;
     selectionMode?: boolean;
     isSelected?: boolean;
     onToggleSelection?: () => void;
@@ -21,6 +23,8 @@ export const AssessmentCard: React.FC<Props> = ({
     data,
     onPress,
     onDevelopmentPlanPress,
+    showMenu = false,
+    onMenuPress,
     selectionMode = false,
     isSelected = false,
     onToggleSelection,
@@ -122,6 +126,7 @@ export const AssessmentCard: React.FC<Props> = ({
                         style={styles.image}
                     />
                     {renderTypeBadge()}
+                       
                 </View>
 
                 <View style={styles.textContent}>
@@ -158,6 +163,20 @@ export const AssessmentCard: React.FC<Props> = ({
                         </Text>
                     ) : null}
                 </View>
+
+                
+                        <TouchableOpacity
+                            onPress={onMenuPress}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            style={{ padding: 8 }}
+                        >
+                            <Ionicons
+                                name="ellipsis-vertical"
+                                size={15}
+                                color="rgba(255,255,255,0.6)"
+                            />
+                        </TouchableOpacity>
+           
             </View>
         </TouchableOpacity>
     );

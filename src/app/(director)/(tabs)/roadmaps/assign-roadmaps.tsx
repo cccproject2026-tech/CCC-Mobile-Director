@@ -16,13 +16,31 @@ const AssignRoadmaps = () => {
     const params = useLocalSearchParams();
 
     // Get selected roadmap IDs from params
+    // const selectedRoadmapIds = useMemo(() => {
+    //     const ids = params.roadmapIds;
+    //     console.log("id",ids);
+    //     if (typeof ids === 'string') {
+    //         return JSON.parse(ids);
+    //     }
+    //     return [];
+    // }, [params.roadmapIds]);
     const selectedRoadmapIds = useMemo(() => {
-        const ids = params.roadmapIds;
-        if (typeof ids === 'string') {
-            return JSON.parse(ids);
-        }
+    const ids = params.roadmapIds;
+
+    console.log("id", ids);
+
+    if (typeof ids !== "string") {
         return [];
-    }, [params.roadmapIds]);
+    }
+
+    try {
+        const parsed = JSON.parse(ids);
+        return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+        // Single ID string
+        return [ids];
+    }
+}, [params.roadmapIds]);
 
     const [search, setSearch] = useState('');
     const [selectedMentees, setSelectedMentees] = useState<Set<string>>(new Set());
@@ -222,12 +240,12 @@ const AssignRoadmaps = () => {
                             {search.trim() ? 'No mentees found' : 'No mentees available'}
                         </Text>
                     </View>
-                ) : (
+                ) : (   
                     <FlatList
                         data={selectableMentees}
                         renderItem={({ item }) => (
                             <MenteeCard
-                                key={item.id}
+                                // key={item.id}j
                                 showMenu={true}
                                 data={item}
                                 layout="card"

@@ -1,8 +1,9 @@
 // app/(director)/(tabs)/roadmaps/phase-list.tsx
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     ScrollView,
     StyleSheet,
     Text,
@@ -19,6 +20,9 @@ import RoadmapCard from '@/components/Cards/RoadmapCard';
 import { RoadmapCardData } from '@/types/roadmap.types';
 import SearchBar from '@/components/Header/SearchBar';
 import { Routes } from '@/navigation/routes';
+import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import {  useDeleteRoadmap } from '@/hooks/roadmap/useRoadmaps';
 
 export default function PhaseListScreen() {
     const router = useRouter();
@@ -31,6 +35,10 @@ export default function PhaseListScreen() {
     const { data: roadmap, isLoading } = useRoadmap(roadmapId);
 
     const [searchQuery, setSearchQuery] = useState('');
+
+const [selectedPhase, setSelectedPhase] = useState<(RoadmapCardData & { id: string }) | null>(null);
+const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+    const deleteRoadmapMutation = useDeleteRoadmap();
 
     const handlePhasePress = (nestedRoadmapId: string) => {
         const phase = roadmap?.roadmaps?.find((r) => r._id === nestedRoadmapId);
@@ -72,21 +80,7 @@ export default function PhaseListScreen() {
         router.back();
     };
 
-    const handleMenuPress = (_phaseId: string) => {
-        // Phase row menu — no secondary actions wired in mobile yet
-    };
-
-    if (isLoading) {
-        return (
-            <GradientBackground>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#fff" />
-                    <Text style={styles.loadingText}>Loading phases...</Text>
-                </View>
-            </GradientBackground>
-        );
-    }
-
+   
     const phases = roadmap?.roadmaps || [];
 
     // Transform phases to RoadmapCardData format
@@ -116,6 +110,105 @@ export default function PhaseListScreen() {
                 phase.description?.toLowerCase().includes(query)
         );
     }, [phaseCards, searchQuery]);
+
+ 
+const phaseMenuItems = [
+    {
+        icon: 'create-outline',
+        label: 'Edit Phase',
+        onPress: () => {
+             console.log("selectedPhase",selectedPhase);
+            if (!selectedPhase) return;
+
+            handleCloseModal();
+
+            setTimeout(() => {
+                handlePhasePress(selectedPhase.id);
+            }, 300);
+        },
+    },
+           {
+            icon: 'person-add-outline',
+            label: 'Assign to',
+            onPress: () => {
+                if (!selectedPhase) return;
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/roadmaps/assign-roadmaps',
+                        params: { roadmapIds: selectedPhase._id },
+                    });
+                }, 300);
+            },
+        },
+    {
+        icon: 'trash-outline',
+        label: 'Delete Phase',
+        onPress: () => {
+            console.log("selectedPhase",selectedPhase);
+            if (!selectedPhase) return;
+                console.log("selectedPhase1",selectedPhase);
+                   deleteRoadmapMutation.mutate(selectedPhase._id, {});
+            // deleteRoadmapMutation.mutate(selectedPhase.id, {
+            //     onSuccess: () => {
+            //         Alert.alert('Phase deleted', 'The phase has been successfully deleted.', [
+            //             { 
+            //                 text: 'OK',
+            //                 onPress: () => {
+            //                     handleCloseModal();
+            //                 },
+            //             },
+            //         ]);
+            //     },
+            //     onError: () => {
+            //         Alert.alert('Error', 'Failed to delete the phase. Please try again.', [
+            //             {
+            //                 text: 'OK',
+            //                 onPress: () => {
+            //                     handleCloseModal();
+            //                  }  } ],
+            //             );
+            //     },
+            // });
+            handleCloseModal();
+
+          
+        },
+    },
+];
+
+     const handleMenuPress = useCallback((phaseId: string) => {
+        console.log("filtered phase:", filteredPhases);
+    const phase = filteredPhases.find((p) => p.id === phaseId);
+
+    if (!phase) return;
+
+    setSelectedPhase(phase);
+
+    setTimeout(() => {
+        bottomSheetModalRef.current?.present();
+    }, 0);
+}, [filteredPhases]);
+
+const handleCloseModal = useCallback(() => {
+    bottomSheetModalRef.current?.dismiss();
+
+    setTimeout(() => {
+        setSelectedPhase(null);
+    }, 300);
+}, []);
+
+
+    if (isLoading) {
+        return (
+            <GradientBackground>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={styles.loadingText}>Loading phases...</Text>
+                </View>
+            </GradientBackground>
+        );
+    }
 
     return (
         <GradientBackground>
@@ -189,6 +282,13 @@ export default function PhaseListScreen() {
                     ))
                 )}
             </ScrollView>
+            <ActionBottomSheet
+    ref={bottomSheetModalRef}
+    title={selectedPhase?.title || ''}
+    subtitle={selectedPhase?.completionTime}
+    actions={phaseMenuItems}
+    onClose={handleCloseModal}
+/>
         </GradientBackground>
     );
 }

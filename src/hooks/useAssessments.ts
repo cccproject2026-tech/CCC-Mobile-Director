@@ -257,3 +257,34 @@ export const useUploadBannerImageMutation = () => {
         },
     });
 };
+
+
+export const useDeleteAssessmentMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (assessmentId: string) =>
+            assessmentService.deleteAssessment(assessmentId),
+
+        onSuccess: (_, assessmentId) => {
+            // Refresh assessment lists
+            queryClient.invalidateQueries({
+                queryKey: assessmentKeys.all,
+            });
+
+            // Remove deleted assessment detail cache
+            queryClient.removeQueries({
+                queryKey: assessmentKeys.detail(assessmentId),
+            });
+
+            // Optional refreshes
+            queryClient.invalidateQueries({
+                queryKey: ['progress'],
+            });
+
+            queryClient.invalidateQueries({
+                queryKey: ['mentees'],
+            });
+        },
+    });
+};

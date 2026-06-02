@@ -74,4 +74,16 @@ export const menteesService = {
             });
         }
     },
+  getAssignedMentees: async (mentorId: string) => {
+    const response = await apiClient.get(
+        ENDPOINTS.MENTEES.GET_ASSIGNED_MENTEES(mentorId),
+        {
+            params: {
+                t: Date.now(),
+            },
+        }
+    );
+
+    return response.data;
+},
 };

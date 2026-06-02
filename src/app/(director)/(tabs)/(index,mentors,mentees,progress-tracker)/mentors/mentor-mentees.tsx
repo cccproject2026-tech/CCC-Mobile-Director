@@ -5,7 +5,7 @@ import TopBar from '@/components/Header/TopBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
 import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useMentorMentees } from '@/hooks/useMentors';
+import { useMentorMentees, useAssignedMentees } from '@/hooks/useMentors';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
@@ -40,7 +40,26 @@ export default function MentorMentees() {
     const { height } = Dimensions.get('window');
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-    const { mentor, mentees, isLoading, isError } = useMentorMentees(id);
+    // const { mentor, mentees, isLoading, isError } = useMentorMentees(id);
+    const { mentor } = useMentorMentees(id);
+
+
+    const {
+        data = [],
+        isLoading,
+        isError,
+    } = useAssignedMentees(id);
+    
+const mentees = useMemo(
+    () =>
+        (data ?? []).map(item => ({
+            ...item,
+            id: item._id,
+        })),
+    [data]
+);
+
+
     const mentorName = mentor
         ? `${mentor.firstName} ${mentor.lastName ?? ''}`
         : 'Mentor';

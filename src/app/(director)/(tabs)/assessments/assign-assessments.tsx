@@ -17,15 +17,42 @@ const AssignAssessments = () => {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams();
-
+   console.log("params",params);
     // Get selected assessment IDs from params
+    // const selectedAssessmentIds = useMemo(() => {
+    //     const ids = params.assessmentIds;
+    //     if (typeof ids === 'string') { 
+    //         return JSON.parse(ids);
+    //     }
+    //     return [];
+    // }, [params.assessmentIds]);
     const selectedAssessmentIds = useMemo(() => {
-        const ids = params.assessmentIds;
-        if (typeof ids === 'string') {
-            return JSON.parse(ids);
+    const ids = params.assessmentIds;
+
+    if (!ids) return [];
+
+    // If already array
+    if (Array.isArray(ids)) {
+        return ids;
+    }
+
+    // Single ID string
+    if (typeof ids === 'string') { 
+        try {
+            // Try parsing JSON array first
+            const parsed = JSON.parse(ids);
+
+            return Array.isArray(parsed)
+                ? parsed
+                : [parsed];
+        } catch {
+            // Fallback: treat as single ID
+            return [ids];
         }
-        return [];
-    }, [params.assessmentIds]);
+    }
+
+    return [];
+}, [params.assessmentIds]);
 
     const [search, setSearch] = useState('');
     const [selectedMentees, setSelectedMentees] = useState<Set<string>>(new Set());

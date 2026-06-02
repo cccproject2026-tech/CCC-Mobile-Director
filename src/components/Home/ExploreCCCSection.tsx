@@ -4,7 +4,6 @@ import { Route } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import ExploreCard from '../Cards/ExploreCard';
-
 type Props = {}
 
 export const exploreItems = [

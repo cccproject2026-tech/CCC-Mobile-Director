@@ -7,14 +7,38 @@ interface Props {
     onClose: () => void;
     onReschedule: () => void;
     onCancel: () => void;
+    onView:() => void;
 }
 
-const MeetingOptionModal: React.FC<Props> = ({ visible, onClose, onReschedule, onCancel }) => {
+const MeetingOptionModal: React.FC<Props> = ({ visible, onClose, onReschedule, onCancel,onView }) => {
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <Pressable style={styles.overlay} onPress={onClose}>
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]} />
                 <View style={styles.content}>
+                          {/* VIEW */}
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.option,
+                            pressed && styles.optionPressed,
+                        ]}
+                        onPress={() => {
+                            onClose();
+                            onView();
+                        }}
+                    >
+                        <Ionicons
+                            name="eye-outline"
+                            size={20}
+                            color="#FFFFFF"
+                        />
+
+                        <Text style={styles.optionText}>
+                            View Details
+                        </Text>
+                    </Pressable>
+
+                    <View style={styles.separator} />
                     <Pressable 
                         style={({ pressed }) => [styles.option, pressed && styles.optionPressed]} 
                         onPress={() => {

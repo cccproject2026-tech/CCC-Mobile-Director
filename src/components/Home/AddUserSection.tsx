@@ -6,7 +6,9 @@ import { Alert, StyleSheet } from 'react-native';
 import AddUserCard from '../Cards/AddUserCard';
 import UserAddedConfirmationModal from '../Modals/AddUserConfirmationModal';
 
-type Props = {};
+type Props = {
+        onUserCreated?: () => void;
+};
 
 const AddUserSection = (props: Props) => {
     const [showConfirmation, setShowConfirmation] = useState(false);
@@ -33,6 +35,7 @@ const AddUserSection = (props: Props) => {
                     role: created.role || role,
                 });
                 setShowConfirmation(true);
+                //   props?.onUserCreated?.();
             },
             onError: (error: any) => {
                 Alert.alert(

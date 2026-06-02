@@ -43,7 +43,7 @@ export default function MentorCard({
     if (layout === "list") {
         return (
             <Pressable style={styles.listContainer} onPress={onPress}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <View style={{ flexDirection: 'row', alignItems: 'center'}}>
                     <ImageContainer src={mentor.profilePicture} size={46} />
 
                     <View style={styles.listInfo}>
@@ -56,10 +56,11 @@ export default function MentorCard({
                             </View>
                         ) : null}
                     </View>
+                                    <ContactIcons small onCall={onCall} onChat={onChat} onMail={onMail} onWhatsApp={onWhatsApp} btnStyles={{marginRight: 3}}/>
+ 
                 </View>
-
-                <ContactIcons small onCall={onCall} onChat={onChat} onMail={onMail} onWhatsApp={onWhatsApp} btnStyles={{marginRight: 3}}/>
                 {showMenu && <ContextMenu menuItems={menuItems} fallbackPress={onMenu} />}
+   
             </Pressable>
         );
     }
@@ -147,7 +148,7 @@ export const styles = StyleSheet.create({
         marginBottom: 10,
         justifyContent: "space-between",
     },
-    listInfo: { flexDirection: "row", alignItems: "center" },
+    listInfo: { flexDirection: "row", alignItems: "center", marginRight:10 },
     listName: { fontSize: 14, fontWeight: "700", color: "#fff", marginRight: 6 },
 
     /* Mentees Badge */

@@ -1,8 +1,8 @@
 import { isSmallDevice } from '@/utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-
+import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { router } from 'expo-router';
 type Props = {
     onClick?: () => void;
     onProgressPress?: () => void;
@@ -26,13 +26,13 @@ const WelcomeCard: React.FC<Props> = ({
 }) => {
     const showProgress = progress !== undefined && progress >= 0;
     const progressHandler = onProgressPress ?? onClick;
-
+console.log("progress",progress);
     return (
         <View
             style={[
                 styles.container as ViewStyle,
                 compact ? styles.containerCompact : null,
-                { backgroundColor: bg, borderColor },
+                { backgroundColor:bg, borderColor:borderColor },
             ]}
         >
             <View style={[styles.content, compact && styles.contentCompact]}>
@@ -43,7 +43,7 @@ const WelcomeCard: React.FC<Props> = ({
                 >
                     {avatar ? (
                         <Image
-                            source={typeof avatar === 'string' ? { uri: avatar } : avatar}
+                            source={typeof avatar === 'string' ? { uri: avatar } : avatar}                            
                             style={[styles.avatar, compact && styles.avatarCompact]}
                         />
                     ) : (
@@ -58,6 +58,8 @@ const WelcomeCard: React.FC<Props> = ({
                 </Pressable>
 
                 <View style={styles.rightColumn}>
+                    <View style={styles.viewProgressContainer}>
+                        <View>
                     <Pressable
                         onPress={onClick}
                         disabled={!onClick}
@@ -65,7 +67,14 @@ const WelcomeCard: React.FC<Props> = ({
                     >
                         <Text style={[styles.message, compact && styles.messageCompact]}>{message}</Text>
                     </Pressable>
-
+                      <Text style={styles.roleText}>
+                                     Director Dashboard
+                                 </Text>
+                                 </View>
+                    {/* <TouchableOpacity style={styles.viewSubContainer} onPress={() => router.push('/(director)/(tabs)/progress-tracker')}>
+                        <Text style={styles.viewPrgressTxt}>View Progress</Text>
+                    </TouchableOpacity>  */}
+</View>
                     {showProgress && (
                         <Pressable
                             onPress={progressHandler}
@@ -80,10 +89,10 @@ const WelcomeCard: React.FC<Props> = ({
                             </Text>
                             <View style={styles.progressVisuals}>
                                 <View style={[styles.progressContainer, compact && styles.progressContainerCompact]}>
-                                    <View style={[styles.progressBar, { width: `${progress}%` }]} />
+                                    <View style={[styles.progressBar, { width: `${progress || 72.76}%` }]} />
                                 </View>
                                 <Text style={[styles.progressText, compact && styles.progressTextCompact]}>
-                                    {progress} %
+                                    {progress || 72.76} %
                                 </Text>
                             </View>
                         </Pressable>
@@ -194,4 +203,29 @@ const styles = StyleSheet.create({
         fontSize: isSmallDevice ? 12 : 13,
         minWidth: 36,
     },
+    viewProgressContainer:{
+        display: "flex",
+        flexDirection: "row",
+         alignItems: "center",
+         justifyContent: "space-between",
+         marginBottom:6
+    },
+    viewSubContainer:{
+        borderWidth:0.5,
+        borderColor:"#fff",
+        paddingHorizontal:6,
+        paddingVertical:6,          
+        borderRadius:6,
+        backgroundColor:"rgba(255,255,255,0.14)",
+    },
+    viewPrgressTxt:{
+        color:"#fff",
+        fontSize:12,
+        fontWeight:"700"
+    },
+        roleText: {
+        color: "white",
+        fontSize: 12,
+        fontWeight:'400',
+    }
 });

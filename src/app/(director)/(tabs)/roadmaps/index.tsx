@@ -18,8 +18,8 @@ import { getRoadmapCard } from '@/utils/roadmapMapper';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -46,8 +46,9 @@ const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
 
 export default function RevitalizationRoadmap() {
     const router = useRouter();
+
     const [search, setSearch] = useState('');
-    const [activeTab, setActiveTab] = useState<'roadmap-library' | 'mentors' | 'mentees'>('roadmap-library');
+    // const [activeTab, setActiveTab] = useState<'roadmap-library' | 'mentors' | 'mentees'>('roadmap-library');
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState('Course Completion : Oldest');
     const { bottom } = useSafeAreaInsets();
@@ -57,6 +58,28 @@ export default function RevitalizationRoadmap() {
     const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
     const [selectedRoadmap, setSelectedRoadmap] = useState<RoadmapCardData | null>(null);
 
+    const params = useLocalSearchParams();
+    console.log("params", params.tab);
+    const validTabs = ['roadmap-library', 'mentors', 'mentees'] as const;
+
+    type TabType = (typeof validTabs)[number];
+
+    const initialTab: TabType =
+        params?.tab && validTabs.includes(params.tab as TabType)
+            ? (params.tab as TabType)
+            : 'roadmap-library';
+
+    const [activeTab, setActiveTab] = useState<
+        'roadmap-library' | 'mentors' | 'mentees'
+    >(initialTab);
+
+    useEffect(() => {
+        if (params?.tab && validTabs.includes(params.tab as TabType)) {
+            setActiveTab(params.tab as TabType);
+        } else {
+            setActiveTab('roadmap-library');
+        }
+    }, [params?.tab]);
     // ✅ Use the new hook for fetching all roadmaps (Director)
     const {
         data: roadmaps = [],
@@ -169,40 +192,40 @@ export default function RevitalizationRoadmap() {
                 }, 300);
             },
         },
-        {
-            icon: 'person-remove-outline',
-            label: 'Assignments',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
-            },
-        },
-        {
-            icon: 'clipboard-outline',
-            label: 'Roadmaps of Mentees',
-            onPress: () => {
-                if (!selectedMentee?.id) return;
-                handleCloseModal();
-                setTimeout(
-                    () =>
-                        router.push({
-                            pathname: '/(director)/(tabs)/mentees/[id]/progress',
-                            params: { id: selectedMentee.id },
-                        } as any),
-                    300,
-                );
-            },
-        },
-        {
-            icon: 'checkmark-done-outline',
-            label: 'Mentor Notes',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => {
-                    router.push({ pathname: `/mentees/notes` as any, params: { id: selectedMentee?.id } });
-                }, 300);
-            },
-        },
+        // {
+        //     icon: 'person-remove-outline',
+        //     label: 'Assignments',
+        //     onPress: () => {
+        //         handleCloseModal();
+        //         setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
+        //     },
+        // },
+        // {
+        //     icon: 'clipboard-outline',
+        //     label: 'Roadmaps of Mentees',
+        //     onPress: () => {
+        //         if (!selectedMentee?.id) return;
+        //         handleCloseModal();
+        //         setTimeout(
+        //             () =>
+        //                 router.push({
+        //                     pathname: '/(director)/(tabs)/mentees/[id]/progress',
+        //                     params: { id: selectedMentee.id },
+        //                 } as any),
+        //             300,
+        //         );
+        //     },
+        // },
+        // {
+        //     icon: 'checkmark-done-outline',
+        //     label: 'Mentor Notes',
+        //     onPress: () => {
+        //         handleCloseModal();
+        //         setTimeout(() => {
+        //             router.push({ pathname: `/mentees/notes` as any, params: { id: selectedMentee?.id } });
+        //         }, 300);
+        //     },
+        // },
         {
             icon: 'book-outline',
             label: 'View Progress Report',
@@ -399,20 +422,20 @@ export default function RevitalizationRoadmap() {
                 // }
 
 
-       if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
+                if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
                     setTimeout(() => {
                         router.push({
                             // pathname: `/(director)/(tabs)/roadmaps/phase-list`,
                             pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-edit',
                             params: {
-                                  isEditMode: 'true',
+                                isEditMode: 'true',
                                 roadmapId: roadmap._id,
                                 type: 'phase',
                                 name: roadmap.name || '',
                                 subheading: roadmap.roadMapDetails || roadmap.description || '',
                                 completionTime: roadmap.duration || '',
-                                bannerImage: roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl|| '',
-                                 },
+                                bannerImage: roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl || '',
+                            },
                         });
                     }, 300);
                 } else {
@@ -427,7 +450,7 @@ export default function RevitalizationRoadmap() {
                                 name: roadmap.name || '',
                                 subheading: roadmap.roadMapDetails || roadmap.description || '',
                                 completionTime: roadmap.duration || '',
-                                bannerImage:  roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl||  '',
+                                bannerImage: roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl || '',
                             },
                         });
                     }, 300);
@@ -443,6 +466,7 @@ export default function RevitalizationRoadmap() {
                 if (!selectedRoadmap) return;
                 const roadmap = roadmaps.find(r => r.name === selectedRoadmap.title);
                 if (!roadmap) return;
+                console.log("roadmap",roadmap);
                 deleteRoadmapMutation.mutate(roadmap._id, {});
                 // handleCloseModal();
 
@@ -506,6 +530,9 @@ export default function RevitalizationRoadmap() {
             bottomSheetModalRef.current?.present();
         }, 0);
     }, []);
+
+
+
 
     const handleCloseModal = useCallback(() => {
         bottomSheetModalRef.current?.dismiss();
@@ -686,7 +713,7 @@ export default function RevitalizationRoadmap() {
         { key: 'mentees', label: 'Mentees' },
     ];
 
-    // ✅ List Header Component
+    // ✅ List Header Component 
     const renderListHeader = () => (
         <View>
             {swiperProfiles.length > 0 ? (
@@ -735,7 +762,7 @@ export default function RevitalizationRoadmap() {
     // ✅ List Footer Component for Pagination
     const renderListFooter = () => {
         const isFetching = activeTab === 'mentors' ? isFetchingNextMentors :
-                           activeTab === 'mentees' ? isFetchingNextMentees : false;
+            activeTab === 'mentees' ? isFetchingNextMentees : false;
 
         if (isFetching) {
             return (
@@ -773,6 +800,7 @@ export default function RevitalizationRoadmap() {
                         showMenu={true}
                         onMenuPress={() => handleRoadmapMenuPress(roadmap)}
                         onPress={() => handlePhasePress(roadmap)}
+                        paramsData={params?.tab}
                     />
                 </View>
             );
@@ -808,7 +836,7 @@ export default function RevitalizationRoadmap() {
         } else if (activeTab === 'mentees') {
             const mentee = item as Mentee;
             return (
-                 <View style={styles.cardWrapper}>
+                <View style={styles.cardWrapper}>
                     <MenteeProgressCard
                         data={mentee}
                         layout={viewMode}
@@ -828,6 +856,7 @@ export default function RevitalizationRoadmap() {
                         onInviteAsFieldMentor={() =>
                             router.push('/(director)/(tabs)/invite-field-mentor')
                         }
+                        paramsData={params?.tab}
                     />
                 </View>
             );
@@ -859,9 +888,9 @@ export default function RevitalizationRoadmap() {
 
                 {/* ✅ Single Main FlatList */}
                 {/* Check for empty state or loading for initial load if needed, but handled inside hooks */}
-                {((activeTab === 'mentors' && mentorsLoading) || 
-                  (activeTab === 'mentees' && menteesLoading) || 
-                  (activeTab === 'roadmap-library' && isLoadingRoadmaps)) && !getListData().length ? (
+                {((activeTab === 'mentors' && mentorsLoading) ||
+                    (activeTab === 'mentees' && menteesLoading) ||
+                    (activeTab === 'roadmap-library' && isLoadingRoadmaps)) && !getListData().length ? (
                     <View style={styles.centerContent}>
                         <ActivityIndicator size="large" color="#fff" />
                         <Text style={styles.loadingText}>Loading...</Text>

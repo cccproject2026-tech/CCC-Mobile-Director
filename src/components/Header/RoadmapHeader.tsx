@@ -127,12 +127,12 @@ const RoadmapHeader = ({ handleOpenCreateRoadmapModal, activeTab }: Props) => {
                 </TouchableOpacity>
 
                 {/* Three Dots Menu */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={styles.iconButton}
                     onPress={() => setShowOutcomeMenu(!showOutcomeMenu)}
                 >
                     <Ionicons name="ellipsis-vertical" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             {/* Outcome Context Menu */}

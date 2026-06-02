@@ -26,6 +26,7 @@ import {LinearGradient} from "expo-linear-gradient";
 import MeetingOptionModal from "@/components/Modals/MeetingOptionModal";
 import CancelConfirmationModal from "@/components/Modals/CancelConfirmationModal";
 import React, {useCallback, useMemo, useState} from "react";
+import MeetingDetailsModal from "@/components/Modals/MeetingDetailsModal";
 import {
   ActivityIndicator,
   Alert,
@@ -36,6 +37,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Linking
 } from "react-native";
 import {useSafeAreaInsets} from "react-native-safe-area-context";
 
@@ -49,6 +51,7 @@ const Appointments: React.FC = () => {
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = React.useState<string>(today);
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [showViewModal, setShowViewModal] = useState(false);
   const [activeTab, setActiveTab] = React.useState<
     "appointments" | "availability" | "meeting"
   >("appointments");
@@ -99,12 +102,13 @@ const Appointments: React.FC = () => {
 
   const {data: appointments = [], isLoading: isLoadingAppointments} = useUpcomingAppointment();
 
-  const filteredAppointments = appointments.filter(
+  const filteredAppointments = appointments.filter( 
     (app) =>
       app.meetingDate.split("T")[0] === selectedDate &&
       (app.notes || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
-
+console.log("appoint ments: ", appointments);
+console.log("filteredAppointments: ", filteredAppointments);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [showOptionsModal, setShowOptionsModal] = useState(false);
@@ -196,6 +200,13 @@ const Appointments: React.FC = () => {
       router.push("/(director)/(tabs)/appointments/availability");
     }
   };
+  const handleViewMeeting = (appointment: any) => {
+    setSelectedAppointment(appointment);
+
+    setShowOptionsModal(false);
+
+    setShowViewModal(true);
+};
 
   const renderAppointment = ({item}: {item: Appointment}) => {
     const mentor = allUsers.find((m: any) => m.id === item.mentorId);
@@ -244,9 +255,15 @@ const Appointments: React.FC = () => {
           setSelectedAppointment(item);
           setShowOptionsModal(true);
         }}
+          onJoinMeeting={() => {
+            if (item?.meetingLink) {
+                Linking.openURL(item.meetingLink);
+            }
+        }}
       />
     );
   };
+  
 
   return (
     <BottomSheetModalProvider>
@@ -380,7 +397,7 @@ const Appointments: React.FC = () => {
                 style={styles.summaryText}
               >{`No appointments on ${new Date(selectedDate).toLocaleDateString("en-GB", {day: "2-digit", month: "short", year: "2-digit"})}`}</Text>
             )}
-          </View>
+          </View> 
 
           {/* <View style={styles.searchSection}>
                         <SearchBar
@@ -462,7 +479,7 @@ const Appointments: React.FC = () => {
           title={responseModal.message}
         />
 
-        <MeetingOptionModal
+        <MeetingOptionModal 
           visible={showOptionsModal}
           onClose={() => setShowOptionsModal(false)}
           onReschedule={() => {
@@ -471,6 +488,11 @@ const Appointments: React.FC = () => {
           onCancel={() => {
             if (selectedAppointment) setShowCancelConfirmModal(true);
           }}
+                  onView={() => {
+        if (selectedAppointment) {
+            handleViewMeeting(selectedAppointment);
+        }
+    }}
         />
 
         <CancelConfirmationModal
@@ -479,6 +501,11 @@ const Appointments: React.FC = () => {
           onConfirm={handleConfirmCancel}
           loading={cancelLoading}
         />
+        <MeetingDetailsModal
+    visible={showViewModal}
+    onClose={() => setShowViewModal(false)}
+    meeting={selectedAppointment}
+/>
       </LinearGradient>
     </BottomSheetModalProvider>
   );

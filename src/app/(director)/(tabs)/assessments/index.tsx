@@ -1,12 +1,13 @@
 import {
     ActivityIndicator,
+    Alert,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,6 +17,7 @@ import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import {
     useAssessments,
     useAssignedAssessmentsForUser,
+    useDeleteAssessmentMutation
 } from '@/hooks/useAssessments';
 import { useMentees } from '@/hooks/useMentees';
 import { useMentors } from '@/hooks/useMentors';
@@ -25,7 +27,8 @@ import { RefreshControl } from 'react-native-gesture-handler';
 import { Routes } from '@/navigation/routes';
 import { AssignedAssessmentView } from '@/types/assessment.types';
 import { Mentor } from '@/types/user.types';
-
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
 type MainTab = 'library' | 'assigned' | 'mentor';
 type StatusFilter = 'all' | 'not_started' | 'in_progress' | 'completed';
 
@@ -39,6 +42,7 @@ const STATUS_TABS = [
 export default function AssessmentsScreen() {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
+    const deleteAssessmentMutation = useDeleteAssessmentMutation();
     const params = useLocalSearchParams<{ tab?: string; assignUser?: string }>();
 
     const initialTab = (params.tab as MainTab) || 'library';
@@ -52,7 +56,7 @@ export default function AssessmentsScreen() {
         typeof initialPastor === 'string' ? initialPastor : '',
     );
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-
+    const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
     useEffect(() => {
         if (params.tab && ['library', 'assigned', 'mentor'].includes(params.tab)) {
             setMainTab(params.tab as MainTab);
@@ -149,6 +153,92 @@ export default function AssessmentsScreen() {
         }
     };
 
+    const assessmentMenuItems = [
+        {
+            icon: 'create-outline',
+            label: 'Edit Assessment',
+            onPress: () => {
+                if (!selectedAssessment) return;
+                console.log("selectedAssessment", selectedAssessment);
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: "/assessments/[id]",
+                        params: { id: selectedAssessment._id },
+                    });
+                }, 300);
+            },
+        },
+        {
+            icon: 'person-add-outline',
+            label: 'Assign to',
+            onPress: () => {
+                if (!selectedAssessment) return;
+                handleCloseModal();
+                setTimeout(() => {
+                    router.push({
+                        pathname: '/(director)/(tabs)/assessments/assign-assessments',
+                        params: { assessmentIds: selectedAssessment._id },
+                    });
+                }, 300);
+            },
+        },
+        {
+            icon: 'trash-outline',
+            label: 'Delete Assessment',
+            onPress: () => {
+                if (!selectedAssessment) return;
+
+                handleCloseModal();
+
+                Alert.alert(
+                    'Delete Assessment',
+                    `Are you sure you want to delete "${selectedAssessment.name || selectedAssessment.title}"?`,
+                    [
+                        {
+                            text: 'Cancel',
+                            style: 'cancel',
+                        },
+                        {
+                            text: 'Delete',
+                            style: 'destructive',
+                            onPress: async () => {
+                                try {
+                                    await deleteAssessmentMutation.mutateAsync(
+                                        selectedAssessment._id
+                                    );
+
+                                    Alert.alert(
+                                        'Success',
+                                        'Assessment deleted successfully.'
+                                    );
+                                } catch (error) {
+                                    Alert.alert(
+                                        'Error',
+                                        'Failed to delete assessment.'
+                                    );
+                                }
+                            },
+                        },
+                    ]
+                );
+            },
+        },
+    ];
+    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+    const handleAssessmentMenuPress = useCallback((assessment: any) => {
+        setSelectedAssessment(assessment);
+        setTimeout(() => {
+            bottomSheetModalRef.current?.present();
+        }, 0);
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        bottomSheetModalRef.current?.dismiss();
+        setTimeout(() => setSelectedAssessment(null), 300);
+    }, []);
+
     const isRefreshing =
         (mainTab === 'library' && libraryFetching) ||
         (mainTab === 'assigned' && assignedFetching);
@@ -204,6 +294,7 @@ export default function AssessmentsScreen() {
                     : 'No assessments in library.',
             );
         }
+        console.log("filteredLibrary", filteredLibrary);
         return (
             <>
                 <Text style={styles.countText}>
@@ -214,6 +305,7 @@ export default function AssessmentsScreen() {
                         key={assessment._id}
                         data={assessment}
                         onPress={() => router.push(Routes.assessments.detail(assessment._id))}
+                        onMenuPress={() => handleAssessmentMenuPress(assessment)}
                     />
                 ))}
             </>
@@ -353,6 +445,14 @@ export default function AssessmentsScreen() {
                     {mainTab === 'mentor' && renderMentor()}
                 </ScrollView>
             </View>
+            <ActionBottomSheet
+                ref={bottomSheetModalRef}
+                title={selectedAssessment?.name || selectedAssessment?.title || 'Assessment'}
+                subtitle={selectedAssessment?.type || ''}
+                image={selectedAssessment?.bannerImage}
+                actions={assessmentMenuItems}
+                onClose={handleCloseModal}
+            />
         </GradientBackground>
     );
 }
