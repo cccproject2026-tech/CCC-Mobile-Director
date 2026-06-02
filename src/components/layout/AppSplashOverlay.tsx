@@ -1,0 +1,42 @@
+import { Image, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+
+type AppSplashOverlayProps = {
+  visible: boolean;
+  onLayout?: (event: LayoutChangeEvent) => void;
+};
+
+/**
+ * Full-screen splash shown after the native splash until the app is ready.
+ * Needed on Android where Expo only supports a small centered launch icon.
+ */
+export default function AppSplashOverlay({ visible, onLayout }: AppSplashOverlayProps) {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <View style={styles.container} pointerEvents="auto" onLayout={onLayout}>
+      <Image
+        source={require('@/assets/images/splash-icon1.png')}
+        style={styles.image}
+        resizeMode="contain"
+        accessibilityIgnoresInvertColors
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+    elevation: 9999,
+    backgroundColor: '#0F3D5E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    width: '85%',
+    maxWidth: 320,
+  },
+});

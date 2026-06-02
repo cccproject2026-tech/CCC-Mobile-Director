@@ -1,5 +1,6 @@
 import "@/services/api/interceptors";
 import { AddFieldSheetProvider } from "@/contexts/AddFieldSheetContext";
+import { useGoogleCalendarOAuthReturn } from "@/hooks/googleCalendar/useGoogleCalendarOAuthReturn";
 import { useAuthStore } from "@/stores/auth.store";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -18,11 +19,19 @@ const queryClient = new QueryClient({
   },
 });
 
+function GoogleCalendarOAuthListener() {
+  useGoogleCalendarOAuthReturn();
+  return null;
+}
+
 function RootNav() {
   const { isAuthenticated } = useAuthStore();
+  const canUseScheduleMeeting = isAuthenticated;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <>
+      <GoogleCalendarOAuthListener />
+      <Stack screenOptions={{ headerShown: false }}>
 
       {/* AUTH ROUTES */}
       <Stack.Protected guard={!isAuthenticated}>
@@ -34,9 +43,21 @@ function RootNav() {
         <Stack.Screen name="(director)" />
       </Stack.Protected>
 
+      <Stack.Protected guard={canUseScheduleMeeting}>
+        <Stack.Screen name="schedule-meeting" />
+      </Stack.Protected>
+
+      <Stack.Screen
+        name="oauth/google-calendar"
+        options={{ headerShown: false, animation: "none" }}
+      />
+
+      <Stack.Screen name="appointments/meeting-details" />
+
       <Stack.Screen name="+not-found" />
 
     </Stack>
+    </>
   );
 }
 

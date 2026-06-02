@@ -26,6 +26,8 @@ import { icons } from '@/constants';
 import { useCancelAppointment,useUpcomingAppointment } from '@/hooks/useAppointments';
 import MeetingDetailsModal from '../Modals/MeetingDetailsModal';
 import { isSmallDevice } from '@/utils/responsive';
+import { openScheduleMeeting } from '@/lib/scheduling/scheduleMeetingNavigation';
+import { useAuthStore } from '@/stores/auth.store';
 type Props = {}
 
 const GlanceSection = (props: Props) => {
@@ -126,16 +128,12 @@ const [showCancelConfirmModal, setShowCancelConfirmModal] =
     ];
 const handleReschedule = (appointment: any) => {
     setSelectedAppointment(appointment);
-
     setShowOptionsModal(false);
-
     appointmentSheetRef.current?.dismiss();
-
-    router.push({
-        pathname: '/(director)/(tabs)/appointments',
-        params: {
-            openSheet: 'true',
-        },
+    const role = useAuthStore.getState().user?.role;
+    openScheduleMeeting(router, role, {
+        mode: 'reschedule',
+        appointmentId: String(appointment?.id ?? ''),
     });
 };
 

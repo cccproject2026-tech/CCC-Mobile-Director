@@ -11,6 +11,11 @@ export const ENDPOINTS = {
     RESET_PASSWORD: "/auth/reset-password",
     REFRESH_TOKEN: "/auth/refresh-token",
     LOGOUT: "/auth/logout",
+    GOOGLE: "/auth/google",
+  },
+
+  GOOGLE_CALENDAR: {
+    STATUS: "/google-calendar/status",
   },
 
     // Users
@@ -96,21 +101,41 @@ export const ENDPOINTS = {
       `/microgrant/application/${applicationId}/status`,
   },
 
+  AVAILABILITY: {
+    MERGED: (mentorUserId: string) => `/availability/${mentorUserId}`,
+  },
+
   APPOINTMENTS: {
     GET: (userId: string) => `/appointments/user/${userId}`,
     CREATE: "/appointments",
     GET_BY_MENTOR: (mentorId: string) => `/appointments/mentor/${mentorId}`,
+    GET_BY_ID: (appointmentId: string) => `/appointments/${appointmentId}`,
     UPDATE: (appointmentId: string) => `/appointments/${appointmentId}`,
     GET_WEEKLY_AVAILABILITY: (mentorId: string) =>
       `/appointments/availability/${mentorId}`,
     GET_MONTHLY_AVAILABILITY: (mentorId: string, month: number, year: number) =>
       `/appointments/availability/${mentorId}/month?month=${month}&year=${year}`,
     SET_AVAILABILITY: "/appointments/availability",
+    CREATE_RECURRING_AVAILABILITY: "/appointments/availability/recurring",
+    PATCH_AVAILABILITY_DAY: (mentorId: string) =>
+      `/appointments/availability/${mentorId}/day`,
+    PATCH_AVAILABILITY_SETTINGS: (mentorId: string) =>
+      `/appointments/availability/${mentorId}/settings`,
+    MARK_DAY_UNAVAILABLE: (mentorId: string) =>
+      `/appointments/availability/${mentorId}/day/unavailable`,
+    MARK_DAY_AVAILABLE: (mentorId: string) =>
+      `/appointments/availability/${mentorId}/day/available`,
+    DELETE_AVAILABILITY_DAY: (mentorId: string, dateYmd: string) =>
+      `/appointments/availability/${mentorId}/day/${dateYmd.slice(0, 10)}`,
+    DELETE_AVAILABILITY_SLOT: (mentorId: string) =>
+      `/appointments/availability/${mentorId}/slot`,
     RESCHEDULE: (appointmentId: string) =>
       `/appointments/${appointmentId}/reschedule`,
+    CANCEL: (appointmentId: string) =>
+      `/appointments/${appointmentId}/cancel`,
     UPCOMING: () => `/appointments/upcoming`,
-    CANCEL_MEETING: (meetingId: string | null) => `/appointments/${meetingId}/cancel`,
-    SEARCH_WITH_DATE: (userId: string | null, date: string | null) => `/appointments/availability/${userId}/week?date=${date}`,
+    SEARCH_WITH_DATE: (userId: string | null, date: string | null) =>
+      `/appointments/availability/${userId}/week?date=${date}`,
   },
 
   ROADMAPS: {
