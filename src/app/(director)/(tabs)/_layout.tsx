@@ -60,6 +60,7 @@ export default function DirectorTabLayout() {
         "videos",
         "contact-details",
         "reports",
+        "ai-insights",
     ];
 
     return (

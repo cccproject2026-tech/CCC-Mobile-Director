@@ -2,7 +2,6 @@ import WelcomeCard from "@/components/Cards/WelcomeCard";
 import HeaderHero from "@/components/Header/HeroHeader";
 import ActionCardSection from "@/components/Home/ActionCardSection";
 import AddUserSection from "@/components/Home/AddUserSection";
-import ExploreCCCSection from "@/components/Home/ExploreCCCSection";
 import MentorMenteeSection from "@/components/Home/MentorMenteeSection";
 import OverviewSection from "@/components/Home/OverviewSection";
 import { GradientBackground, homeLayout } from "@/components/ui/design-system";
@@ -114,13 +113,12 @@ export default function Index() {
             <MentorShipAndSupportSection />
 
             <TrackingAndReportsSection />
-            <AiInsightsSection />
             <DirectorsNotesSection />
             <AddUserSection />
             <MentorMenteeSection />
-            <ExploreCCCSection />
             <OverviewSection />
             <ActionCardSection />
+            <AiInsightsSection />
           </View>
         </View>
       </Animated.ScrollView>
