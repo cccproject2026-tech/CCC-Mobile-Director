@@ -1,4 +1,7 @@
 import SearchBar from "@/components/Header/SearchBar";
+import { Colors } from "@/constants/Colors";
+import { homeLayout, roadmapTheme } from "@/components/ui/design-system";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAssignedAssessmentsForUser } from "@/hooks/useAssessments";
 import { Routes } from "@/navigation/routes";
 import { usersService } from "@/services/users.service";
@@ -118,7 +121,7 @@ export default function CdpDevelopmentPlanModal({ visible, onClose }: Props) {
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <View style={styles.container}>
+      <LinearGradient colors={[...Colors.appBgGradient]} style={styles.container}>
         <View style={styles.header}>
           <View style={styles.headerText}>
             <Text style={styles.headerTitle}>{headerTitle}</Text>
@@ -248,7 +251,7 @@ export default function CdpDevelopmentPlanModal({ visible, onClose }: Props) {
             )}
           </ScrollView>
         )}
-      </View>
+      </LinearGradient>
     </Modal>
   );
 }
@@ -256,7 +259,6 @@ export default function CdpDevelopmentPlanModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#176192",
   },
   header: {
     flexDirection: "row",
@@ -280,7 +282,7 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: "rgba(255,255,255,0.7)",
+    color: roadmapTheme.textMuted,
     lineHeight: 18,
   },
   headerActions: {
@@ -293,8 +295,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-    backgroundColor: "rgba(255,255,255,0.1)",
+    borderColor: roadmapTheme.newfrostedBorder,
+    backgroundColor: roadmapTheme.newfrostedSurfaceStrong,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -328,11 +330,11 @@ const styles = StyleSheet.create({
   emptyBlock: {
     marginTop: 16,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: homeLayout.cardRadius,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
-    backgroundColor: "rgba(255,255,255,0.06)",
-    color: "rgba(255,255,255,0.75)",
+    borderColor: roadmapTheme.newfrostedBorder,
+    backgroundColor: roadmapTheme.newfrostedSurfaceStrong,
+    color: roadmapTheme.textMuted,
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
@@ -343,7 +345,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
     textTransform: "uppercase",
-    color: "#8ec5eb",
+    color: roadmapTheme.accentMint,
   },
   selectedName: {
     marginTop: 4,
@@ -358,16 +360,16 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 14,
     marginBottom: 12,
-    borderRadius: 16,
+    borderRadius: homeLayout.cardRadius,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
-    backgroundColor: "rgba(19, 42, 66, 0.85)",
+    borderColor: roadmapTheme.newfrostedBorder,
+    backgroundColor: roadmapTheme.newfrostedSurfaceStrong,
   },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(142, 197, 235, 0.2)",
+    backgroundColor: roadmapTheme.frostedSurface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -386,15 +388,15 @@ const styles = StyleSheet.create({
   listSubtitle: {
     marginTop: 2,
     fontSize: 12,
-    color: "rgba(255,255,255,0.55)",
+    color: roadmapTheme.textCaption,
   },
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "rgba(142, 197, 235, 0.45)",
-    backgroundColor: "rgba(142, 197, 235, 0.15)",
+    borderColor: roadmapTheme.newfrostedBorder,
+    backgroundColor: roadmapTheme.frostedSurface,
   },
   badgeText: {
     fontSize: 11,

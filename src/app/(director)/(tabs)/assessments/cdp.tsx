@@ -1,5 +1,9 @@
 import TopBar from '@/components/Header/TopBar';
-import { GradientBackground } from '@/components/ui/design-system';
+import {
+  GradientBackground,
+  homeLayout,
+  roadmapTheme,
+} from '@/components/ui/design-system';
 import { useCdpSectionRecommendations } from '@/hooks/useAssessments';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { Ionicons } from '@expo/vector-icons';
@@ -149,7 +153,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   headerSub: {
-    color: 'rgba(255,255,255,0.65)',
+    color: roadmapTheme.textMuted,
     fontSize: 13,
     marginTop: 4,
   },
@@ -202,10 +206,10 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: 'rgba(142, 197, 235, 0.25)',
+    borderRadius: homeLayout.tileRadius,
+    backgroundColor: roadmapTheme.newfrostedSurfaceStrong,
     borderWidth: 1,
-    borderColor: 'rgba(142, 197, 235, 0.45)',
+    borderColor: roadmapTheme.newfrostedBorder,
   },
   downloadText: {
     color: '#fff',
@@ -214,14 +218,14 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     padding: 24,
-    borderRadius: 14,
+    borderRadius: homeLayout.cardRadius,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: roadmapTheme.newfrostedBorder,
+    backgroundColor: roadmapTheme.newfrostedSurfaceStrong,
     alignItems: 'center',
   },
   emptyText: {
-    color: 'rgba(255,255,255,0.65)',
+    color: roadmapTheme.textMuted,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
@@ -229,13 +233,13 @@ const styles = StyleSheet.create({
   sectionCard: {
     marginBottom: 16,
     padding: 16,
-    borderRadius: 14,
+    borderRadius: homeLayout.cardRadius,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderColor: roadmapTheme.newfrostedBorder,
+    backgroundColor: roadmapTheme.newfrostedSurfaceStrong,
   },
   sectionHeading: {
-    color: '#8ec5eb',
+    color: roadmapTheme.accentMint,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 8,
@@ -256,7 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cdpLabel: {
-    color: 'rgba(255,255,255,0.55)',
+    color: roadmapTheme.textCaption,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
@@ -264,13 +268,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   cdpMessage: {
-    color: 'rgba(255,255,255,0.9)',
+    color: roadmapTheme.textPrimary,
     fontSize: 14,
     lineHeight: 22,
   },
   sentAt: {
     marginTop: 10,
-    color: 'rgba(255,255,255,0.45)',
+    color: roadmapTheme.textCaption,
     fontSize: 11,
   },
 });
