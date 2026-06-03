@@ -242,6 +242,8 @@ export interface CourseCompletedUser {
     response?: "Accepted" | "Waiting" | "Not Interested";
     hasCompleted?: boolean;
     hasIssuedCertificate?: boolean;
+    hasRealCertificate?: boolean;
+    fieldMentorInvitation?: unknown;
 }
 
 export interface InviteFieldMentorPayload {

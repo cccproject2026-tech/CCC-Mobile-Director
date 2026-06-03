@@ -1,18 +1,27 @@
+import {
+  certificatesService,
+  hasRealCertificate,
+} from "@/services/certificates.service";
 import { usersService } from "@/services/users.service";
 import { useAuthStore } from "@/stores/auth.store";
+import { CertificateRecord } from "@/types/certificate.types";
 import {
   CourseCompletedStatus,
+  CourseCompletedUser,
   InviteFieldMentorPayload,
 } from "@/types/progress.types";
 import { Mentee } from "@/types/user.types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert } from "react-native";
+import { Alert, Linking } from "react-native";
 import { profileKeys } from "./useProfile";
 import { progressKeys } from "./useProgress";
 
 export const completionKeys = {
   courseCompleted: (search?: string) => ["courseCompleted", search ?? ""] as const,
+  certificate: (userId: string) => ["certificate", userId] as const,
 };
+
+const DEFAULT_PROGRAM_NAME = "12-Month Mentoring Revitalization Program";
 
 export function useMarkProgramComplete() {
   const queryClient = useQueryClient();
@@ -31,15 +40,52 @@ export function useMarkProgramComplete() {
 export function useIssueCertificate() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, issuedBy }: { userId: string; issuedBy: string }) =>
-      usersService.issueCertificate(userId, issuedBy),
+    mutationFn: ({
+      userId,
+      issuedBy,
+      completionDate,
+      personalMessage,
+    }: {
+      userId: string;
+      issuedBy: string;
+      completionDate?: string;
+      personalMessage?: string;
+    }) =>
+      certificatesService.issueCertificate({
+        userId,
+        issuedBy,
+        programName: DEFAULT_PROGRAM_NAME,
+        completionDate,
+        personalMessage,
+      }),
     onSuccess: (_data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: progressKeys.user(userId) });
       queryClient.invalidateQueries({ queryKey: profileKeys.user(userId) });
+      queryClient.invalidateQueries({ queryKey: completionKeys.certificate(userId) });
       queryClient.invalidateQueries({ queryKey: ["mentees"] });
       queryClient.invalidateQueries({ queryKey: completionKeys.courseCompleted() });
       queryClient.invalidateQueries({ queryKey: ["directorOverview"] });
     },
+  });
+}
+
+export function useUserCertificate(userId: string | undefined) {
+  return useQuery({
+    queryKey: completionKeys.certificate(userId ?? ""),
+    queryFn: () => certificatesService.getUserCertificate(userId!),
+    enabled: !!userId,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function openCertificateUrl(certificate: CertificateRecord | null | undefined) {
+  const url = certificate?.pdfUrl || certificate?.certificateUrl;
+  if (!url || typeof url !== "string") {
+    Alert.alert("Certificate", "No certificate file is available yet.");
+    return;
+  }
+  void Linking.openURL(url).catch(() => {
+    Alert.alert("Certificate", "Could not open the certificate link.");
   });
 }
 
@@ -64,14 +110,70 @@ export function useInviteFieldMentor() {
 export function useCourseCompletedUsers(search?: string) {
   return useQuery({
     queryKey: completionKeys.courseCompleted(search),
-    queryFn: async () => {
+    queryFn: async (): Promise<CourseCompletedUser[]> => {
       const data = await usersService.getAllUsers({
         role: "pastor",
         search: search || undefined,
         limit: 500,
         roleMatch: "mixed",
       });
-      return usersService.mapToCourseCompletedUsers(data.users);
+
+      const rawUsers = data.users as Array<Record<string, unknown>>;
+      const usersExposeCertificateData = rawUsers.some((u) =>
+        certificatesService.userExposesCertificateFields(u),
+      );
+
+      const mapped = await Promise.all(
+        rawUsers.map(async (u): Promise<CourseCompletedUser | null> => {
+          const mentee = u as unknown as Mentee;
+          const id = String(u.id ?? u._id ?? "").trim();
+          if (!id) return null;
+
+          const certificate = await certificatesService.resolveCertificateForUser(
+            u,
+            usersExposeCertificateData,
+          );
+          const hasCert = hasRealCertificate(certificate);
+          const hasCompleted = Boolean(u.hasCompleted);
+          const fieldMentorInvitation = mentee.fieldMentorInvitation;
+
+          if (!fieldMentorInvitation && !hasCert && !hasCompleted) {
+            return null;
+          }
+
+          let status: CourseCompletedStatus = "completed";
+          if (fieldMentorInvitation) status = "invited";
+          else if (hasCert) status = "certificate_issued";
+          else if (hasCompleted) status = "completed";
+          else return null;
+
+          return {
+            id,
+            name:
+              `${String(u.firstName ?? "")} ${String(u.lastName ?? "")}`.trim() ||
+              "Unknown",
+            email: String(u.email ?? ""),
+            profilePicture:
+              typeof u.profilePicture === "string" ? u.profilePicture : undefined,
+            createdAt: typeof u.createdAt === "string" ? u.createdAt : undefined,
+            status,
+            hasCompleted,
+            hasIssuedCertificate: Boolean(mentee.hasIssuedCertificate) || hasCert,
+            hasRealCertificate: hasCert,
+            fieldMentorInvitation,
+            invitationDate: fieldMentorInvitation
+              ? new Date(
+                  String(
+                    (fieldMentorInvitation as { invitedAt?: string }).invitedAt ?? "",
+                  ),
+                ).toLocaleDateString()
+              : undefined,
+            response: fieldMentorInvitation ? "Waiting" : undefined,
+          };
+        }),
+      );
+
+      return mapped.filter((row): row is CourseCompletedUser => row !== null);
     },
   });
 }
@@ -215,9 +317,52 @@ export function useMenteeCardCompletionHandlers(mentee?: Mentee | null) {
   };
 }
 
+/** Tab filters aligned with CCC-Web course-completed page. */
 export function filterCourseCompletedByTab(
-  users: ReturnType<typeof usersService.mapToCourseCompletedUsers>,
-  tab: CourseCompletedStatus
+  users: CourseCompletedUser[],
+  tab: CourseCompletedStatus,
 ) {
-  return users.filter((u) => u.status === tab);
+  return users.filter((u) => {
+    if (tab === "completed") {
+      return Boolean(u.hasCompleted) && !u.hasRealCertificate;
+    }
+    if (tab === "certificate_issued") {
+      return Boolean(u.hasRealCertificate);
+    }
+    if (tab === "invited") {
+      return Boolean(u.fieldMentorInvitation);
+    }
+    return false;
+  });
+}
+
+export function sortCourseCompletedUsers(
+  users: CourseCompletedUser[],
+  sortBy: string,
+): CourseCompletedUser[] {
+  const list = [...users];
+
+  if (sortBy === "latest_completed" || sortBy === "latest_issued") {
+    return list.sort(
+      (a, b) =>
+        new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+    );
+  }
+
+  if (sortBy === "oldest_completed" || sortBy === "oldest_issued") {
+    return list.sort(
+      (a, b) =>
+        new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime(),
+    );
+  }
+
+  if (sortBy === "accepted") {
+    return list.filter((u) => u.response === "Accepted");
+  }
+
+  if (sortBy === "waiting") {
+    return list.filter((u) => u.response === "Waiting");
+  }
+
+  return list;
 }

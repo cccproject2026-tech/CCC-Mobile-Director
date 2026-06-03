@@ -7,7 +7,10 @@ export default function InviteFieldMentorRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/(director)/(tabs)/course-completed" as any);
+    router.replace({
+      pathname: "/(director)/(tabs)/course-completed",
+      params: { initialTab: "invited" },
+    } as any);
   }, [router]);
 
   return (

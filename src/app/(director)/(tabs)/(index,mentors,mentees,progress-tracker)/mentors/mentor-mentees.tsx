@@ -333,10 +333,6 @@ const mentees = useMemo(
                                     router.push(`/(director)/(tabs)/mentees/${mentee.id}` as any)
                                 }
                                 onMenuPress={() => handleMenuPress(mentee)}
-                                onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
-                                onInviteAsFieldMentor={() =>
-                                    router.push('/(director)/(tabs)/invite-field-mentor' as any)
-                                }
                             />
                         )}
                         contentContainerStyle={

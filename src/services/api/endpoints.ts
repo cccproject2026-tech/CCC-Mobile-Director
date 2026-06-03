@@ -194,6 +194,11 @@ export const ENDPOINTS = {
     LIST: "/users",
   },
 
+  CERTIFICATES: {
+    ISSUE: "/certificates/issue",
+    USER: (userId: string) => `/certificates/user/${encodeURIComponent(userId)}`,
+  },
+
   // Directors
   SUPER_ADMIN: {
     GET_ALL_DIRECTORS: "/super-admin/directors",

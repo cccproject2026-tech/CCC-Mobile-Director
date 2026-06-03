@@ -344,8 +344,12 @@ export default function Mentees() {
                                     onMail={() => sendEmail(mentee.email)}
                                     onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                     onMenuPress={() => handleMenuPress(mentee)}
-                                    onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
-                                    onInviteAsFieldMentor={() => router.push('/(director)/(tabs)/invite-field-mentor')}
+                                    onInviteAsFieldMentor={() =>
+                                        router.push({
+                                            pathname: '/(director)/(tabs)/course-completed',
+                                            params: { initialTab: 'invited' },
+                                        } as any)
+                                    }
                                     paramsData={params?.type}
                                 />
                             )}

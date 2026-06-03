@@ -22,6 +22,8 @@ const trackItems = [
         id: '3',
         iconName: 'ribbon-outline',
         title: 'Certificates Issued',
+        route: '/(director)/(tabs)/course-completed' as const,
+        params: { initialTab: 'certificate_issued' as const },
     },
     {
         id: '4',
