@@ -12,6 +12,7 @@ const roadmapItems = [
         iconName: 'map-outline',
         title: 'RoadMaps Library',
         route: '/(director)/(tabs)/roadmaps',
+        accentKey: 'sky',
         params: {
             tab: 'roadmap-library'
         }
@@ -20,14 +21,15 @@ const roadmapItems = [
         id: '2',
         iconName: 'add-circle-outline',
         title: 'Create New Roadmap',
-        route: '/(director)/(tabs)/roadmaps'
-
+        route: '/(director)/(tabs)/roadmaps',
+        accentKey: 'mint',
     },
     {
         id: '3',
         iconName: 'people-outline',
         title: 'Mentees RoadMap',
         route: '/(director)/(tabs)/roadmaps',
+        accentKey: 'gold',
         params: {
             tab: 'mentees',
         },

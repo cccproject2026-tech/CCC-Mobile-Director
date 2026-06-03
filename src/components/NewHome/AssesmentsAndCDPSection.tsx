@@ -12,18 +12,21 @@ const assesmentsItems = [
         iconName: 'folder-outline',
         title: 'Assessments Library',
         route: '/(director)/(tabs)/assessments',
+        accentKey: 'violet',
     },
     {
         id: '3',
         iconName: 'people-outline',
         title: 'Mentees Assesments',
         route: '/(director)/(tabs)/mentees',
+        accentKey: 'sky',
     },
     {
         id: '4',
         iconName: 'trending-up-outline',
         title: 'CDP \n (Development Plan)',
         action: 'cdp',
+        accentKey: 'gold',
     },
 ] as const;
 

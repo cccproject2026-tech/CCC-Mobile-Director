@@ -6,6 +6,17 @@ export { PrimaryButton } from "./PrimaryButton";
 export { roadmapTheme } from "./roadmapTheme";
 export { homeLayout } from "./homeLayout";
 export {
+  HOME_SECTION_ICON_COLORS,
+  homeTileAccents,
+  resolveHomeTileAccent,
+  resolveHomeTileIconColor,
+  resolveSectionIconColor,
+  tileSurfaceStyle,
+} from "./homeTileColors";
+export type { HomeTileAccent, HomeTileAccentKey } from "./homeTileColors";
+export { HomeGridTile } from "./HomeGridTile";
+export type { HomeGridTileProps } from "./HomeGridTile";
+export {
   useHomeGrid,
   useHomeGridLayout,
   resolveHomeGridColumns,

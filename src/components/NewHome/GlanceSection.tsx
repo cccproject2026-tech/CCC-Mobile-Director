@@ -1,4 +1,4 @@
-import { CommonCard, HomeCardHeader, useHomeGridLayout } from '../ui/design-system';
+import { CommonCard, HomeCardHeader, HomeGridTile, useHomeGridLayout } from '../ui/design-system';
 import React, { useMemo, useRef, useState, useCallback } from 'react';
 import {
     StyleSheet,
@@ -114,18 +114,17 @@ const [showCancelConfirmModal, setShowCancelConfirmModal] =
     const glanceCards = [
         {
             id: '1',
-            icon: 'people-sharp',
-            iconColor: 'white',
+            icon: 'people-sharp' as const,
+            accentKey: 'coral',
             bagde: newInterestsCount,
             title: 'New Interests',
             subTitle: '(Mentors/Mentees)',
             route: '/(director)/(tabs)/new-interests',
         },
-
         {
             id: '2',
-            icon: 'today-sharp',
-            iconColor: 'white',
+            icon: 'today-sharp' as const,
+            accentKey: 'sky',
             bagde: filteredAppointments?.length || 0,
             title: "Today's Appointments",
         },
@@ -271,10 +270,14 @@ const handleConfirmCancel = () => {
                 <View style={gridStyle} onLayout={onGridLayout}>
 
                     {glanceCards.map((item, index) => (
-
-                        <TouchableOpacity
+                        <HomeGridTile
                             key={item.id}
-                            style={[getTileStyle(index), styles.glanceTile]}
+                            iconName={item.icon}
+                            label={item.title}
+                            subtitle={item.subTitle}
+                            accentKey={item.accentKey}
+                            badge={item.bagde}
+                            style={getTileStyle(index)}
                             onPress={() => {
                                 if (item.title.includes('Appointments')) {
                                     appointmentSheetRef.current?.present();
@@ -284,38 +287,16 @@ const handleConfirmCancel = () => {
                                     router.push(item.route as any);
                                 }
                             }}
-                        >
-                            <View style={styles.iconBadgeRow}>
-                                <View style={styles.iconWrapper}>
-                                    <Ionicons name={item.icon as any} size={20} color="white" />
-                                </View>
-                                {item.bagde > 0 && (
-                                    <View style={styles.badge}>
-                                        <Text style={styles.badgeText}>
-                                            {item.bagde > 99 ? '99+' : item.bagde}
-                                        </Text>
-                                    </View>
-                                )}
-                            </View>
-                            <Text style={styles.itemText}>{item.title}</Text>
-                            {!!item.subTitle && (
-                                <Text style={styles.itemSubText}>{item.subTitle}</Text>
-                            )}
-                        </TouchableOpacity>
-
+                        />
                     ))}
 
-                    <TouchableOpacity
+                    <HomeGridTile
+                        iconName="calendar-sharp"
+                        label="My Calendar"
+                        accentKey="gold"
+                        style={getTileStyle(2)}
                         onPress={() => router.push('/(director)/(tabs)/appointments')}
-                        style={[getTileStyle(2), styles.glanceTile, styles.calendarTile]}
-                    >
-                        <View style={styles.iconBadgeRow}>
-                            <View style={styles.iconWrapper}>
-                                <Ionicons name="calendar-sharp" size={20} color="white" />
-                            </View>
-                        </View>
-                        <Text style={styles.itemText}>My Calendar</Text>
-                    </TouchableOpacity>
+                    />
 
                 </View>
 

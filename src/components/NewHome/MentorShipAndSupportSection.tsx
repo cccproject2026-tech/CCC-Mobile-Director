@@ -10,20 +10,21 @@ const mentorshipItems = [
         id: '1',
         iconName: 'book-outline',
         title: 'Mentorship Sessions Library',
+        accentKey: 'mint',
     },
     {
         id: '2',
         iconName: 'people-outline',
         title: 'Mentees Mentorship Sessions',
+        accentKey: 'sky',
     },
     {
         id: '3',
         iconName: 'heart-outline',
         title: 'Microgrants',
-        route: '/(director)/(tabs)/micro-grant'
-
+        route: '/(director)/(tabs)/micro-grant',
+        accentKey: 'coral',
     },
-
 ] as const;
 
 

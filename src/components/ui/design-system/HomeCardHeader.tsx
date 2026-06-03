@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { roadmapTheme } from './roadmapTheme';
@@ -21,12 +20,9 @@ export function HomeCardHeader({ title, subtitle, iconName, iconColor, actionLab
     <View style={styles.wrap}>
       <View style={styles.topRow}>
         <View style={styles.left}>
-          <LinearGradient
-            colors={[`${iconColor}44`, `${iconColor}11`]}
-            style={styles.iconBg}
-          >
+          <View style={styles.iconBg}>
             <Ionicons name={iconName} size={18} color={iconColor} />
-          </LinearGradient>
+          </View>
           <View style={styles.titleWrap}>
             <Text style={[styles.title, compact && styles.titleCompact]}>{title}</Text>
             {subtitle ? (
@@ -37,9 +33,9 @@ export function HomeCardHeader({ title, subtitle, iconName, iconColor, actionLab
           </View>
         </View>
         {actionLabel && onAction ? (
-          <Pressable onPress={onAction} style={[styles.actionBtn, { borderColor: `${iconColor}33`, backgroundColor: `${iconColor}11` }]}>
-            <Text style={[styles.actionText, { color: iconColor }]}>{actionLabel}</Text>
-            <Ionicons name="arrow-forward" size={12} color={iconColor} />
+          <Pressable onPress={onAction} style={styles.actionBtn}>
+            <Text style={styles.actionText}>{actionLabel}</Text>
+            <Ionicons name="arrow-forward" size={12} color={roadmapTheme.textCaption} />
           </Pressable>
         ) : null}
       </View>
@@ -67,7 +63,8 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 11,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: roadmapTheme.frostedBorder,
+    backgroundColor: roadmapTheme.frostedSurface,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -99,6 +96,8 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: 1,
     borderRadius: 20,
+    borderColor: roadmapTheme.frostedBorder,
+    backgroundColor: roadmapTheme.frostedSurface,
     paddingHorizontal: 12,
     paddingVertical: 5,
     flexShrink: 0,
@@ -106,5 +105,6 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 11,
     fontWeight: '600',
+    color: roadmapTheme.textCaption,
   },
 });

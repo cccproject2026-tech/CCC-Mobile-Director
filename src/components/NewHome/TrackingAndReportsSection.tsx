@@ -10,13 +10,15 @@ const trackItems = [
         id: '1',
         iconName: 'analytics-outline',
         title: 'Track Progress',
-        route: '/(director)/(tabs)/progress-tracker'
+        route: '/(director)/(tabs)/progress-tracker',
+        accentKey: 'sky',
     },
     {
         id: '2',
         iconName: 'school-outline',
         title: 'Cource Completed',
-        route: '/(director)/(tabs)/course-completed'
+        route: '/(director)/(tabs)/course-completed',
+        accentKey: 'teal',
     },
     {
         id: '3',
@@ -24,13 +26,15 @@ const trackItems = [
         title: 'Certificates Issued',
         route: '/(director)/(tabs)/course-completed' as const,
         params: { initialTab: 'certificate_issued' as const },
+        accentKey: 'amber',
     },
     {
         id: '4',
         iconName: 'mail-outline',
         title: 'Field Mentor Invitations',
         route: '/(director)/(tabs)/mentees',
-        params: { type: "Field-Mentor-Home" }
+        params: { type: "Field-Mentor-Home" },
+        accentKey: 'mint',
     },
 ] as const;
 

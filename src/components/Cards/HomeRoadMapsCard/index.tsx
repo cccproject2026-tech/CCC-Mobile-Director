@@ -1,4 +1,9 @@
-import { homeTileStyles, HomeCardHeader, roadmapTheme, useHomeGridLayout } from '@/components/ui/design-system';
+import {
+  HomeCardHeader,
+  HomeGridTile,
+  resolveSectionIconColor,
+  useHomeGridLayout,
+} from '@/components/ui/design-system';
 import AddUserSection from '@/components/Home/AddUserSection';
 import { useAuthStore } from '@/stores/auth.store';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,27 +13,28 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
   ViewStyle,
 } from 'react-native';
+
+type TileItem = {
+  id: string;
+  iconName: React.ComponentProps<typeof Ionicons>['name'];
+  title: string;
+  route?: string;
+  params?: Record<string, string>;
+  action?: string;
+  accentKey?: string;
+};
 
 type Props = {
   title: string;
   desciption: string;
   iconName: React.ComponentProps<typeof Ionicons>['name'];
   iconColor?: string;
-  data: any;
+  data: TileItem[];
   modelOpen?: () => void;
   onCdpPress?: () => void;
-};
-
-const ICON_COLORS: Record<string, string> = {
-  'RoadMaps': '#77C2F0',
-  'Assesments & CDP': '#C084FC',
-  'Mentorship & Support': '#36DB83',
-  'Tracking Progress': '#E8C88A',
-  'Directors Notes': '#E8C88A',
 };
 
 const NewHomeScreenCard: React.FC<Props> = ({
@@ -41,14 +47,30 @@ const NewHomeScreenCard: React.FC<Props> = ({
   onCdpPress,
 }) => {
   const { user } = useAuthStore();
-  const { width } = useWindowDimensions();
-  const compact = width < 375;
-  const resolvedIconColor = iconColor ?? ICON_COLORS[title] ?? '#77C2F0';
+  const resolvedIconColor = iconColor ?? resolveSectionIconColor(title);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const { gridStyle, onGridLayout, getTileStyle } = useHomeGridLayout(data.length);
   const userId = (user as { id?: string; _id?: string })?.id ?? (user as { _id?: string })?._id;
   const userName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Personal Notes';
   const isNotesOrUser = title === 'Directors Notes' || title === 'New User';
+
+  const handleTilePress = (item: TileItem) => {
+    if (item?.title === 'Create New Roadmap') {
+      modelOpen?.();
+      return;
+    }
+    if (item?.action === 'cdp' || String(item?.title ?? '').includes('CDP')) {
+      onCdpPress?.();
+      return;
+    }
+    if (!item?.route) {
+      return;
+    }
+    router.push({
+      pathname: item.route as any,
+      params: item.params as any,
+    });
+  };
 
   return (
     <View style={styles.container as ViewStyle}>
@@ -61,36 +83,15 @@ const NewHomeScreenCard: React.FC<Props> = ({
 
       {!isNotesOrUser ? (
         <View style={gridStyle} onLayout={onGridLayout}>
-          {data.map((item: any, index: number) => (
-            <TouchableOpacity
+          {data.map((item, index) => (
+            <HomeGridTile
               key={item.id}
-              onPress={() => {
-                if (item?.title === 'Create New Roadmap') {
-                  modelOpen?.();
-                  return;
-                }
-                if (
-                  item?.action === 'cdp' ||
-                  String(item?.title ?? '').includes('CDP')
-                ) {
-                  onCdpPress?.();
-                  return;
-                }
-                if (!item?.route) {
-                  return;
-                }
-                router.push({
-                  pathname: item.route as any,
-                  params: item.params,
-                });
-              }}
-              style={[getTileStyle(index), styles.tileContent]}
-            >
-              <Ionicons name={item.iconName} size={compact ? 16 : 18} color="white" />
-              <Text style={[homeTileStyles.label, compact && styles.itemNameCompact]}>
-                {item.title}
-              </Text>
-            </TouchableOpacity>
+              iconName={item.iconName}
+              label={item.title}
+              accentKey={item.accentKey}
+              onPress={() => handleTilePress(item)}
+              style={getTileStyle(index)}
+            />
           ))}
         </View>
       ) : (
@@ -109,7 +110,7 @@ const NewHomeScreenCard: React.FC<Props> = ({
               <Ionicons
                 name="add-circle-outline"
                 size={22}
-                color="black"
+                color="#0F3B5C"
                 style={styles.addIcon}
               />
             </TouchableOpacity>
@@ -127,7 +128,7 @@ const NewHomeScreenCard: React.FC<Props> = ({
               <Ionicons
                 name={showAddUserForm ? 'close-outline' : 'add-circle-outline'}
                 size={22}
-                color="black"
+                color="#0F3B5C"
                 style={styles.addIcon}
               />
             </TouchableOpacity>
@@ -149,13 +150,6 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 10,
   },
-  tileContent: {
-    gap: 4,
-  },
-  itemNameCompact: {
-    fontSize: 10,
-    marginTop: 4,
-  },
   textInputContanier: {
     maxWidth: 280,
     width: '100%',
@@ -173,6 +167,7 @@ const styles = StyleSheet.create({
   addNoteText: {
     fontWeight: '500',
     fontSize: 14,
+    color: '#0F3B5C',
   },
   addIcon: {
     backgroundColor: '#E0E7EE',
