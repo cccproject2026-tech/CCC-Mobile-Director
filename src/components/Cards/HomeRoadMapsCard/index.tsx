@@ -20,6 +20,7 @@ type Props = {
   iconColor?: string;
   data: any;
   modelOpen?: () => void;
+  onCdpPress?: () => void;
 };
 
 const ICON_COLORS: Record<string, string> = {
@@ -37,6 +38,7 @@ const NewHomeScreenCard: React.FC<Props> = ({
   iconColor,
   data,
   modelOpen,
+  onCdpPress,
 }) => {
   const { user } = useAuthStore();
   const { width } = useWindowDimensions();
@@ -65,6 +67,16 @@ const NewHomeScreenCard: React.FC<Props> = ({
               onPress={() => {
                 if (item?.title === 'Create New Roadmap') {
                   modelOpen?.();
+                  return;
+                }
+                if (
+                  item?.action === 'cdp' ||
+                  String(item?.title ?? '').includes('CDP')
+                ) {
+                  onCdpPress?.();
+                  return;
+                }
+                if (!item?.route) {
                   return;
                 }
                 router.push({

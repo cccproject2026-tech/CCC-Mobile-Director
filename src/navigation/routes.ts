@@ -10,6 +10,7 @@ export const Routes = {
     editSectionsFor: (id: string): Href =>
       ({ pathname: "/assessments/edit-sections", params: { id } }) as Href,
     result: "/assessments/result" as Href,
+    cdp: "/assessments/cdp" as Href,
     mentorPastors: "/assessments/mentor-pastors" as Href,
     detail: (id: string): Href =>
       ({ pathname: "/assessments/[id]", params: { id } }) as Href,
@@ -21,6 +22,11 @@ export const Routes = {
     resultFor: (assessmentId: string, userId: string): Href =>
       ({
         pathname: "/assessments/result",
+        params: { assessmentId, userId },
+      }) as Href,
+    cdpFor: (assessmentId: string, userId: string): Href =>
+      ({
+        pathname: "/assessments/cdp",
         params: { assessmentId, userId },
       }) as Href,
     mentorPastorsFor: (mentorId: string): Href =>
