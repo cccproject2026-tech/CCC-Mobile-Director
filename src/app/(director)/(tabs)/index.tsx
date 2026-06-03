@@ -2,7 +2,6 @@ import WelcomeCard from "@/components/Cards/WelcomeCard";
 import HeaderHero from "@/components/Header/HeroHeader";
 import ActionCardSection from "@/components/Home/ActionCardSection";
 import AddUserSection from "@/components/Home/AddUserSection";
-import MentorMenteeSection from "@/components/Home/MentorMenteeSection";
 import OverviewSection from "@/components/Home/OverviewSection";
 import { GradientBackground, homeLayout } from "@/components/ui/design-system";
 import { Colors } from "@/constants/Colors";
@@ -115,7 +114,6 @@ export default function Index() {
             <TrackingAndReportsSection />
             <DirectorsNotesSection />
             <AddUserSection />
-            <MentorMenteeSection />
             <OverviewSection />
             <ActionCardSection />
             <AiInsightsSection />
