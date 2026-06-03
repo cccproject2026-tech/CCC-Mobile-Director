@@ -40,16 +40,10 @@ const NewHomeScreenCard: React.FC<Props> = ({
   return (
     <View style={styles.container as ViewStyle}>
       <View style={styles.headerContainer}>
-        <View style={styles.headerSubContainer}>
-          <View style={styles.iconContainer}>
-            <Ionicons name={iconName} size={18} color={roadmapTheme.textPrimary} />
-          </View>
-          <Text style={[styles.titleText, compact && styles.titleTextCompact]}>{title}</Text>
+        <View style={styles.iconContainer}>
+          <Ionicons name={iconName} size={18} color={roadmapTheme.textPrimary} />
         </View>
-        <View style={styles.viewAllContainer}>
-          <Text style={styles.viewAllText}>View all</Text>
-          <Ionicons name="chevron-forward" size={14} color="#EAF7FF" />
-        </View>
+        <Text style={[styles.titleText, compact && styles.titleTextCompact]}>{title}</Text>
       </View>
       <Text style={[styles.descriptionText, compact && styles.descriptionTextCompact]}>
         {desciption}
@@ -137,13 +131,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerSubContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    minWidth: 0,
+    gap: 8,
   },
   iconContainer: {
     width: 34,
@@ -154,7 +142,6 @@ const styles = StyleSheet.create({
     borderColor: roadmapTheme.frostedBorderStrong,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
   },
   titleText: {
     flex: 1,
@@ -204,17 +191,6 @@ const styles = StyleSheet.create({
   addIcon: {
     backgroundColor: '#E0E7EE',
     borderRadius: 20,
-  },
-  viewAllText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.75)',
-  },
-  viewAllContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    flexShrink: 0,
   },
   addUserContainer: {
     flexDirection: 'row',

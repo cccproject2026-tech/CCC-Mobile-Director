@@ -52,8 +52,8 @@ const AiInsightCard: React.FC<Props> = ({ title, desciption, iconName }) => {
           </View>
           <Text style={[styles.titleText, compact && styles.titleTextCompact]}>{title}</Text>
         </View>
-        <View style={styles.viewAllContainer}>
-          <Text style={styles.viewAllText}>View Insights</Text>
+        <View style={styles.viewInsightsContainer}>
+          <Text style={styles.viewInsightsText}>View Insights</Text>
           <Ionicons name="chevron-forward" size={14} color="#EAF7FF" />
         </View>
       </View>
@@ -108,7 +108,19 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     minWidth: 0,
+  },
+  viewInsightsText: {
+    fontSize: isSmallDevice ? 11 : 12,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.75)',
+  },
+  viewInsightsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    flexShrink: 0,
   },
   iconContainer: {
     width: 34,
@@ -119,7 +131,6 @@ const styles = StyleSheet.create({
     borderColor: roadmapTheme.frostedBorderStrong,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
   },
   titleText: {
     flex: 1,
@@ -153,17 +164,6 @@ const styles = StyleSheet.create({
   metricCellDivider: {
     borderRightWidth: 1,
     borderRightColor: '#4E84AC',
-  },
-  viewAllText: {
-    fontSize: isSmallDevice ? 11 : 12,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.75)',
-  },
-  viewAllContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    flexShrink: 0,
   },
   usersText: {
     color: 'white',

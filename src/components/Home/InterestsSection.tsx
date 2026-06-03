@@ -90,11 +90,6 @@ const InterestsSection = () => {
 export default InterestsSection;
 
 const styles = StyleSheet.create({
-    headerRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-    },
     badge: {
         backgroundColor: 'rgba(255,255,255,0.92)',
         borderRadius: 10,
@@ -108,6 +103,11 @@ const styles = StyleSheet.create({
         color: roadmapTheme.textActive,
         fontWeight: '700',
         fontSize: 12,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
     },
     seeAll: {
         color: 'rgba(255,255,255,0.85)',

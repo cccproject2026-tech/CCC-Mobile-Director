@@ -2,9 +2,7 @@ import WelcomeCard from "@/components/Cards/WelcomeCard";
 import HeaderHero from "@/components/Header/HeroHeader";
 import ActionCardSection from "@/components/Home/ActionCardSection";
 import AddUserSection from "@/components/Home/AddUserSection";
-import AppointmentsSection from "@/components/Home/AppointmentsSection";
 import ExploreCCCSection from "@/components/Home/ExploreCCCSection";
-import InterestsSection from "@/components/Home/InterestsSection";
 import MentorMenteeSection from "@/components/Home/MentorMenteeSection";
 import OverviewSection from "@/components/Home/OverviewSection";
 import { GradientBackground, homeLayout } from "@/components/ui/design-system";
@@ -25,7 +23,6 @@ import { icons } from '@/constants';
 import DirectorsNotesSection from "@/components/NewHome/DirectorsNotesSection";
 import TrackingAndReportsSection from "@/components/NewHome/TrackingAndReportsSection";
 import AiInsightsSection from "@/components/NewHome/AiInsightsSection";
-import NewUserAddSection from "@/components/NewHome/NewUserAddSection";
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import CreateRoadmapSheet from "@/components/Sheets/CreateRoadmapSheet";
 
@@ -119,11 +116,6 @@ export default function Index() {
             <TrackingAndReportsSection />
             <AiInsightsSection />
             <DirectorsNotesSection />
-            <NewUserAddSection />
-
-
-            <AppointmentsSection />
-            <InterestsSection />
             <AddUserSection />
             <MentorMenteeSection />
             <ExploreCCCSection />

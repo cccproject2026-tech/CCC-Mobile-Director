@@ -2,7 +2,7 @@ import { useDirectorOverview } from '@/hooks/useProgress';
 import { CommonCard, HomeSectionHeader, homeLayout, roadmapTheme } from '@/components/ui/design-system';
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
-import { PieChart, BarChart } from 'react-native-gifted-charts';
+import { PieChart } from 'react-native-gifted-charts';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -26,24 +26,6 @@ const OverviewSection = () => {
             </CommonCard>
         );
     }
-
-    const barData = data.monthlyData.map((item: any) => ([
-        {
-            value: item.pastorsCompleted,
-            label: item.monthName.substring(0, 3),
-            spacing: 2,
-            labelTextStyle: { color: roadmapTheme.textMuted, fontSize: 10 },
-            frontColor: '#7C3AED',
-            gradientColor: '#38BDF8',
-            showGradient: true,
-        },
-        {
-            value: item.mentorsCompleted,
-            frontColor: '#38BDF8',
-            gradientColor: roadmapTheme.accentMint,
-            showGradient: true,
-        },
-    ])).flat();
 
     const pieData = [
         { value: data.completedPastors, color: '#38BDF8', text: 'Graduated' },
@@ -109,50 +91,6 @@ const OverviewSection = () => {
                             </View>
                         ))}
                     </View>
-                </View>
-            </CommonCard>
-
-            {/* Monthly trends bar */}
-            <CommonCard>
-                <View style={styles.cardTitleRow}>
-                    <View style={styles.cardTitleTexts}>
-                        <Text style={styles.cardTitle}>Monthly Trends</Text>
-                        <Text style={styles.cardSubtitle}>Pastors and mentors over 12 months</Text>
-                    </View>
-                    <View style={styles.yearBadge}>
-                        <Text style={styles.yearText}>12 mo</Text>
-                    </View>
-                </View>
-
-                <View style={styles.barLegendRow}>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#7C3AED' }]} />
-                        <Text style={styles.legendLabel}>Pastor</Text>
-                    </View>
-                    <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#38BDF8' }]} />
-                        <Text style={styles.legendLabel}>Mentor</Text>
-                    </View>
-                </View>
-
-                <View style={styles.chartWrap}>
-                    <BarChart
-                        data={barData}
-                        width={SCREEN_WIDTH - 120}
-                        height={180}
-                        barWidth={10}
-                        initialSpacing={10}
-                        spacing={18}
-                        hideRules
-                        yAxisThickness={0}
-                        xAxisThickness={1}
-                        xAxisColor={roadmapTheme.divider}
-                        yAxisTextStyle={{ color: roadmapTheme.textCaption, fontSize: 11 }}
-                        backgroundColor="transparent"
-                        noOfSections={5}
-                        showFractionalValues={false}
-                        xAxisLabelTextStyle={{ color: roadmapTheme.textCaption, fontSize: 10, textAlign: 'center' }}
-                    />
                 </View>
             </CommonCard>
         </View>
@@ -299,15 +237,6 @@ const styles = StyleSheet.create({
         marginTop: 1,
     },
 
-    // Bar
-    barLegendRow: {
-        flexDirection: 'row',
-        gap: 14,
-        marginBottom: 12,
-    },
-    chartWrap: {
-        alignItems: 'center',
-    },
 });
 
 export default OverviewSection;
