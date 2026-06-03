@@ -127,7 +127,7 @@ const [showCancelConfirmModal, setShowCancelConfirmModal] =
             icon: 'today-sharp',
             iconColor: 'white',
             bagde: filteredAppointments?.length || 0,
-            title: "Today's\nAppointments",
+            title: "Today's Appointments",
         },
     ];
 const handleReschedule = (appointment: any) => {
@@ -309,8 +309,10 @@ const handleConfirmCancel = () => {
                         onPress={() => router.push('/(director)/(tabs)/appointments')}
                         style={[getTileStyle(2), styles.glanceTile, styles.calendarTile]}
                     >
-                        <View style={styles.iconWrapper}>
-                            <Ionicons name="calendar-sharp" size={20} color="white" />
+                        <View style={styles.iconBadgeRow}>
+                            <View style={styles.iconWrapper}>
+                                <Ionicons name="calendar-sharp" size={20} color="white" />
+                            </View>
                         </View>
                         <Text style={styles.itemText}>My Calendar</Text>
                     </TouchableOpacity>
@@ -498,7 +500,7 @@ export default GlanceSection;
 const styles = StyleSheet.create({
 
     glanceTile: {
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'center',
         paddingVertical: isSmallDevice ? 6 : 8,
     },
