@@ -266,7 +266,7 @@ const handleConfirmCancel = () => {
 
             <CommonCard>
 
-                <HomeCardHeader title="At a Glance" />
+                <HomeCardHeader title="At a Glance" subtitle="Your dashboard overview" iconName="flash-outline" iconColor="#77C2F0" />
 
                 <View style={gridStyle} onLayout={onGridLayout}>
 

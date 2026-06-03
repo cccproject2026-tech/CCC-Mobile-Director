@@ -1,4 +1,4 @@
-import { homeTileStyles, roadmapTheme, useHomeGridLayout } from '@/components/ui/design-system';
+import { homeTileStyles, HomeCardHeader, roadmapTheme, useHomeGridLayout } from '@/components/ui/design-system';
 import AddUserSection from '@/components/Home/AddUserSection';
 import { useAuthStore } from '@/stores/auth.store';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,20 +17,31 @@ type Props = {
   title: string;
   desciption: string;
   iconName: React.ComponentProps<typeof Ionicons>['name'];
+  iconColor?: string;
   data: any;
   modelOpen?: () => void;
+};
+
+const ICON_COLORS: Record<string, string> = {
+  'RoadMaps': '#77C2F0',
+  'Assesments & CDP': '#C084FC',
+  'Mentorship & Support': '#36DB83',
+  'Tracking Progress': '#E8C88A',
+  'Directors Notes': '#E8C88A',
 };
 
 const NewHomeScreenCard: React.FC<Props> = ({
   title,
   desciption,
   iconName,
+  iconColor,
   data,
   modelOpen,
 }) => {
   const { user } = useAuthStore();
   const { width } = useWindowDimensions();
   const compact = width < 375;
+  const resolvedIconColor = iconColor ?? ICON_COLORS[title] ?? '#77C2F0';
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const { gridStyle, onGridLayout, getTileStyle } = useHomeGridLayout(data.length);
   const userId = (user as { id?: string; _id?: string })?.id ?? (user as { _id?: string })?._id;
@@ -39,15 +50,12 @@ const NewHomeScreenCard: React.FC<Props> = ({
 
   return (
     <View style={styles.container as ViewStyle}>
-      <View style={styles.headerContainer}>
-        <View style={styles.iconContainer}>
-          <Ionicons name={iconName} size={18} color={roadmapTheme.textPrimary} />
-        </View>
-        <Text style={[styles.titleText, compact && styles.titleTextCompact]}>{title}</Text>
-      </View>
-      <Text style={[styles.descriptionText, compact && styles.descriptionTextCompact]}>
-        {desciption}
-      </Text>
+      <HomeCardHeader
+        title={title}
+        subtitle={desciption}
+        iconName={iconName}
+        iconColor={resolvedIconColor}
+      />
 
       {!isNotesOrUser ? (
         <View style={gridStyle} onLayout={onGridLayout}>
@@ -127,41 +135,7 @@ export default NewHomeScreenCard;
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  iconContainer: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1,
-    borderColor: roadmapTheme.frostedBorderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleText: {
-    flex: 1,
-    color: roadmapTheme.textPrimary,
-    fontWeight: '800',
-    fontSize: 16,
-    letterSpacing: -0.2,
-  },
-  titleTextCompact: {
-    fontSize: 14,
-  },
-  descriptionText: {
-    color: roadmapTheme.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  descriptionTextCompact: {
-    fontSize: 11,
-    lineHeight: 15,
+    gap: 10,
   },
   tileContent: {
     gap: 4,

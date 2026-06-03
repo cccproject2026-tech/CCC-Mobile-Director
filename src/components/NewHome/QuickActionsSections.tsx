@@ -47,6 +47,8 @@ const QuickActionSection = () => {
       <HomeCardHeader
         title="Quick Actions"
         subtitle="Pick up from the step you left off and keep going."
+        iconName="grid-outline"
+        iconColor="#36DB83"
       />
       <View style={gridStyle} onLayout={onGridLayout}>
         {quickActionItems.map((item, index) => (
