@@ -114,7 +114,7 @@ const [showCancelConfirmModal, setShowCancelConfirmModal] =
     const glanceCards = [
         {
             id: '1',
-            icon: 'people-outline',
+            icon: 'people-sharp',
             iconColor: 'white',
             bagde: newInterestsCount,
             title: 'New Interests',
@@ -124,7 +124,7 @@ const [showCancelConfirmModal, setShowCancelConfirmModal] =
 
         {
             id: '2',
-            icon: 'calendar-outline',
+            icon: 'today-sharp',
             iconColor: 'white',
             bagde: filteredAppointments?.length || 0,
             title: "Today's\nAppointments",
@@ -310,7 +310,7 @@ const handleConfirmCancel = () => {
                         style={[getTileStyle(2), styles.glanceTile, styles.calendarTile]}
                     >
                         <View style={styles.iconWrapper}>
-                            <Ionicons name="calendar-outline" size={20} color="white" />
+                            <Ionicons name="calendar-sharp" size={20} color="white" />
                         </View>
                         <Text style={styles.itemText}>My Calendar</Text>
                     </TouchableOpacity>
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingHorizontal: 4,
         borderWidth: 1.5,
-        borderColor: 'rgba(13,54,86,0.8)',
+        borderColor: 'transparent',
     },
 
     badgeText: {
