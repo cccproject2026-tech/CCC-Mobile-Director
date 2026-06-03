@@ -154,7 +154,7 @@ export default function PersonalNoteDetailScreen() {
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <Stack.Screen options={{ headerShown: false }} />
 
-                <ScreenBackHeader title="Note Detail" onBack={() => router.back()} />
+                <ScreenBackHeader title="Note Detail" />
 
                 {loading ? (
                     <View style={styles.loadingBox}>

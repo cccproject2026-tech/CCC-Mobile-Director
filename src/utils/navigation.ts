@@ -1,25 +1,31 @@
-import type { Href, Router } from "expo-router";
+import type { Href, Router } from 'expo-router';
 
 export type ReturnToParams = {
   returnTo?: string | string[];
 };
 
-const MENTOR_TABS_GROUPED_PREFIX = "/(mentor)/(tabs)";
+/** Default when the stack has no screen to pop (e.g. tab root, deep link). */
+export const DIRECTOR_HOME_HREF = '/(director)/(tabs)' as Href;
+
+const MENTOR_TABS_GROUPED_PREFIX = '/(mentor)/(tabs)';
+
+/** Updated by NavigationBackHandler — used when router.back() is patched. */
+export const currentPathnameRef = { current: '' };
 
 /** Expand tab-relative paths (e.g. `/review-center/pastor`) to full Expo Router hrefs. */
 export function normalizeReturnToHref(href?: string | null): string | undefined {
-  const trimmed = String(href ?? "").trim();
+  const trimmed = String(href ?? '').trim();
   if (!trimmed) return undefined;
-  if (trimmed.startsWith("/(")) return trimmed;
+  if (trimmed.startsWith('/(')) return trimmed;
 
-  const qIndex = trimmed.indexOf("?");
+  const qIndex = trimmed.indexOf('?');
   const path = qIndex >= 0 ? trimmed.slice(0, qIndex) : trimmed;
-  const query = qIndex >= 0 ? trimmed.slice(qIndex) : "";
+  const query = qIndex >= 0 ? trimmed.slice(qIndex) : '';
 
   if (
-    path.startsWith("/review-center") ||
-    path.startsWith("/roadmap") ||
-    path.startsWith("/assessments")
+    path.startsWith('/review-center') ||
+    path.startsWith('/roadmap') ||
+    path.startsWith('/assessments')
   ) {
     return `${MENTOR_TABS_GROUPED_PREFIX}${path}${query}`;
   }
@@ -32,7 +38,7 @@ export function getReturnToParam(params: ReturnToParams): string | undefined {
   const raw = params.returnTo;
   if (!raw) return undefined;
   const value = Array.isArray(raw) ? raw[0] : raw;
-  const trimmed = String(value ?? "").trim();
+  const trimmed = String(value ?? '').trim();
   return trimmed || undefined;
 }
 
@@ -45,9 +51,9 @@ export function buildReturnTo(
 
   const qs = new URLSearchParams();
   for (const [key, value] of Object.entries(searchParams)) {
-    if (key === "returnTo" || value == null) continue;
+    if (key === 'returnTo' || value == null) continue;
     const normalized = Array.isArray(value) ? value[0] : value;
-    if (normalized == null || normalized === "") continue;
+    if (normalized == null || normalized === '') continue;
     qs.set(key, String(normalized));
   }
 
@@ -65,13 +71,56 @@ export function appendReturnTo<T extends Record<string, unknown>>(
   return { ...params, returnTo };
 }
 
+function isTabRootPath(path: string): boolean {
+  const normalized = path.replace(/\/$/, '') || '/';
+  return (
+    normalized === '/' ||
+    normalized === '/(director)/(tabs)' ||
+    normalized === '/(director)/(tabs)/index' ||
+    normalized === '/(director)'
+  );
+}
+
+/** Parent route via pathname (avoids GO_BACK on tab navigators where canGoBack() lies). */
+export function getParentPathname(pathname: string): string {
+  const path = (pathname || '').replace(/\/$/, '') || '/';
+
+  if (isTabRootPath(path)) {
+    return DIRECTOR_HOME_HREF as string;
+  }
+
+  const segments = path.split('/').filter(Boolean);
+  if (segments.length === 0) {
+    return DIRECTOR_HOME_HREF as string;
+  }
+
+  const last = segments[segments.length - 1];
+
+  if (last === 'index') {
+    segments.pop();
+  } else if (!last.startsWith('(')) {
+    segments.pop();
+  }
+
+  if (segments.length === 0) {
+    return DIRECTOR_HOME_HREF as string;
+  }
+
+  const parent = `/${segments.join('/')}`;
+  if (isTabRootPath(parent)) {
+    return DIRECTOR_HOME_HREF as string;
+  }
+
+  return parent;
+}
+
 /**
- * When `returnTo` is set (cross-stack entry), restore that screen first.
- * Otherwise use stack `back()`, then `fallback`.
+ * Safe back: never dispatches GO_BACK (unreliable in Expo Router tabs).
+ * Uses replace to parent path, returnTo, or dashboard fallback.
  */
 export function safeGoBack(
   router: Router,
-  options?: { fallback?: Href; returnTo?: string },
+  options?: { fallback?: Href; returnTo?: string; currentPathname?: string },
 ): void {
   const returnTo = normalizeReturnToHref(options?.returnTo);
 
@@ -80,18 +129,19 @@ export function safeGoBack(
     return;
   }
 
-  if (router.canGoBack()) {
-    router.back();
-    return;
+  const pathname =
+    options?.currentPathname ?? currentPathnameRef.current ?? '';
+  const fallback =
+    normalizeReturnToHref(String(options?.fallback ?? DIRECTOR_HOME_HREF)) ??
+    DIRECTOR_HOME_HREF;
+
+  if (pathname) {
+    const parent = getParentPathname(pathname);
+    if (parent && parent !== pathname.replace(/\/$/, '')) {
+      router.replace(parent as Href);
+      return;
+    }
   }
 
-  const fallback = normalizeReturnToHref(String(options?.fallback ?? ""));
-  if (fallback) {
-    router.replace(fallback as Href);
-    return;
-  }
-
-  if (options?.fallback) {
-    router.replace(options.fallback);
-  }
+  router.replace(fallback);
 }

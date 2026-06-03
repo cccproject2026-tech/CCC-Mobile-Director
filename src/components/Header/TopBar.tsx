@@ -2,6 +2,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -42,6 +43,7 @@ const TopBar: React.FC<Props> = ({
     const { top } = useSafeAreaInsets();
     const navigation = useNavigation();
     const router = useRouter();
+    const safeBack = useSafeBack();
     const { user } = useAuthStore();
     const onMenuPress = () => navigation.dispatch(DrawerActions.openDrawer());
     const handleNotificationsPress = () => {
@@ -52,7 +54,7 @@ const TopBar: React.FC<Props> = ({
         if (onPressBack) {
             onPressBack();
         } else {
-            router.back();
+            safeBack();
         }
     };
 

@@ -3,6 +3,7 @@ import { MentorAvailabilityWorkspace } from "@/components/mentor/availability/Me
 import TopBar from "@/components/Header/TopBar";
 import AppGradientBackground from "@/components/layout/AppGradientBackground";
 import { useAuthStore } from "@/stores/auth.store";
+import { useSafeBack } from "@/hooks/useSafeBack";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -10,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AvailabilityScreen = () => {
   const router = useRouter();
+  const safeBack = useSafeBack();
   const { bottom } = useSafeAreaInsets();
   const { user } = useAuthStore();
   const mentorId = user?.id ?? "";
@@ -27,7 +29,7 @@ const AvailabilityScreen = () => {
   const handleTabPress = (tab: "appointments" | "availability") => {
     setActiveTab(tab);
     if (tab === "appointments") {
-      router.back();
+      safeBack();
     }
   };
 

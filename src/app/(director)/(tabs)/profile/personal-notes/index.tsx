@@ -98,7 +98,7 @@ export default function PersonalNotesScreen() {
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <Stack.Screen options={{ headerShown: false }} />
 
-                <ScreenBackHeader title="Personal Notes" onBack={() => router.back()} />
+                <ScreenBackHeader title="Personal Notes" />
 
                 {/* Tab row */}
                 <View style={styles.tabRow}>

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useSafeBack } from "@/hooks/useSafeBack";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -17,14 +17,14 @@ export const Header: React.FC<HeaderProps> = ({
     showNewMeeting = false,
     onNewMeetingPress,
 }) => {
-    const router = useRouter();
+    const safeBack = useSafeBack();
     const { top } = useSafeAreaInsets();
 
     return (
         <View style={styles.container}>
             <View style={styles.left}>
                 {showBackButton && (
-                    <Pressable onPress={() => router.back()} style={styles.backButton}>
+                    <Pressable onPress={safeBack} style={styles.backButton}>
                         <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                     </Pressable>
                 )}

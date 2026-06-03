@@ -1,4 +1,6 @@
 import "@/services/api/interceptors";
+import "@/utils/patchRouterBack";
+import { NavigationBackHandler } from "@/components/navigation/NavigationBackHandler";
 import { AddFieldSheetProvider } from "@/contexts/AddFieldSheetContext";
 import { useGoogleCalendarOAuthReturn } from "@/hooks/googleCalendar/useGoogleCalendarOAuthReturn";
 import { useAuthStore } from "@/stores/auth.store";
@@ -68,6 +70,7 @@ export default function RootLayout() {
         <BottomSheetModalProvider>
           <KeyboardProvider>
             <AddFieldSheetProvider>
+              <NavigationBackHandler />
               <RootNav />
             </AddFieldSheetProvider>
           </KeyboardProvider>

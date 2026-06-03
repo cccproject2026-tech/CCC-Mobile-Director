@@ -140,10 +140,7 @@ export default function PastorDocumentsScreen() {
         <GradientBackground>
             <TopBar showUserName showNotifications />
 
-            <ScreenBackHeader
-                title="Documents"
-                onBack={() => router.back()}
-            />
+            <ScreenBackHeader title="Documents" />
 
             {/* Upload button + user name row */}
             <View style={styles.actionRow}>

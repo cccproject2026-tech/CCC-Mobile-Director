@@ -7,7 +7,6 @@ import {
     ScreenBackHeader,
 } from "@/components/ui/design-system";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
@@ -53,8 +52,6 @@ const dummyNotifications: Notification[] = [
 const unreadCount = dummyNotifications.filter((n) => !n.read).length;
 
 export default function NotificationScreen() {
-    const navigation = useNavigation();
-
     return (
         <>
             <Stack.Screen options={{ headerShown: false, title: "Notifications" }} />
@@ -62,10 +59,7 @@ export default function NotificationScreen() {
                 <View style={styles.root}>
                     <TopBar showNotifications={false} />
 
-                    <ScreenBackHeader
-                        title="Notifications"
-                        onBack={() => navigation.goBack()}
-                    />
+                    <ScreenBackHeader title="Notifications" />
 
                     {/* unread badge row */}
                     {unreadCount > 0 && (

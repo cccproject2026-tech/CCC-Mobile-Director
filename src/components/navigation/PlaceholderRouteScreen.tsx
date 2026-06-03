@@ -1,7 +1,8 @@
 import TopBar from "@/components/Header/TopBar";
 import { GradientBackground } from "@/components/ui/design-system";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
+import { useSafeBack } from "@/hooks/useSafeBack";
+import { Stack } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -12,7 +13,7 @@ type Props = {
 };
 
 export default function PlaceholderRouteScreen({ title, message, icon = "information-circle-outline" }: Props) {
-  const router = useRouter();
+  const safeBack = useSafeBack();
 
   return (
     <GradientBackground>
@@ -20,7 +21,7 @@ export default function PlaceholderRouteScreen({ title, message, icon = "informa
       <TopBar showUserName showNotifications />
 
       <View style={styles.page}>
-        <Pressable onPress={() => router.back()} style={styles.backRow}>
+        <Pressable onPress={safeBack} style={styles.backRow}>
           <Ionicons name="chevron-back" size={22} color="#D9EEF8" />
           <Text style={styles.backText}>{title}</Text>
         </Pressable>
