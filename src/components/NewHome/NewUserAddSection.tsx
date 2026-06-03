@@ -8,7 +8,7 @@ type Props = {}
 const NewUserAddSection = (props: Props) => {
 
     return (
-        <CommonCard style={{ marginBottom: 8 }}>
+        <CommonCard>
             <NewHomeScreenCard iconName='person-add-outline' title="New User" desciption="Add New Users." data={[]} />
         </CommonCard>
     );

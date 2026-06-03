@@ -38,7 +38,7 @@ const roadmapItems = [
 const RoadMapsSection = (props: Props) => {
 
     return (
-        <CommonCard style={{ marginBottom: 8 }}>
+        <CommonCard>
             <NewHomeScreenCard iconName='layers-outline' title="RoadMaps" desciption="Build, Assign and track roadmap Progress." data={roadmapItems} modelOpen={props.handleOpenCreateRoadmapModal} />
         </CommonCard>
     );

@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   mainCardsGroup: {
-    gap: homeLayout.newCardsGroupGap,
+    gap: homeLayout.cardsGroupGap,
   },
   greetingOnHero: {
     color: "rgba(255,255,255,0.95)",

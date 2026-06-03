@@ -27,7 +27,7 @@ const assesmentsItems = [
 const AiInsightsSection = (props: Props) => {
 
     return (
-        <CommonCard style={{ marginBottom: 8 }}>
+        <CommonCard>
             <AiInsightCard iconName='sparkles-outline' title="AI Insights" desciption="AI-generated insights to help you improve the system and drive impact" data={assesmentsItems} />
         </CommonCard>
     );

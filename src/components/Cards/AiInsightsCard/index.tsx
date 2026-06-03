@@ -1,253 +1,205 @@
+import { roadmapTheme, useHomeGridLayout } from '@/components/ui/design-system';
 import { isSmallDevice } from '@/utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View, ViewStyle, ImageSourcePropType } from 'react-native';
-import { roadmapTheme } from '@/components/ui/design-system';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+
 type Props = {
-    title: string;
-    desciption: string;
-    iconName: React.ComponentProps<typeof Ionicons>['name'];
-    data: any
+  title: string;
+  desciption: string;
+  iconName: React.ComponentProps<typeof Ionicons>['name'];
+  data: any;
 };
 
-const AiInsightCard: React.FC<Props> = ({
-    title,
-    desciption,
-    iconName,
-    data
-}) => {
+const METRICS = [
+  {
+    icon: 'people-outline' as const,
+    iconSize: 22,
+    label: 'Overall Users',
+    value: '1248',
+    sub: 'Total Active Users',
+    trend: '12% this month',
+  },
+  {
+    icon: 'shield-checkmark-outline' as const,
+    iconSize: 18,
+    label: 'System Health',
+    value: '92%',
+    sub: 'System health score',
+    trend: 'Good',
+  },
+  {
+    icon: 'stats-chart-outline' as const,
+    iconSize: 18,
+    label: 'Performance analytics',
+    value: '85%',
+    sub: 'Course Completion rate',
+    trend: '8% this month',
+  },
+];
 
+const AiInsightCard: React.FC<Props> = ({ title, desciption, iconName }) => {
+  const { width } = useWindowDimensions();
+  const compact = width < 375;
+  const { gridStyle, onGridLayout, getTileStyle } = useHomeGridLayout(3, 3);
 
-    return (
-        <View
-            style={[
-                styles.container as ViewStyle,
-            ]}
-        >
-            <View style={styles.headerContainer}>
-                <View style={styles.headerSubContainer}>
-                <View style={styles.iconContainer}>
-                    <Ionicons name={iconName} size={18} color={roadmapTheme.textPrimary}  />
-                </View>
-                <Text style={styles.titleText}>{title}</Text>
-                </View>
-                <View style={styles.viewAllContainer}>
-                                  <Text style={styles.viewAllText}>
-                                      View Insights
-                                  </Text>
-              
-                                  <Ionicons
-                                      name="chevron-forward"
-                                      size={14}
-                                      color="#EAF7FF"
-                                  />
-                              </View>
-            </View>
-            <Text style={styles.descriptionText}>{desciption}</Text>
-
-
-     <View style={styles.itemsMainContainer}>
-
-
-    <View style={styles.itemMainContainer}>
-        <View style={styles.itemIconContainer}>
-<Ionicons name="people-outline" size={22} color="#77C2F0"/>
-</View>
-<View style={styles.itemContainer}>
-    <Text style={styles.usersText}>
-        Overall Users
-    </Text>
-        <Text style={styles.countText}>
-        1248
-    </Text>
-        <Text style={styles.activeUsersText}>
-        Total Active Users
-    </Text>
-    <View style={styles.caretUpContainer}>
-     <Ionicons name="caret-up" color={ "#36DB83" } size={13} /> 
-        <Text style={styles.violationText}>
-   12% this month
-    </Text>
-    </View>
-</View>
-    </View>
-
-<View style={styles.seperatedLine}></View>
-
-        <View style={styles.itemMainContainer}>
-              <View style={styles.itemIconContainer}>
-<Ionicons name="shield-checkmark-outline" size={18} color="#77C2F0"/>
-</View>
-
-<View style={styles.itemContainer}>
-    <Text style={styles.usersText}>
-        System Health
-    </Text>
-        <Text style={styles.countText}>
-        92%
-    </Text>
-        <Text style={styles.activeUsersText}>
-        System health score
-    </Text>
-      <View style={styles.caretUpContainer}>
-     <Ionicons name="caret-up" color={ "#36DB83" } size={13} /> 
-        <Text style={styles.violationText}>
-   Good
-    </Text>
-    </View>
-</View>
-    </View>
-
-
-<View style={styles.seperatedLine}></View>
-
-    <View style={[styles.itemMainContainer,{borderRightWidth:0}]}>
-          <View style={styles.itemIconContainer}>
-<Ionicons name="stats-chart-outline" size={18} color="#77C2F0"/>
-</View>
-<View style={styles.itemContainer}>
-    <Text style={styles.usersText}>
-        Performance analytics
-    </Text>
-        <Text style={styles.countText}>
-        85%
-    </Text>
-        <Text style={styles.activeUsersText}>
-        Cource Completion rate
-    </Text>
-    <View style={styles.caretUpContainer}>
-     <Ionicons name="caret-up" color={ "#36DB83" } size={13} /> 
-        <Text style={styles.violationText}>
-   8% this month
-    </Text>
-    </View>
-</View>
-    </View>
-
-
-    
-            </View>
-
-            
-
+  return (
+    <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <View style={styles.headerSubContainer}>
+          <View style={styles.iconContainer}>
+            <Ionicons name={iconName} size={18} color={roadmapTheme.textPrimary} />
+          </View>
+          <Text style={[styles.titleText, compact && styles.titleTextCompact]}>{title}</Text>
         </View>
-    );
+        <View style={styles.viewAllContainer}>
+          <Text style={styles.viewAllText}>View Insights</Text>
+          <Ionicons name="chevron-forward" size={14} color="#EAF7FF" />
+        </View>
+      </View>
+      <Text style={[styles.descriptionText, compact && styles.descriptionTextCompact]}>
+        {desciption}
+      </Text>
+
+      <View style={gridStyle} onLayout={onGridLayout}>
+        {METRICS.map((metric, index) => (
+          <View
+            key={metric.label}
+            style={[
+              getTileStyle(index),
+              styles.metricCell,
+              index < METRICS.length - 1 && styles.metricCellDivider,
+            ]}
+          >
+            <Ionicons name={metric.icon} size={metric.iconSize} color="#77C2F0" />
+            <Text style={[styles.usersText, compact && styles.usersTextCompact]}>
+              {metric.label}
+            </Text>
+            <Text style={[styles.countText, compact && styles.countTextCompact]}>
+              {metric.value}
+            </Text>
+            <Text style={[styles.activeUsersText, compact && styles.activeUsersTextCompact]}>
+              {metric.sub}
+            </Text>
+            <View style={styles.caretUpContainer}>
+              <Ionicons name="caret-up" color="#36DB83" size={13} />
+              <Text style={styles.violationText}>{metric.trend}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
 };
 
 export default AiInsightCard;
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1
-    },
-    headerContainer: {
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent:"space-between",
-        marginBottom: 4
-    },
-    headerSubContainer:{
-    display: "flex",
-        flexDirection: "row",
-        justifyContent:"flex-start",
-        alignItems: "center",
-    }, 
-    itemIconContainer:{
-width:"100%",
-// paddingLeft:10
-    },
-    iconContainer: {
-             width: 34,
+  container: {
+    width: '100%',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  headerSubContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
+  iconContainer: {
+    width: 34,
     height: 34,
     borderRadius: 9,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
     borderColor: roadmapTheme.frostedBorderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight:6
-    },
-
-    titleText: {
-       color: roadmapTheme.textPrimary,
-            fontWeight: "800",
-            fontSize: isSmallDevice ? 14 : 16,
-            letterSpacing: -0.2,
-    },
-    descriptionText: {
-             color: roadmapTheme.textMuted,
-    fontSize: isSmallDevice ? 10 : 12,
-    lineHeight: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  titleText: {
+    flex: 1,
+    color: roadmapTheme.textPrimary,
+    fontWeight: '800',
+    fontSize: 16,
+    letterSpacing: -0.2,
+  },
+  titleTextCompact: {
+    fontSize: 14,
+  },
+  descriptionText: {
+    color: roadmapTheme.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
     marginTop: 4,
-    },
-    itemsMainContainer: {
-        width: "100%",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent:"space-between",
-        marginTop: 12,
-    },
-
-
-
-        viewAllText: {
-        fontSize: isSmallDevice ? 10 : 12,
-        fontWeight: "400",
-        color: "rgba(255,255,255,0.75)",
-    },
-
-    viewAllContainer: {
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 2,
-        marginTop:-14
-    },
-itemMainContainer:{
-        width: "32%",
-        display: "flex",
-        // flexDirection: "row",
-        minHeight:70,
-        paddingLeft:"1%",
-        // padding:4
-        
-}, 
-    seperatedLine:{
-      minHeight:95,
-        borderRightWidth:0.8,
-        borderColor: "#4E84AC",
-    },
-itemContainer:{
-    // paddingLeft:4
-},
-usersText:{
-    color:"white",
-    fontSize:isSmallDevice ? 9 : 10,
-    fontWeight:"600"
-},
-countText:{
-    fontSize:isSmallDevice ? 9 : 10,
-    fontWeight:"bold",
-    color:"white",
-    marginTop:4
-},
-activeUsersText:{
-    fontSize:isSmallDevice ? 8 : 9,
-     color:"white",
-},
-violationText:{
-      fontSize:isSmallDevice ? 9 : 10,
-    fontWeight:"bold",
-    color:"#36DB83",
-    marginLeft:2
-},
-caretUpContainer:{
-    display:"flex",
-    flexDirection:"row",
-    alignItems:"center"
-}
-
-
+  },
+  descriptionTextCompact: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  metricCell: {
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    paddingRight: 4,
+    gap: 2,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    padding: 0,
+  },
+  metricCellDivider: {
+    borderRightWidth: 1,
+    borderRightColor: '#4E84AC',
+  },
+  viewAllText: {
+    fontSize: isSmallDevice ? 11 : 12,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.75)',
+  },
+  viewAllContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    flexShrink: 0,
+  },
+  usersText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  usersTextCompact: {
+    fontSize: 9,
+  },
+  countText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: 'white',
+    marginTop: 4,
+  },
+  countTextCompact: {
+    fontSize: 10,
+  },
+  activeUsersText: {
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 12,
+  },
+  activeUsersTextCompact: {
+    fontSize: 8,
+  },
+  violationText: {
+    fontSize: isSmallDevice ? 9 : 10,
+    fontWeight: '700',
+    color: '#36DB83',
+    marginLeft: 2,
+  },
+  caretUpContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
 });

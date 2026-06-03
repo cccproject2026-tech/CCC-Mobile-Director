@@ -1,4 +1,4 @@
-import { CommonCard } from '../ui/design-system';
+import { CommonCard, HomeCardHeader, useHomeGridLayout } from '../ui/design-system';
 import React, { useMemo, useRef, useState, useCallback } from 'react';
 import {
     StyleSheet,
@@ -31,7 +31,11 @@ import { useAuthStore } from '@/stores/auth.store';
 type Props = {}
 
 const GlanceSection = (props: Props) => {
-
+    const GLANCE_TILE_COUNT = 3;
+    const { gridStyle, onGridLayout, getTileStyle } = useHomeGridLayout(
+        GLANCE_TILE_COUNT,
+        3,
+    );
     const today = new Date().toISOString().split('T')[0];
 
     const [selectedDate] = useState<string>(today);
@@ -260,37 +264,17 @@ const handleConfirmCancel = () => {
     return (
         <>
 
-            <CommonCard style={{ marginBottom: 8 }}>
+            <CommonCard>
 
-                <View style={styles.header}>
+                <HomeCardHeader title="At a Glance" />
 
-                    <Text style={styles.glanceText}>
-                        At a Glance
-                    </Text>
+                <View style={gridStyle} onLayout={onGridLayout}>
 
-                    <View style={styles.viewAllContainer}>
-
-                        <Text style={styles.viewAllText}>
-                            View all
-                        </Text>
-
-                        <Ionicons
-                            name="chevron-forward"
-                            size={14}
-                            color="#EAF7FF"
-                        />
-
-                    </View>
-
-                </View>
-
-                <View style={styles.glanceItemMainContainer}>
-
-                    {glanceCards.map((item) => (
+                    {glanceCards.map((item, index) => (
 
                         <TouchableOpacity
                             key={item.id}
-                            style={styles.glanceItemContainer}
+                            style={[getTileStyle(index), styles.glanceTile]}
                             onPress={() => {
 
                                 if (
@@ -313,7 +297,7 @@ const handleConfirmCancel = () => {
 
                                     <Ionicons
                                         name={item.icon as any}
-                                        size={24}
+                                        size={20}
                                         color={item.iconColor}
                                     />
 
@@ -343,14 +327,9 @@ const handleConfirmCancel = () => {
 
                     ))}
 
-                    <TouchableOpacity onPress={() => router.push('/(director)/(tabs)/appointments')}
-                        style={[
-                            styles.glanceItemContainer,
-                            {
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            },
-                        ]}
+                    <TouchableOpacity
+                        onPress={() => router.push('/(director)/(tabs)/appointments')}
+                        style={[getTileStyle(2), styles.glanceTile, styles.calendarTile]}
                     >
 
                         <View style={styles.countContainer}>
@@ -359,7 +338,7 @@ const handleConfirmCancel = () => {
 
                                 <Ionicons
                                     name="calendar-outline"
-                                    size={24}
+                                    size={20}
                                     color="white"
                                 />
 
@@ -555,48 +534,14 @@ export default GlanceSection;
 
 const styles = StyleSheet.create({
 
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-
-    glanceText: {
-        fontSize: isSmallDevice ? 14 : 16,
-        fontWeight: '600',
-        color: 'rgba(255,255,255,0.95)',
-    },
-
-    viewAllText: {
-        fontSize: isSmallDevice ? 10 : 12,
-        fontWeight: '400',
-        color: 'rgba(255,255,255,0.75)',
-    },
-
-    viewAllContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
-
-    glanceItemMainContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginTop: 6,
-    },
-
-    glanceItemContainer: {
-        width: '31.5%',
-        marginRight: '1.8%',
-        minHeight: 100,
-        backgroundColor: 'rgba(255,255,255,0.06)',
-        borderColor: 'rgba(255,255,255,0.14)',
-        borderRadius: 12,
-        borderWidth: 1,
-        paddingVertical: isSmallDevice ? 9 : 10,
+    glanceTile: {
         justifyContent: 'flex-start',
+        paddingVertical: isSmallDevice ? 6 : 8,
+    },
+
+    calendarTile: {
+        justifyContent: 'center',
         alignItems: 'center',
-        // marginBottom: 12,
     },
 
     countContainer: {
@@ -606,13 +551,13 @@ const styles = StyleSheet.create({
     },
 
     iconWrapper: {
-        height: 30,
+        height: 24,
         justifyContent: 'center',
         alignItems: 'center',
     },
 
     countWrapper: {
-        height: 24,
+        height: 20,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -620,7 +565,7 @@ const styles = StyleSheet.create({
     countText: {
         color: 'white',
         fontWeight: '600',
-        fontSize: isSmallDevice ? 16 : 18,
+        fontSize: isSmallDevice ? 14 : 16,
         width: '100%',
         textAlign: 'center',
     },

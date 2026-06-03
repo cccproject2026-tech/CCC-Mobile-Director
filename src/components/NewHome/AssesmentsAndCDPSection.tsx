@@ -30,8 +30,8 @@ const AssesmentsAndCDPSection = (props: Props) => {
 
 
     return (
-        <CommonCard style={{ marginBottom: 8 }}>
-            <NewHomeScreenCard iconName='clipboard-outline' title="Assesments & CDP" desciption="Create assessments and manage CDPs effectively." data={assesmentsItems} modelOpen />
+        <CommonCard>
+            <NewHomeScreenCard iconName='clipboard-outline' title="Assesments & CDP" desciption="Create assessments and manage CDPs effectively." data={assesmentsItems} />
         </CommonCard>
     );
 };

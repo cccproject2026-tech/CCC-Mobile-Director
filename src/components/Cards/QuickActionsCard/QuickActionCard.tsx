@@ -1,75 +1,51 @@
-import { isSmallDevice } from '@/utils/responsive';
+import { homeTileStyles } from '@/components/ui/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Image, Pressable,TouchableOpacity, StyleSheet, Text, View, ViewStyle, ImageSourcePropType } from 'react-native';
+import {
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  ViewStyle,
+} from 'react-native';
 
 type Props = {
-    itemName: any;
-    iconName: React.ComponentProps<typeof Ionicons>['name'];
-    route:string
+  itemName: string;
+  iconName: React.ComponentProps<typeof Ionicons>['name'];
+  route: string;
+  tileStyle?: StyleProp<ViewStyle>;
 };
 
-const QuickActionCard: React.FC<Props> = ({
+const QuickActionCard: React.FC<Props> = ({ itemName, iconName, route, tileStyle }) => {
+  const { width } = useWindowDimensions();
+  const compact = width < 375;
 
-    itemName,
-    iconName,
-    route
-}) => {
-
-
-    return (
-       <TouchableOpacity
-    onPress={() =>
+  return (
+    <TouchableOpacity
+      onPress={() =>
         router.push({
-            pathname: route as any,
-            params: {
-                type: "home",
-            },
+          pathname: route as any,
+          params: { type: 'home' },
         })
-    }
-    style={[
-        styles.container as ViewStyle,
-    ]}
->
-    <Ionicons
-        name={iconName}
-        size={24}
-        color="white"
-    />
-
-    <Text style={styles.assignText}>
-        {itemName}
-    </Text>
-</TouchableOpacity>
-    );
+      }
+      style={[tileStyle, styles.tileInner]}
+    >
+      <Ionicons name={iconName} size={compact ? 18 : 20} color="white" />
+      <Text style={[homeTileStyles.label, compact && styles.labelCompact]}>{itemName}</Text>
+    </TouchableOpacity>
+  );
 };
 
 export default QuickActionCard;
 
 const styles = StyleSheet.create({
-    container: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-                   backgroundColor: "rgba(255,255,255,0.06)",
-    borderColor: "rgba(255,255,255,0.14)",
-        padding: isSmallDevice ? 7 : 8,
-        minHeight: 90,
-        borderWidth: 1,
-        borderRadius: 12,
-        width: "31%",
-        marginRight: "2%",
-        marginTop: 8
-    },
-    assignText: {
-        color: "white",
-        fontSize: isSmallDevice ? 10 : 11,
-             fontWeight: "600",
-        textAlign: "center",
-        width: "100%",
-        marginTop:4
-
-    }
-
+  tileInner: {
+    gap: 4,
+  },
+  labelCompact: {
+    fontSize: 10,
+    marginTop: 4,
+  },
 });

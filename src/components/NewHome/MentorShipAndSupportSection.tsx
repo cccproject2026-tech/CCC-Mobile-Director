@@ -30,7 +30,7 @@ const mentorshipItems = [
 const MentorShipAndSupportSection = (props: Props) => {
 
     return (
-        <CommonCard style={{ marginBottom: 8 }}>
+        <CommonCard>
             <NewHomeScreenCard iconName='people-outline' title="Mentorship & Support" desciption="Manage Sessions and support initiatives." data={mentorshipItems} modelOpen={() => { }} />
         </CommonCard>
     );

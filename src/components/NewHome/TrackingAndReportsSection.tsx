@@ -36,7 +36,7 @@ const trackItems = [
 const TrackingAndReportsSection = (props: Props) => {
 
     return (
-        <CommonCard style={{ marginBottom: 8 }}>
+        <CommonCard>
             <NewHomeScreenCard iconName='pie-chart-outline' title="Tracking Progress" desciption="Monitor Progress and Achievements" data={trackItems} modelOpen={() => { }} />
         </CommonCard>
     );

@@ -8,7 +8,7 @@ type Props = {}
 const DirectorsNotesSection = (props: Props) => {
 
     return (
-        <CommonCard style={{ marginBottom: 8 }}>
+        <CommonCard>
             <NewHomeScreenCard iconName='chatbox-ellipses-outline' title="Directors Notes" desciption="Keep important notes updates, and observations." data={[]} modelOpen={() => { }} />
         </CommonCard>
     );
