@@ -276,53 +276,31 @@ const handleConfirmCancel = () => {
                             key={item.id}
                             style={[getTileStyle(index), styles.glanceTile]}
                             onPress={() => {
-
-                                if (
-                                    item.title.includes('Appointments')
-                                ) {
+                                if (item.title.includes('Appointments')) {
                                     appointmentSheetRef.current?.present();
                                     return;
                                 }
-
                                 if (item?.route) {
                                     router.push(item.route as any);
                                 }
-
                             }}
                         >
-
-                            <View style={styles.countContainer}>
-
+                            <View style={styles.iconBadgeRow}>
                                 <View style={styles.iconWrapper}>
-
-                                    <Ionicons
-                                        name={item.icon as any}
-                                        size={20}
-                                        color={item.iconColor}
-                                    />
-
+                                    <Ionicons name={item.icon as any} size={20} color="white" />
                                 </View>
-
-                                <View style={styles.countWrapper}>
-
-                                    <Text style={styles.countText}>
-                                        {item?.bagde || 0}
-                                    </Text>
-
-                                </View>
-
+                                {item.bagde > 0 && (
+                                    <View style={styles.badge}>
+                                        <Text style={styles.badgeText}>
+                                            {item.bagde > 99 ? '99+' : item.bagde}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
-
-                            <Text style={styles.itemText}>
-                                {item.title}
-                            </Text>
-
+                            <Text style={styles.itemText}>{item.title}</Text>
                             {!!item.subTitle && (
-                                <Text style={styles.itemSubText}>
-                                    {item.subTitle}
-                                </Text>
+                                <Text style={styles.itemSubText}>{item.subTitle}</Text>
                             )}
-
                         </TouchableOpacity>
 
                     ))}
@@ -331,25 +309,10 @@ const handleConfirmCancel = () => {
                         onPress={() => router.push('/(director)/(tabs)/appointments')}
                         style={[getTileStyle(2), styles.glanceTile, styles.calendarTile]}
                     >
-
-                        <View style={styles.countContainer}>
-
-                            <View style={styles.iconWrapper}>
-
-                                <Ionicons
-                                    name="calendar-outline"
-                                    size={20}
-                                    color="white"
-                                />
-
-                            </View>
-
+                        <View style={styles.iconWrapper}>
+                            <Ionicons name="calendar-outline" size={20} color="white" />
                         </View>
-
-                        <Text style={styles.itemText}>
-                            My Calendar
-                        </Text>
-
+                        <Text style={styles.itemText}>My Calendar</Text>
                     </TouchableOpacity>
 
                 </View>
@@ -536,6 +499,7 @@ const styles = StyleSheet.create({
 
     glanceTile: {
         justifyContent: 'flex-start',
+        alignItems: 'center',
         paddingVertical: isSmallDevice ? 6 : 8,
     },
 
@@ -544,30 +508,44 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    countContainer: {
-        justifyContent: 'center',
+    iconBadgeRow: {
+        position: 'relative',
         alignItems: 'center',
-        width: '100%',
+        justifyContent: 'center',
+        marginBottom: 2,
     },
 
     iconWrapper: {
-        height: 24,
-        justifyContent: 'center',
+        width: 38,
+        height: 38,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
         alignItems: 'center',
+        justifyContent: 'center',
     },
 
-    countWrapper: {
-        height: 20,
-        justifyContent: 'center',
+    badge: {
+        position: 'absolute',
+        top: -6,
+        right: -8,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: '#FB7185',
         alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+        borderWidth: 1.5,
+        borderColor: 'rgba(13,54,86,0.8)',
     },
 
-    countText: {
-        color: 'white',
-        fontWeight: '600',
-        fontSize: isSmallDevice ? 14 : 16,
-        width: '100%',
-        textAlign: 'center',
+    badgeText: {
+        color: '#fff',
+        fontSize: 9,
+        fontWeight: '800',
+        lineHeight: 12,
     },
 
     itemText: {
