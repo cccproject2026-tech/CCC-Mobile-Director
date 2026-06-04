@@ -1,3 +1,6 @@
+/** Matches CCC-Backend / CCC-Web microgrant statuses */
+export type MicroGrantStatus = 'new' | 'pending' | 'accepted' | 'rejected';
+
 export interface GrantField {
     label: string;
     type: 'text' | 'textarea' | 'file' | 'checkbox' | 'select' | 'radio';
@@ -40,7 +43,7 @@ export interface GrantSubmissionResponse {
         userId: string;
         answers: GrantApplicationData;
         supportingDoc: string;
-        status: 'pending' | 'approved' | 'rejected' | 'under_review';
+        status: MicroGrantStatus;
         createdAt: string;
         updatedAt: string;
     };
@@ -66,7 +69,7 @@ export interface MicrograntApplication {
     };
     answers: GrantApplicationData;
     supportingDoc: string;
-    status: 'new' | 'pending' | 'approved' | 'rejected' | 'under_review';
+    status: MicroGrantStatus;
     createdAt: string;
     updatedAt: string;
     __v: number;
@@ -102,7 +105,7 @@ export interface MicrograntApplicationDetail {
         };
         answers: GrantApplicationData;
         supportingDoc: string;
-        status: 'new' | 'pending' | 'approved' | 'rejected' | 'under_review';
+        status: MicroGrantStatus;
         createdAt: string;
         updatedAt: string;
         __v: number;
@@ -120,7 +123,7 @@ export interface GrantStatusResponse {
     message: string;
     data: {
         applicationId: string;
-        status: 'new' | 'pending' | 'approved' | 'rejected' | 'under_review';
+        status: MicroGrantStatus;
         submittedAt: string;
         lastUpdated: string;
     };
@@ -131,7 +134,7 @@ export interface CheckApplicationResponse {
     message: string;
     data: {
         applied: boolean;
-        status: 'pending' | 'approved' | 'rejected' | 'under_review';
+        status: MicroGrantStatus;
         applicationId: string;
     };
 }

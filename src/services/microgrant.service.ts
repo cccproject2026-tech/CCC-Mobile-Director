@@ -1,4 +1,14 @@
-import { CheckApplicationResponse, GrantFormResponse, GrantSubmissionPayload, GrantSubmissionResponse, MicrograntApplication, MicrograntApplicationDetail, MicrograntApplicationDetailApiResponse, MicrograntApplicationsApiResponse } from '@/types/microgrant.types';
+import {
+    CheckApplicationResponse,
+    GrantFormResponse,
+    GrantSubmissionPayload,
+    GrantSubmissionResponse,
+    MicrograntApplication,
+    MicrograntApplicationDetail,
+    MicrograntApplicationDetailApiResponse,
+    MicrograntApplicationsApiResponse,
+    MicroGrantStatus,
+} from '@/types/microgrant.types';
 import { apiClient } from './api/client';
 import { ENDPOINTS } from './api/endpoints';
 
@@ -70,7 +80,7 @@ export const grantService = {
     /**
      * Fetch all microgrant applications with optional status filter
      */
-    getApplications: async (status?: string): Promise<MicrograntApplication[]> => {
+    getApplications: async (status?: MicroGrantStatus): Promise<MicrograntApplication[]> => {
         try {
             const response = await apiClient.get<MicrograntApplicationsApiResponse>(
                 ENDPOINTS.GRANT.GET_APPLICATIONS(status),
@@ -123,10 +133,10 @@ export const grantService = {
         };
     },
 
-    updateApplicationStatus: async (userId: string, status: string): Promise<void> => {
+    updateApplicationStatus: async (applicationId: string, status: MicroGrantStatus): Promise<void> => {
         try {
             await apiClient.patch(
-                ENDPOINTS.GRANT.UPDATE_APPLICATION_STATUS(userId),
+                ENDPOINTS.GRANT.UPDATE_APPLICATION_STATUS(applicationId),
                 { status }
             );
         } catch (error) {

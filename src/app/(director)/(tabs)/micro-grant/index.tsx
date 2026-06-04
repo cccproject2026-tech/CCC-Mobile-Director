@@ -1,8 +1,7 @@
 // app/(director)/(tabs)/micro-grant/index.tsx
-import { ActivityIndicator, Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import React, { useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
 import { GradientBackground } from '@/components/ui/design-system';
@@ -11,33 +10,45 @@ import ApplicationCard from '@/components/Cards/ApplicationCard';
 import { useMicroGrantApplicationWithProfiles } from '@/hooks/useMicroGrant';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import { chatNotAvailableYet, dialPhone, openWhatsApp, sendEmail } from '@/utils/contactActions';
+import {
+    countMicroGrantApplicationsByTab,
+    normalizeMicroGrantStatus,
+} from '@/utils/microgrant';
+
+type MicroGrantTab = 'new' | 'pending' | 'accepted';
 
 const MicroGrant = () => {
     const router = useRouter();
     const [search, setSearch] = useState('');
-    const [activeTab, setActiveTab] = useState<'new' | 'pending' | 'accepted'>('new');
-    const { bottom } = useSafeAreaInsets();
-    const { height } = Dimensions.get('window');
+    const [activeTab, setActiveTab] = useState<MicroGrantTab>('new');
 
-    const { applications, isLoading, totalCount } = useMicroGrantApplicationWithProfiles(activeTab);
+    const { applications: allApplications, isLoading } = useMicroGrantApplicationWithProfiles();
 
-    // Filter applications based on search
-    const filteredApplications = applications.filter(app => {
-        if (!search) return true;
-        const fullName = `${app.userProfile?.firstName || ''} ${app.userProfile?.lastName || ''}`.toLowerCase();
-        const email = app.userId?.email?.toLowerCase() || '';
-        const searchLower = search.toLowerCase();
-        return fullName.includes(searchLower) || email.includes(searchLower);
-    });
+    const tabCounts = useMemo(
+        () => countMicroGrantApplicationsByTab(allApplications),
+        [allApplications],
+    );
+
+    const filteredApplications = useMemo(() => {
+        const searchLower = search.trim().toLowerCase();
+        return allApplications.filter((app) => {
+            const status = normalizeMicroGrantStatus(app.status);
+            if (status !== activeTab) return false;
+            if (!searchLower) return true;
+            const fullName = `${app.userProfile?.firstName || ''} ${app.userProfile?.lastName || ''}`.toLowerCase();
+            const email = app.userId?.email?.toLowerCase() || '';
+            return fullName.includes(searchLower) || email.includes(searchLower);
+        });
+    }, [allApplications, activeTab, search]);
 
     const tabs = [
-        { key: 'new', label: 'New', badge: activeTab === 'new' ? totalCount : undefined },
-        { key: 'pending', label: 'Pending', badge: activeTab === 'pending' ? totalCount : undefined },
-        { key: 'accepted', label: 'Accepted', badge: activeTab === 'accepted' ? totalCount : undefined },
+        { key: 'new', label: 'New', badge: tabCounts.new || undefined },
+        { key: 'pending', label: 'Pending', badge: tabCounts.pending || undefined },
+        { key: 'accepted', label: 'Accepted', badge: tabCounts.accepted || undefined },
     ];
 
     const handleTabChange = (tab: string) => {
-        setActiveTab(tab as 'new' | 'pending' | 'accepted');
+        setActiveTab(tab as MicroGrantTab);
     };
 
     const handleCall = (phone?: string) => {
@@ -110,10 +121,10 @@ const MicroGrant = () => {
                                     profilePicture={item.userProfile?.profilePicture}
                                     title={item.userProfile?.role}
                                     createdAt={item.createdAt}
-                                    onCall={() => handleCall((item.userProfile as any)?.phoneNumber)}
+                                    onCall={() => handleCall((item.userProfile as { phoneNumber?: string })?.phoneNumber)}
                                     onChat={() => handleChat(item.userId?._id)}
                                     onMail={() => handleMail(item.userId?.email)}
-                                    onWhatsApp={() => handleWhatsApp((item.userProfile as any)?.phoneNumber)}
+                                    onWhatsApp={() => handleWhatsApp((item.userProfile as { phoneNumber?: string })?.phoneNumber)}
                                 />
                             )}
                         />

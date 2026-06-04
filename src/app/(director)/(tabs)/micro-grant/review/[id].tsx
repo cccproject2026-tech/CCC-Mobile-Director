@@ -27,22 +27,25 @@ const ApplicationReview = () => {
 
 
     const handleReject = () => {
+        if (!applicationId) return;
         updateStatusMutation.mutate(
-            { userId: application?.application._id as string, status: 'pending' },
+            { applicationId: applicationId as string, status: 'rejected' },
             { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
 
     const handleAccept = () => {
+        if (!applicationId) return;
         updateStatusMutation.mutate(
-            { userId: application?.application._id as string, status: 'accepted' },
+            { applicationId: applicationId as string, status: 'accepted' },
             { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
 
     const handleAddToPending = () => {
+        if (!applicationId) return;
         updateStatusMutation.mutate(
-            { userId: application?.application._id as string, status: 'pending' },
+            { applicationId: applicationId as string, status: 'pending' },
             { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
