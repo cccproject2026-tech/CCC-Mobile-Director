@@ -54,7 +54,6 @@ const ApplicationCard: React.FC<Props> = memo(({
         } else {
             router.push({
                 pathname: `/(director)/(tabs)/micro-grant/${userId}`,
-                // params: { applicationId },
             });
         }
     };
