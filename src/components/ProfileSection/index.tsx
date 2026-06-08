@@ -126,9 +126,11 @@ export const PersonalInfoSection = ({
                     <View style={[styles.editFieldContainer, styles.halfInput]}>
                         <Text style={styles.fieldLabel}>Email :</Text>
                         <TextInput
-                            style={[styles.editInput, { color: 'rgba(255,255,255,0.5)' }]}
+                            // style={[styles.editInput, { color: 'rgba(255,255,255,0.5)' }]}
+                                 style={[styles.editInput ]}
                             value={profileData?.user?.email}
-                            editable={false}
+                            // editable={false}
+                            editable={true}
                             placeholder="Email"
                             placeholderTextColor="rgba(255,255,255,0.5)"
                         />

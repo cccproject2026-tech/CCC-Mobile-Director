@@ -132,10 +132,7 @@ export default function InterestReceivedScreen() {
                 <TopBar notifications={3} showUserName showNotifications />
 
                 <View style={styles.inner}>
-                    <ScreenBackHeader
-                        title="Interest Received"
-                        onBack={() => router.back()}
-                    />
+                    <ScreenBackHeader title="Interest Received" />
 
                     <View style={styles.searchWrapper}>
                         <SearchBar value={search} onChangeValue={setSearch} variant="frosted" />

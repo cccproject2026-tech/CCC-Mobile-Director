@@ -1,4 +1,4 @@
-export type InterestStatus = 'new' | 'pending' | 'accepted' | 'rejected' | 'approved';
+export type InterestStatus = 'new' | 'pending' | 'accepted' | 'rejected';
 
 export type ChurchDetails = {
     _id?: string;

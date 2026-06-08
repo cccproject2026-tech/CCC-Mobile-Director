@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useSafeBack } from "@/hooks/useSafeBack";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import CustomMenu, { MenuItem } from "../Menu/CustomMenu";
@@ -11,7 +11,7 @@ type Props = {
 };
 
 const RoadmapHeader = ({ handleOpenCreateRoadmapModal, activeTab }: Props) => {
-    const router = useRouter();
+    const safeBack = useSafeBack();
     const [showOutcomeMenu, setShowOutcomeMenu] = useState(false);
     const [showOutcomeModal, setShowOutcomeModal] = useState(false);
     const [selectedOutcome, setSelectedOutcome] = useState<string>("");
@@ -91,7 +91,7 @@ const RoadmapHeader = ({ handleOpenCreateRoadmapModal, activeTab }: Props) => {
         <View style={styles.navigationBar}>
             {/* Left Section - Back Button + Title with Subtitle */}
             <View style={styles.navigationLeft}>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <TouchableOpacity style={styles.backButton} onPress={safeBack}>
                     <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
                 <View>
@@ -127,12 +127,12 @@ const RoadmapHeader = ({ handleOpenCreateRoadmapModal, activeTab }: Props) => {
                 </TouchableOpacity>
 
                 {/* Three Dots Menu */}
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     style={styles.iconButton}
                     onPress={() => setShowOutcomeMenu(!showOutcomeMenu)}
                 >
                     <Ionicons name="ellipsis-vertical" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
 
             {/* Outcome Context Menu */}

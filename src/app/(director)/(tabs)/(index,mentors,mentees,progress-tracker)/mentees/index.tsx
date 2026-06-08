@@ -28,6 +28,7 @@ import {
     openWhatsApp,
     sendEmail,
 } from '@/utils/contactActions';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function Mentees() {
     const router = useRouter();
@@ -39,6 +40,8 @@ export default function Mentees() {
     const [selectedStateFilter, setSelectedStateFilter] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
     const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
+    const params = useLocalSearchParams();
+
     const {
         data: mentees,
         isLoading,
@@ -153,6 +156,19 @@ export default function Mentees() {
         },
     ];
 
+    const fromhomeScreenmenuItems = [
+
+        {
+            icon: 'person-add-outline',
+            label: 'Assign Mentor',
+            onPress: () => {
+                handleCloseModal();
+                setTimeout(() => router.push({ pathname: '/mentees/assign-mentors', params: { id: selectedMentee?.id || '' } }), 300);
+            },
+        },
+
+    ];
+
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
 
     const handleMenuPress = useCallback((mentee: Mentee) => {
@@ -186,9 +202,32 @@ export default function Mentees() {
                     (m as any).profileInfo?.toLowerCase().includes(q),
             );
         }
-        if (activeTab === 'not-started') filtered = filtered.filter((m: Mentee) => (m.progress ?? 0) === 0);
-        else if (activeTab === 'in-progress') filtered = filtered.filter((m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100);
-        else if (activeTab === 'completed') filtered = filtered.filter((m: Mentee) => m.progress === 100 || m.hasCompleted === true);
+        // if (activeTab === 'not-started') filtered = filtered.filter((m: Mentee) => (m.progress ?? 0) === 0);
+        // else if (activeTab === 'in-progress') filtered = filtered.filter((m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100);
+        // else if (activeTab === 'completed') filtered = filtered.filter((m: Mentee) => m.progress === 100 || m.hasCompleted === true);
+    if (params?.type === "Field-Mentor-Home") {
+        filtered = filtered.filter(
+            (m: Mentee) =>
+                m.progress === 100 || m.hasCompleted === true
+        );
+    } else {
+        // normal tabs filtering
+        if (activeTab === 'not-started') {
+            filtered = filtered.filter((m: Mentee) => (m.progress ?? 0) === 0);
+        } else if (activeTab === 'in-progress') {
+            filtered = filtered.filter(
+                (m: Mentee) =>
+                    (m.progress ?? 0) > 0 &&
+                    (m.progress ?? 0) < 100
+            );
+        } else if (activeTab === 'completed') {
+            filtered = filtered.filter(
+                (m: Mentee) =>
+                    m.progress === 100 ||
+                    m.hasCompleted === true
+            );
+        }
+    }
 
         if (selectedStateFilter) {
             filtered = filtered.filter(
@@ -204,7 +243,7 @@ export default function Mentees() {
             });
         }
         return filtered;
-    }, [menteeList, search, activeTab, selectedFilter, selectedStateFilter]);
+    }, [menteeList, search, activeTab, selectedFilter, selectedStateFilter,    params?.type,]);
 
     const notStartedCount = useMemo(() => menteeList.filter((m: Mentee) => (m.progress ?? 0) === 0).length, [menteeList]);
     const inProgressCount = useMemo(() => menteeList.filter((m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100).length, [menteeList]);
@@ -268,10 +307,10 @@ export default function Mentees() {
                     </View>
 
                     {/* Tabs */}
-                    <TabSwitcher variant="frosted" tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
+                     {  params?.type !== "Field-Mentor-Home" &&  <TabSwitcher variant="frosted" tabs={tabs} activeTab={activeTab} onChange={handleTabChange} /> }
 
                     {/* Sort */}
-                    <View style={styles.sortContainer}>
+                 {  params?.type !== "Field-Mentor-Home" && <View style={styles.sortContainer}>
                         <Text style={styles.sortLabel}>Sort by</Text>
                         <Pressable onPress={() => setFilterModalVisible(true)} style={styles.sortButton}>
                             <Text style={styles.sortButtonText} numberOfLines={1}>
@@ -279,10 +318,10 @@ export default function Mentees() {
                             </Text>
                             <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.8)" />
                         </Pressable>
-                    </View>
+                    </View> }
 
                     {/* List / Skeleton */}
-                    {isLoading ? (
+                    {isLoading ? ( 
                         <View style={styles.flatListContent}>
                             <UserCardSkeleton layout={viewMode} />
                             <UserCardSkeleton layout={viewMode} />
@@ -305,8 +344,13 @@ export default function Mentees() {
                                     onMail={() => sendEmail(mentee.email)}
                                     onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                                     onMenuPress={() => handleMenuPress(mentee)}
-                                    onIssueCertificate={() => featureNotAvailableYet('Issuing a certificate')}
-                                    onInviteAsFieldMentor={() => router.push('/(director)/(tabs)/invite-field-mentor')}
+                                    onInviteAsFieldMentor={() =>
+                                        router.push({
+                                            pathname: '/(director)/(tabs)/course-completed',
+                                            params: { initialTab: 'invited' },
+                                        } as any)
+                                    }
+                                    paramsData={params?.type}
                                 />
                             )}
                             contentContainerStyle={styles.flatListContent}
@@ -336,7 +380,7 @@ export default function Mentees() {
                     ref={bottomSheetModalRef}
                     title={selectedMentee?.username || selectedMentee?.firstName || ''}
                     image={selectedMentee?.profilePicture}
-                    actions={menuItems}
+                    actions={params?.type === "home" ? fromhomeScreenmenuItems : menuItems}
                     onClose={handleCloseModal}
                 />
 

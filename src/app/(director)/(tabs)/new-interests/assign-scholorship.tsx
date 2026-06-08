@@ -202,7 +202,6 @@ export default function AssignScholarshipScreen() {
                 >
                     <ScreenBackHeader
                         title="Interest Received"
-                        onBack={() => router.back()}
                         style={styles.screenHeader}
                     />
 

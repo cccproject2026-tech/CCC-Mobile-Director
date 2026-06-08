@@ -26,6 +26,27 @@ export function sendEmail(address?: string | null) {
   openUrl(`mailto:${encodeURIComponent(address.trim())}`, "email");
 }
 
+export function openSMS(phone?: string | null) {
+  if (!phone?.trim()) {
+    Alert.alert("No phone number", "Phone number is not available.");
+    return;
+  }
+
+  const normalized = phone.replace(/[^\d+]/g, "");
+
+  Linking.canOpenURL(`sms:${normalized}`)
+    .then((supported) => {
+      if (supported) {
+        Linking.openURL(`sms:${normalized}`);
+      } else {
+        Alert.alert("Unable to open", "SMS app is not available.");
+      }
+    })
+    .catch(() => {
+      Alert.alert("Unable to open", "SMS app is not available.");
+    });
+}
+
 /** WhatsApp web / app link from digits (country code should be included when possible). */
 export function openWhatsApp(phone?: string | null) {
   if (!phone?.trim()) {

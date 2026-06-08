@@ -1005,7 +1005,7 @@ export default function RoadmapFormScreen() {
 
                 <ScrollView
                     style={styles.scrollView}
-                    contentContainerStyle={[styles.content, { paddingBottom: bottom + 40, flexGrow: 1 }]}
+                    contentContainerStyle={[styles.content, { paddingBottom: bottom + 40,paddingHorizontal: 16,paddingTop:10, flexGrow: 1 }]}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >

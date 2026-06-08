@@ -1,5 +1,10 @@
 import { grantService } from '@/services/microgrant.service';
-import { ApplicationWithProfile, MicrograntApplication, MicrograntApplicationDetail } from '@/types/microgrant.types';
+import {
+    ApplicationWithProfile,
+    MicrograntApplication,
+    MicrograntApplicationDetail,
+    MicroGrantStatus,
+} from '@/types/microgrant.types';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUserProfile } from './useProfile';
 import { profileService } from '@/services/profile.service';
@@ -13,7 +18,7 @@ export const micrograntApplicationsKeys = {
 /**
  * Hook to fetch microgrant applications with optional status filter
  */
-export function useMicrograntApplications(status?: string) {
+export function useMicrograntApplications(status?: MicroGrantStatus) {
     return useQuery<MicrograntApplication[], Error>({
         queryKey: micrograntApplicationsKeys.byStatus(status),
         queryFn: () => grantService.getApplications(status),
@@ -34,7 +39,7 @@ export function useMicrograntApplication(applicationId: string) {
 
 
 
-export const useMicroGrantApplicationWithProfiles = (status: 'new' | 'pending' | 'accepted') => {
+export const useMicroGrantApplicationWithProfiles = (status?: MicroGrantStatus) => {
     const { data: applicationsData, isLoading: isLoadingApplications } = useMicrograntApplications(status);
 
     // Extract unique user IDs
@@ -137,8 +142,13 @@ export const useUpdateApplicationStatus = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ userId, status }: { userId: string; status: string }) =>
-            grantService.updateApplicationStatus(userId, status),
+        mutationFn: ({
+            applicationId,
+            status,
+        }: {
+            applicationId: string;
+            status: MicroGrantStatus;
+        }) => grantService.updateApplicationStatus(applicationId, status),
         onSuccess: () => {
             // Invalidate all application queries
             queryClient.invalidateQueries({ queryKey: ['microgrant-applications'] });

@@ -2,7 +2,7 @@ import MenteeCard from '@/components/Cards/MenteeCard';
 import SearchBar from '@/components/Header/SearchBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useMentorMentees, useRemoveMenteesFromMentor } from '@/hooks/useMentors';
+import { useMentorMentees, useRemoveMenteesFromMentor, useAssignedMentees } from '@/hooks/useMentors';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -26,6 +26,7 @@ export default function RemoveMenteeScreen() {
     const router = useRouter();
     const { top, bottom } = useSafeAreaInsets();
     const { id: mentorIdParam } = useLocalSearchParams();
+    console.log("mentorIdParam", mentorIdParam);
     const mentorId = Array.isArray(mentorIdParam) ? mentorIdParam[0] : mentorIdParam;
     const [search, setSearch] = useState('');
     const [selectedMentees, setSelectedMentees] = useState<string[]>([]);
@@ -33,8 +34,20 @@ export default function RemoveMenteeScreen() {
     const [selectedFilter, setSelectedFilter] = useState('Latest Join');
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
-    const { mentees, isLoading } = useMentorMentees(mentorId);
+    // const { mentees, isLoading } = useMentorMentees(mentorId);
+    const {
+        data, isLoading, isError
+    } = useAssignedMentees(mentorId);
 
+const mentees = useMemo(
+    () =>
+        (data ?? []).map(item => ({
+            ...item,
+            id: item._id,
+        })),
+    [data]
+);
+    console.log("mentees", mentees);
     const removeMutation = useRemoveMenteesFromMentor();
 
     const toggleSelectMentee = (id: string) => {
@@ -93,7 +106,9 @@ export default function RemoveMenteeScreen() {
             .filter(m => selectedMentees.includes(m.id))
             .map(m => `${m.firstName} ${m.lastName ?? ''}`)
             .join(', ');
-
+        console.log("selectedNames", selectedNames);
+    console.log("selectedMentees", selectedMentees);
+        console.log("mentorId", mentorId);
         Alert.alert(
             'Remove Mentees',
             `Are you sure you want to remove: ${selectedNames}?`,
@@ -210,27 +225,29 @@ export default function RemoveMenteeScreen() {
                 />
 
                 {/* Sticky Bottom Remove Container */}
-                <View style={[styles.bottomContainer, { paddingBottom: bottom + 16 }]}>
-                    <View style={styles.selectedNamesContainer}>
-                        <Text style={styles.selectedNamesText} numberOfLines={1}>
-                            {getSelectedNamesText()}
-                        </Text>
-                    </View>
 
-                    <TouchableOpacity
-                        style={[
-                            styles.removeButton,
-                            (selectedMentees.length === 0 || removeMutation.isPending) && styles.removeButtonDisabled,
-                        ]}
-                        onPress={handleRemove}
-                        disabled={selectedMentees.length === 0 || removeMutation.isPending}
-                        activeOpacity={0.85}
-                    >
-                        <Text style={styles.removeButtonText}>
-                            {removeMutation.isPending ? 'Removing...' : 'Remove'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+                {filteredMentees && filteredMentees.length > 0 && (
+                    <View style={[styles.bottomContainer, { paddingBottom: bottom + 16 }]}>
+                        <View style={styles.selectedNamesContainer}>
+                            <Text style={styles.selectedNamesText} numberOfLines={1}>
+                                {getSelectedNamesText()}
+                            </Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.removeButton,
+                                (selectedMentees.length === 0 || removeMutation.isPending) && styles.removeButtonDisabled,
+                            ]}
+                            onPress={handleRemove}
+                            disabled={selectedMentees.length === 0 || removeMutation.isPending}
+                            activeOpacity={0.85}
+                        >
+                            <Text style={styles.removeButtonText}>
+                                {removeMutation.isPending ? 'Removing...' : 'Remove'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>)}
 
                 <FilterModal
                     visible={filterModalVisible}

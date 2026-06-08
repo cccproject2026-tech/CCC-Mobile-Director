@@ -60,17 +60,22 @@ export default function DirectorTabLayout() {
         "videos",
         "contact-details",
         "reports",
+        "ai-insights",
     ];
 
     return (
         <Tabs
+        initialRouteName="index" 
+        backBehavior="none" 
+        
             screenOptions={{
                 headerShown: false,
+                tabBarHideOnKeyboard: true,
                 tabBarActiveTintColor: "#fff",
                 tabBarInactiveTintColor: "#BFC6DF",
                 tabBarStyle: isTabBarVisible
                     ? {
-                          backgroundColor: "#221C70",
+                          backgroundColor: "#0D3656",
                           borderTopWidth: 0,
                           height: 60 + bottom,
                           paddingBottom: bottom,
@@ -78,6 +83,7 @@ export default function DirectorTabLayout() {
                       }
                     : {
                           display: "none",
+                               position: "absolute",
                       },
                 tabBarLabelStyle: {
                     fontSize: 12,
@@ -86,6 +92,16 @@ export default function DirectorTabLayout() {
                 },
             }}
         >
+            <Tabs.Screen
+                name="alerts"
+                options={{
+                    title: "Alerts",
+                    tabBarIcon: ({ color }) => (
+                        <Ionicons name="notifications-outline" size={24} color={color} />
+
+                    ),
+                }}
+            />
             {/* Visible tabs — footer shows only Dashboard and Profile */}
             <Tabs.Screen
                 name="index"

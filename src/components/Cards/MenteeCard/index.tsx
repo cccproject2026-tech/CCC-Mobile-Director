@@ -8,6 +8,7 @@ import MenteeProgress from "./MenteeProgress";
 import MenteeActions from "./MenteeActions";
 import { Mentee } from "@/types/user.types";
 import { styles } from "./styles";
+import { router } from "expo-router";
 
 export interface MenteeCardProps {
     data: Mentee;
@@ -29,13 +30,15 @@ export interface MenteeCardProps {
     onInviteAsFieldMentor?: () => void;
     disabled?: boolean;
     disabledMessage?: string;
-    showMenu?: boolean
+    showMenu?: boolean,
+    paramsData?: any
 }
 
 export default function MenteeCard(props: MenteeCardProps) {
     const { data, layout = "full", isSelected, onToggleSelect, onPress, disabled, disabledMessage, showMenu } = props;
     const isSelectionMode = onToggleSelect !== undefined;
-
+    console.log("props", props);
+       console.log("paramsData", props?.paramsData);
     // ▫ LIST MODE
     if (layout === "list")
         return (
@@ -43,23 +46,23 @@ export default function MenteeCard(props: MenteeCardProps) {
                 style={[styles.listContainer, isSelected && styles.selectedCard, disabled && { opacity: 0.5 }]}
                 onPress={disabled ? undefined : (isSelectionMode ? onToggleSelect : onPress)}
             >
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <ProfileImage size={42} uri={data.profilePicture} />
                     <Text numberOfLines={1} style={styles.listName}>
                         {data.username || `${data.firstName} ${data.lastName ?? ""}`}
                     </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <ContactActions small {...props} />
                     {props.onMenuPress && (
                         <TouchableOpacity onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
-                            <Ionicons size={18} color="#fff" name="ellipsis-vertical" style={{marginLeft: 4}} />
+                            <Ionicons size={18} color="#fff" name="ellipsis-vertical" style={{ marginLeft: 4 }} />
                         </TouchableOpacity>
                     )}
                 </View>
 
-                
+
             </Pressable>
         );
 
@@ -96,34 +99,52 @@ export default function MenteeCard(props: MenteeCardProps) {
                     </View>
                 </View>
 
-                <ContactActions {...props} small rowStyles={{gap: 2}} btnStyles={{marginTop: 7, marginBottom: 10}}/>
+                <ContactActions {...props} small rowStyles={{ gap: 2 }} btnStyles={{ marginTop: 7, marginBottom: 10 }} />
             </TouchableOpacity>
         );
 
     // ▫ FULL CARD (DEFAULT)
     return (
-        <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
-            {/* Menu or Chevron */}
-            {props.onMenuPress && showMenu ? (
-                <TouchableOpacity style={styles.menuButton} onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
-                    <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
-                </TouchableOpacity>
-            ) : (
-                <View style={{ position: "absolute", top: 14, right: 14 }}>
-                    <Ionicons name="chevron-forward" size={22} color="#fff" />
-                </View>
-            )}
+        // <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
 
+ <TouchableOpacity style={styles.container} onPress={() => {
+            props?.paramsData === "mentees" ? router.push({
+                pathname: '/(director)/(tabs)/roadmaps',
+                params: { id: data?.id ?? '' },
+            }) : onPress?.()
+        }} activeOpacity={0.9}>
+
+            {/* Menu or Chevron */}
+
+            {props?.paramsData !== "mentees" && props?.paramsData !== "Field-Mentor-Home"  ?
+
+                (props.onMenuPress && showMenu ? (
+                    <TouchableOpacity style={styles.menuButton} onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
+                        <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
+                    </TouchableOpacity>
+                ) : (
+                    <View style={{ position: "absolute", top: 14, right: 14 }}>
+                        <Ionicons name="chevron-forward" size={22} color="#fff" />
+                    </View>
+                ))
+                :
+                <TouchableOpacity onPress={() => {props?.paramsData === "Field-Mentor-Home" ? onPress?.() :  router.push({
+                    pathname: '/(director)/(tabs)/roadmaps',
+                    params: { id: data?.id ?? '' },
+                })}  } style={{ position: "absolute", top: "50%", right: 14 }}>
+                    <Ionicons name="chevron-forward" size={22} color="#fff" />
+                </TouchableOpacity>
+            }
             <View style={styles.topSection}>
                 <View>
                     <ProfileImage uri={data.profilePicture} size={95} />
-                    <ContactActions {...props} small rowStyles={{gap: 2}} btnStyles={{marginTop: 7, marginBottom: 10}}/>
+                    <ContactActions {...props} small rowStyles={{ gap: 2 }} btnStyles={{ marginTop: 7, marginBottom: 10 }} />
                 </View>
-
+   
                 <View style={styles.contentSection}>
                     <Text style={styles.name} numberOfLines={1}>
                         {data.firstName} {data.lastName} {data.role && `(${data.role})`}
-                    </Text>
+                    </Text> 
                     <Text style={styles.description} numberOfLines={3}>
                         {data.profileInfo ?? "No description"}
                     </Text>

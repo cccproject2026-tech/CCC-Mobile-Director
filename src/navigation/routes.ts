@@ -1,4 +1,7 @@
 import type { Href } from "expo-router";
+import type { CourseCompletedStatus } from "@/types/progress.types";
+
+type CourseCompletedTab = CourseCompletedStatus;
 
 export const Routes = {
   assessments: {
@@ -10,6 +13,7 @@ export const Routes = {
     editSectionsFor: (id: string): Href =>
       ({ pathname: "/assessments/edit-sections", params: { id } }) as Href,
     result: "/assessments/result" as Href,
+    cdp: "/assessments/cdp" as Href,
     mentorPastors: "/assessments/mentor-pastors" as Href,
     detail: (id: string): Href =>
       ({ pathname: "/assessments/[id]", params: { id } }) as Href,
@@ -21,6 +25,11 @@ export const Routes = {
     resultFor: (assessmentId: string, userId: string): Href =>
       ({
         pathname: "/assessments/result",
+        params: { assessmentId, userId },
+      }) as Href,
+    cdpFor: (assessmentId: string, userId: string): Href =>
+      ({
+        pathname: "/assessments/cdp",
         params: { assessmentId, userId },
       }) as Href,
     mentorPastorsFor: (mentorId: string): Href =>
@@ -40,6 +49,11 @@ export const Routes = {
     report: "/progress-tracker/report" as Href,
   },
   courseCompleted: "/course-completed" as Href,
+  courseCompletedTab: (tab: CourseCompletedTab): Href =>
+    ({
+      pathname: "/course-completed",
+      params: { initialTab: tab },
+    }) as Href,
   roadmaps: {
     index: "/roadmaps" as Href,
     select: "/roadmaps/select-roadmap" as Href,

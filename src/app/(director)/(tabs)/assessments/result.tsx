@@ -9,6 +9,7 @@ import {
 import React, { useMemo } from 'react';
 import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,6 +40,7 @@ function findChoiceLabel(
 
 export default function AssessmentResultScreen() {
     const router = useRouter();
+    const safeBack = useSafeBack();
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams<{ assessmentId?: string; userId?: string }>();
     const assessmentId = Array.isArray(params.assessmentId)
@@ -95,7 +97,7 @@ export default function AssessmentResultScreen() {
             <TopBar showUserName />
 
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
+                <TouchableOpacity onPress={safeBack} style={styles.backRow}>
                     <Ionicons name="chevron-back" size={22} color="#fff" />
                     <View style={{ flex: 1 }}>
                         <Text style={styles.headerTitle}>Assessment Result</Text>
@@ -129,10 +131,21 @@ export default function AssessmentResultScreen() {
                     contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottom + 24 }}
                 >
                     {recommendations?.hasCdp ? (
-                        <View style={styles.banner}>
-                            <Ionicons name="bulb-outline" size={18} color="#fff" />
-                            <Text style={styles.bannerText}>Recommendations available</Text>
-                        </View>
+                        <TouchableOpacity
+                            style={styles.banner}
+                            onPress={() =>
+                                router.push(
+                                    Routes.assessments.cdpFor(assessmentId, userId),
+                                )
+                            }
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons name="document-text-outline" size={18} color="#fff" />
+                            <Text style={styles.bannerText}>
+                                Customized Development Plan
+                            </Text>
+                            <Ionicons name="chevron-forward" size={18} color="#fff" />
+                        </TouchableOpacity>
                     ) : null}
 
                     {preSurveyRows.length > 0 && (
@@ -206,6 +219,8 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         backgroundColor: 'rgba(94,179,209,0.25)',
+        borderWidth: 1,
+        borderColor: 'rgba(142, 197, 235, 0.45)',
         marginBottom: 16,
         marginTop: 8,
     },

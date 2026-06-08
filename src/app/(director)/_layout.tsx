@@ -15,13 +15,13 @@ export default function DirectorLayout() {
                 headerShown: false,
             }}
         >
-            <Drawer.Screen
+            {/* <Drawer.Screen
                 name="(tabs)"
                 options={{
                     headerShown: false,
                     drawerItemStyle: { display: 'none' },
                 }}
-            />
+            /> */}
         </Drawer>
     );
 }

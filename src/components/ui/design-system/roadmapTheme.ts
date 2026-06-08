@@ -15,4 +15,10 @@ export const roadmapTheme = {
   textSubtle: "rgba(255,255,255,0.65)",
   textCaption: "rgba(255,255,255,0.55)",
   divider: "rgba(255,255,255,0.12)",
+
+
+  newfrostedSurfaceStrong: "#236291",
+  newfrostedBorder: "#316A91",
 } as const;
+
+

@@ -10,7 +10,7 @@ type Props = {
 };
 
 /** Frosted card — Pastor Home + mentorship flows. */
-export function CommonCard({ children, style, compact }: Props) {
+export function CommonCard({ children, style, compact = true }: Props) {
   return <View style={[styles.card, compact ? styles.cardCompact : null, style]}>{children}</View>;
 }
 
@@ -20,9 +20,9 @@ const styles = StyleSheet.create({
     borderRadius: homeLayout.cardRadius,
     borderWidth: 1,
     borderColor: roadmapTheme.frostedBorder,
-    padding: 14,
-    paddingBottom: 16,
-    gap: 10,
+    padding: homeLayout.cardPadding,
+    paddingBottom: homeLayout.cardPaddingBottom,
+    gap: homeLayout.cardInnerGap,
   },
   cardCompact: {
     borderRadius: homeLayout.cardRadiusCompact,

@@ -9,6 +9,7 @@ import { GradientBackground, ScreenBackHeader } from "@/components/ui/design-sys
 import { roadmapTheme } from "@/components/ui/design-system/roadmapTheme";
 import { useMentors } from "@/hooks/useMentors";
 import { Mentor } from "@/types/user.types";
+import { useLocalSearchParams } from 'expo-router';
 
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -24,13 +25,14 @@ import {
     TouchableOpacity,
     View,
     RefreshControl,
+    Linking
 } from "react-native";
 import {
-    chatNotAvailableYet,
     dialPhone,
     featureNotAvailableYet,
     openWhatsApp,
     sendEmail,
+    openSMS
 } from "@/utils/contactActions";
 
 export default function Mentors() {
@@ -42,7 +44,7 @@ export default function Mentors() {
     const [selectedFilter, setSelectedFilter] = useState("");
     const [viewMode, setViewMode] = useState<"card" | "list">("list");
     const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
-
+    const params = useLocalSearchParams();
     const bottomSheetRef = useRef<BottomSheetModal>(null);
     const {
         data: mentorsData,
@@ -52,11 +54,14 @@ export default function Mentors() {
         hasNextPage,
         isFetchingNextPage
     } = useMentors(10);
+console.log("mentorsData",mentorsData);
+
 
     const mentorList = useMemo(() => {
         return mentorsData?.pages.flatMap(page => page.mentors) || [];
     }, [mentorsData]);
 
+    console.log("mentorList",mentorList);
     const menuItemsMentor = [
         {
             icon: "people-outline",
@@ -69,7 +74,7 @@ export default function Mentors() {
                     });
                 }
             }
-        },
+        }, 
         {
             icon: "person-add-outline",
             label: "Assign New Mentee",
@@ -84,8 +89,8 @@ export default function Mentors() {
         },
         {
             icon: "person-remove-outline",
-            label: "Remove a Mentee",
-            onPress: () => {
+            label: "Remove a Mentee", 
+            onPress: () => { 
                 if (selectedMentor?.id) {
                     router.push({
                         pathname: "/mentors/remove-mentee",
@@ -142,6 +147,26 @@ export default function Mentors() {
         },
     ];
 
+
+
+    const fromhomeScreenmenuItems = [
+
+        {
+            icon: "person-add-outline",
+            label: "Assign New Mentee",
+            onPress: () => {
+                if (selectedMentor?.id) {
+                    router.push({
+                        pathname: "/mentors/assign-mentees",
+                        params: { id: selectedMentor.id },
+                    });
+                }
+            },
+        },
+
+    ];
+
+
     const menuItemsFieldMentor = [
         {
             icon: "people-outline",
@@ -194,34 +219,137 @@ export default function Mentors() {
         },
     ];
 
+    // const filterOptions: FilterOption[] = [
+    //     { label: "Least number of Mentees" },
+    // ];
     const filterOptions: FilterOption[] = [
-        { label: "Least number of Mentees" },
-    ];
+    {
+        label: "Sort By",
+        options: [
+            "Least Mentees",
+            "Most Mentees",
+            "Name A-Z",
+            "Name Z-A",
+            "Last Contacted",
+        ],
+        isExpandable: true,
+    },
+];
+
+    // const filteredMentors = useMemo(() => {
+    //     let list = mentorList;
+
+    //     if (search.trim()) {
+    //         const q = search.toLowerCase();
+    //         list = list.filter(m =>
+    //             m.firstName.toLowerCase().includes(q) ||
+    //             (m.lastName ?? "").toLowerCase().includes(q) ||
+    //             (m.username ?? "").toLowerCase().includes(q) ||
+    //             m.role?.toLowerCase().includes(q) ||
+    //             (m as any).profileInfo?.toLowerCase().includes(q)
+    //         );
+    //     }
+    //     if (activeTab === "mentor") list = list.filter(m => m.role === "mentor");
+    //     if (activeTab === "field_mentor")
+    //         // list = list.filter(m => m.role === "field_mentor");
+    //     list = list.filter(m => m.role === "field mentor");
+
+    //     return list;
+    // }, [mentorList, search, activeTab, selectedFilter]);
 
     const filteredMentors = useMemo(() => {
-        let list = mentorList;
+    let list = [...mentorList];
 
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            list = list.filter(m =>
-                m.firstName.toLowerCase().includes(q) ||
+    // Search
+    if (search.trim()) {
+        const q = search.toLowerCase();
+
+        list = list.filter(
+            m =>
+                m.firstName?.toLowerCase().includes(q) ||
                 (m.lastName ?? "").toLowerCase().includes(q) ||
                 (m.username ?? "").toLowerCase().includes(q) ||
-                m.role?.toLowerCase().includes(q) ||
-                (m as any).profileInfo?.toLowerCase().includes(q)
-            );
-        }
-        if (activeTab === "mentor") list = list.filter(m => m.role === "mentor");
-        if (activeTab === "field_mentor")
-            list = list.filter(m => m.role === "field_mentor");
+                (m.role ?? "").toLowerCase().includes(q) ||
+                (m.profileInfo ?? "").toLowerCase().includes(q)
+        );
+    }
 
-        return list;
-    }, [mentorList, search, activeTab, selectedFilter]);
+    // Tabs
+    if (activeTab === "mentor") {
+        list = list.filter(
+            m => m.role?.toLowerCase() === "mentor"
+        );
+    }
+
+    if (activeTab === "field_mentor") {
+        list = list.filter(
+            m =>
+                m.role?.toLowerCase() === "field mentor" ||
+                m.role?.toLowerCase() === "field_mentor"
+        );
+    }
+
+    // Sorting
+    switch (selectedFilter) {
+        case "Least Mentees":
+            list.sort(
+                (a, b) =>
+                    (a.assignedId?.length ?? 0) -
+                    (b.assignedId?.length ?? 0)
+            );
+            break;
+
+        case "Most Mentees":
+            list.sort(
+                (a, b) =>
+                    (b.assignedId?.length ?? 0) -
+                    (a.assignedId?.length ?? 0)
+            );
+            break;
+
+        case "Name A-Z":
+            list.sort((a, b) => {
+                const nameA =
+                    `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim();
+                const nameB =
+                    `${b.firstName ?? ""} ${b.lastName ?? ""}`.trim();
+
+                return nameA.localeCompare(nameB);
+            });
+            break;
+
+        case "Name Z-A":
+            list.sort((a, b) => {
+                const nameA =
+                    `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim();
+                const nameB =
+                    `${b.firstName ?? ""} ${b.lastName ?? ""}`.trim();
+
+                return nameB.localeCompare(nameA);
+            });
+            break;
+
+        case "Last Contacted":
+            list.sort((a, b) => {
+                const dateA = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+                const dateB = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+
+                return dateB - dateA;
+            });
+            break;
+
+        default:
+            break;
+    }
+
+    return list;
+}, [mentorList, search, activeTab, selectedFilter]);
 
     const openMenu = useCallback((mentor: Mentor) => {
         setSelectedMentor(mentor);
         setTimeout(() => bottomSheetRef.current?.present(), 10);
     }, []);
+
 
     const renderItem = ({ item }: { item: Mentor }) => (
         <MentorCard
@@ -241,7 +369,7 @@ export default function Mentors() {
             onCall={() => dialPhone(item.phoneNumber)}
             onWhatsApp={() => openWhatsApp(item.phoneNumber)}
             onMail={() => sendEmail(item.email)}
-            onChat={() => chatNotAvailableYet()}
+            onChat={() => openSMS(item.phoneNumber)}
             onMenu={() => openMenu(item)}
         />
     );
@@ -375,12 +503,14 @@ export default function Mentors() {
                         subtitle={`${selectedMentor.assignedId?.length ?? 0} Mentees`}
                         image={selectedMentor.profilePicture}
                         actions={
-                            selectedMentor.role === "mentor"
-                                ? menuItemsMentor
-                                : menuItemsFieldMentor
+                            params?.type === "home" ? fromhomeScreenmenuItems :
+                                selectedMentor.role === "mentor"
+                                    ? menuItemsMentor
+                                    : menuItemsFieldMentor
                         }
                         onClose={() => bottomSheetRef.current?.dismiss()}
                     />
+
                 )}
             </View>
         </GradientBackground>

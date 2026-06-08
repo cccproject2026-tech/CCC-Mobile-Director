@@ -20,14 +20,20 @@ const ActionCardSection: React.FC = () => {
                     title="Course Completed"
                     count={isLoading ? undefined : (completedCount ?? 0)}
                     onPress={() =>
-                        router.push("/(director)/(tabs)/course-completed" as any)
+                        router.push({
+                            pathname: "/(director)/(tabs)/course-completed",
+                            params: { initialTab: "completed" },
+                        } as any)
                     }
                 />
                 <ActionCard
                     icon={Icons.school}
                     title="Invite to be a Field Mentor"
                     onPress={() =>
-                        router.push("/(director)/(tabs)/course-completed" as any)
+                        router.push({
+                            pathname: "/(director)/(tabs)/course-completed",
+                            params: { initialTab: "invited" },
+                        } as any)
                     }
                 />
             </View>

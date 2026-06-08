@@ -1,4 +1,4 @@
-import { ApiAssessment } from "@/types/assessment.types";
+import { ApiAssessment, AssignedAssessmentView } from "@/types/assessment.types";
 
 export type AssignedAssessmentRow = {
   assessmentId: string;
@@ -112,6 +112,30 @@ export function formatDueDateLabel(dueDate?: string): string {
   const d = new Date(dueDate);
   if (Number.isNaN(d.getTime())) return "No due date";
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+/** Completed assessments eligible for CDP list (web director home parity). */
+export function isCompletedAssessmentForCdp(
+  assessment: Pick<AssignedAssessmentView, "sections" | "progressStatus">,
+): boolean {
+  const status = String(assessment.progressStatus ?? "")
+    .toLowerCase()
+    .trim();
+  if (
+    status === "completed" ||
+    status === "reviewed" ||
+    status === "submitted"
+  ) {
+    return true;
+  }
+  return (
+    Array.isArray(assessment.sections) &&
+    assessment.sections.some(
+      (section) =>
+        Array.isArray(section?.recommendations) &&
+        section.recommendations.length > 0,
+    )
+  );
 }
 
 export function hasCdpPayload(body: unknown): boolean {

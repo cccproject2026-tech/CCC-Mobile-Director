@@ -136,3 +136,20 @@ export const useRemoveMenteesFromMentor = () => {
         },
     });
 };
+
+export const useAssignedMentees = (
+    mentorId?: string | string[]
+) => {
+    const id = Array.isArray(mentorId) ? mentorId[0] : mentorId;
+
+    return useQuery({
+        queryKey: ["assigned-mentees", id],
+        enabled: !!id,
+        queryFn: async () => {
+            const response =
+                await menteesService.getAssignedMentees(id!);
+
+            return response?.data || response?.users || response || [];
+        },
+    });
+};

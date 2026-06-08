@@ -8,7 +8,15 @@ import FinalCommentsSection from "@/components/progress/FinalCommentsSection";
 import { GradientBackground, roadmapTheme } from "@/components/ui/design-system";
 import { useAssignedAssessments } from "@/hooks/useAssessments";
 import { Routes } from "@/navigation/routes";
-import { useCompletionWorkflow } from "@/hooks/useCompletionWorkflow";
+import {
+  hasRealCertificate,
+} from "@/services/certificates.service";
+import {
+  openCertificateUrl,
+  useCompletionWorkflow,
+  useUserCertificate,
+} from "@/hooks/useCompletionWorkflow";
+import { useSafeBack } from "@/hooks/useSafeBack";
 import { useAssignedRoadmaps } from "@/hooks/roadmap/useRoadmaps";
 import {
   useAssessmentProgress,
@@ -20,7 +28,7 @@ import { useUserProfile } from "@/hooks/useProfile";
 import { getRoadmapCard } from "@/utils/roadmapMapper";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -49,9 +57,15 @@ function StatusChip({ label, tone }: { label: string; tone: "done" | "progress" 
 }
 
 export default function TrackProgressDetailScreen() {
-  const { userId: userIdParam } = useLocalSearchParams<{ userId: string }>();
+  const safeBack = useSafeBack();
+  const params = useLocalSearchParams<{ userId?: string; issueCertificate?: string }>();
+  const userIdParam = params.userId;
   const userId = Array.isArray(userIdParam) ? userIdParam[0] : userIdParam ?? "";
+  const issueCertificateParam = Array.isArray(params.issueCertificate)
+    ? params.issueCertificate[0]
+    : params.issueCertificate;
   const { bottom } = useSafeAreaInsets();
+  const issuePromptHandled = useRef(false);
 
   const [roadmapTab, setRoadmapTab] = useState<TabKey>("All");
   const [assessmentTab, setAssessmentTab] = useState<TabKey>("All");
@@ -72,7 +86,25 @@ export default function TrackProgressDetailScreen() {
   const { data: roadmapProgress } = useRoadmapProgress(userId);
   const { data: assessmentProgress } = useAssessmentProgress(userId);
 
+  const { data: certificate } = useUserCertificate(userId);
   const workflow = useCompletionWorkflow(userId, profile ?? undefined);
+  const hasCertificate = hasRealCertificate(certificate ?? null);
+
+  const runIssueCertificateRef = useRef(workflow.runIssueCertificate);
+  runIssueCertificateRef.current = workflow.runIssueCertificate;
+
+  useEffect(() => {
+    if (
+      issuePromptHandled.current ||
+      issueCertificateParam !== "1" ||
+      !profile?.hasCompleted ||
+      hasCertificate
+    ) {
+      return;
+    }
+    issuePromptHandled.current = true;
+    runIssueCertificateRef.current();
+  }, [issueCertificateParam, profile?.hasCompleted, hasCertificate]);
 
   const fullName = profile
     ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim()
@@ -83,8 +115,7 @@ export default function TrackProgressDetailScreen() {
     !!profile?.hasCompleted &&
     !profile?.fieldMentorInvitation &&
     !profile?.isFieldMentor;
-  const canIssueCertificate =
-    !!profile?.hasCompleted && !profile?.hasIssuedCertificate;
+  const canIssueCertificate = !!profile?.hasCompleted && !hasCertificate;
   const canMarkFromComments =
     overallPct >= 99 &&
     !profile?.hasCompleted &&
@@ -186,7 +217,7 @@ export default function TrackProgressDetailScreen() {
       <TopBar showUserName />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
+        <TouchableOpacity onPress={safeBack} style={styles.backRow}>
           <Ionicons name="chevron-back" size={22} color="#fff" />
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Track Progress</Text>
@@ -220,7 +251,7 @@ export default function TrackProgressDetailScreen() {
               ) : (
                 <StatusChip label="In progress" tone="pending" />
               )}
-              {profile?.hasIssuedCertificate && (
+              {hasCertificate && (
                 <StatusChip label="Certificate issued" tone="done" />
               )}
               {profile?.fieldMentorInvitation && (
@@ -239,6 +270,15 @@ export default function TrackProgressDetailScreen() {
             >
               <Ionicons name="ribbon-outline" size={18} color="#fff" />
               <Text style={styles.actionBtnText}>Issue Certificate</Text>
+            </TouchableOpacity>
+          )}
+          {hasCertificate && (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => openCertificateUrl(certificate ?? null)}
+            >
+              <Ionicons name="document-outline" size={18} color="#fff" />
+              <Text style={styles.actionBtnText}>View Certificate</Text>
             </TouchableOpacity>
           )}
           {canInviteFieldMentor && (

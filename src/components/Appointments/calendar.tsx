@@ -17,6 +17,7 @@ export interface RecurringAvailability {
 interface GradientCalendarProps {
   selected: string;
   setSelected: (date: string) => void;
+  onMonthChange?: (month: number, year: number) => void;
   containerStyle?: ViewStyle;
   gradientColors?: string[];
 
@@ -38,6 +39,7 @@ interface GradientCalendarProps {
 const GradientCalendar: React.FC<GradientCalendarProps> = ({
   selected,
   setSelected,
+  onMonthChange,
   containerStyle,
   gradientColors = ["#176192", "#1D548D", "#0d2847"],
   availableDates,
@@ -102,12 +104,14 @@ const GradientCalendar: React.FC<GradientCalendarProps> = ({
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() - 1);
     setCurrentMonth(newDate);
+    onMonthChange?.(newDate.getMonth() + 1, newDate.getFullYear());
   };
 
   const handleNextMonth = () => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + 1);
     setCurrentMonth(newDate);
+    onMonthChange?.(newDate.getMonth() + 1, newDate.getFullYear());
   };
 
   const monthYearString = currentMonth.toLocaleString("en-US", {

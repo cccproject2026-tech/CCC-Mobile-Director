@@ -8,16 +8,19 @@ import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-ic
 import TopBar from '@/components/Header/TopBar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMicroGrantApplicationDetails, useUpdateApplicationStatus } from '@/hooks/useMicroGrant';
+import { MICROGRANT_PAGE_TITLE } from '@/utils/microgrant';
 
 const ApplicationReview = () => {
     const router = useRouter();
-    const { id: applicationId } = useLocalSearchParams();
+    const { id: routeId } = useLocalSearchParams();
     const { bottom } = useSafeAreaInsets();
 
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
 
-    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(applicationId as string);
+    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(routeId as string);
     const updateStatusMutation = useUpdateApplicationStatus();
+    /** PATCH /microgrant/application/:applicationId/status requires the application document _id, not userId. */
+    const statusApplicationId = application?.application._id;
 
     const handleCheckboxToggle = (option: string) => {
         setSelectedOptions(prev =>
@@ -27,22 +30,25 @@ const ApplicationReview = () => {
 
 
     const handleReject = () => {
+        if (!statusApplicationId) return;
         updateStatusMutation.mutate(
-            { userId: application?.application._id as string, status: 'pending' },
+            { applicationId: statusApplicationId, status: 'rejected' },
             { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
 
     const handleAccept = () => {
+        if (!statusApplicationId) return;
         updateStatusMutation.mutate(
-            { userId: application?.application._id as string, status: 'accepted' },
+            { applicationId: statusApplicationId, status: 'accepted' },
             { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
 
     const handleAddToPending = () => {
+        if (!statusApplicationId) return;
         updateStatusMutation.mutate(
-            { userId: application?.application._id as string, status: 'pending' },
+            { applicationId: statusApplicationId, status: 'pending' },
             { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
         );
     };
@@ -93,7 +99,7 @@ const ApplicationReview = () => {
                 {/* Title */}
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>
-                        {application.application.formId?.title || 'The Center for Community Change Micro-Grant Application'}
+                        {MICROGRANT_PAGE_TITLE}
                     </Text>
                 </View>
 

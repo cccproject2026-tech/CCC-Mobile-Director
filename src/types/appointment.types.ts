@@ -1,5 +1,6 @@
 export type AppointmentPlatform = 'zoom' | 'google_meet' | 'teams' | 'phone' | 'in_person';
 export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+export type SessionMode = 'ONLINE' | 'IN_PERSON' | 'NOT_DECIDED';
 
 export interface CreateAppointmentPayload {
     userId: string; // MongoId - REQUIRED
@@ -8,6 +9,8 @@ export interface CreateAppointmentPayload {
     platform: AppointmentPlatform; // REQUIRED
     meetingLink?: string; // OPTIONAL
     notes?: string; // OPTIONAL
+    initiatorRole?: string;
+    googleCalendarNonMentorUserId?: string;
 }
 
 export interface UpdateAppointmentPayload {
@@ -38,6 +41,14 @@ export interface Appointment {
     meetingLink?: string;
     notes?: string;
     status: AppointmentStatus;
+    zoomMeeting?: {
+        joinUrl?: string;
+        join_url?: string;
+        joinURL?: string;
+    };
+    mentorGoogleCalendarEventId?: string | null;
+    userGoogleCalendarEventId?: string | null;
+    googleCalendarSyncWarnings?: string[];
     createdAt?: string;
     updatedAt?: string;
     user?: UserMentorRespose;
@@ -153,4 +164,63 @@ export interface SetAvailabilityApiResponse {
     success: boolean;
     message: string;
     data: SetAvailabilityResponse;
+}
+
+export type AppointmentSlotPeriod = 'AM' | 'PM';
+
+export interface AppointmentAvailabilityTimeSlot {
+    startTime: string;
+    startPeriod: AppointmentSlotPeriod;
+    endTime: string;
+    endPeriod: AppointmentSlotPeriod;
+}
+
+export interface TemplateWeeklySlotRowDto {
+    date: string;
+    slots: AppointmentAvailabilityTimeSlot[];
+}
+
+export interface CreateRecurringAvailabilityPayload {
+    mentorId: string;
+    templateWeeklySlots: TemplateWeeklySlotRowDto[];
+    horizonDays?: number;
+    clearPersonalizations?: boolean;
+    meetingDuration?: number;
+    minSchedulingNoticeHours?: number;
+    maxBookingsPerDay?: number;
+    preferredPlatform?: string;
+}
+
+export interface UpdateMentorAvailabilitySettingsPayload {
+    meetingDuration?: number;
+    minSchedulingNoticeHours?: number;
+    maxBookingsPerDay?: number;
+    preferredPlatform?: string;
+}
+
+export interface PatchMentorAvailabilityDayPayload {
+    date: string;
+    slots: AppointmentAvailabilityTimeSlot[];
+    meetingDuration?: number;
+    minSchedulingNoticeHours?: number;
+    maxBookingsPerDay?: number;
+    preferredPlatform?: string;
+}
+
+export interface MentorAvailabilityDocument {
+    mentorId?: string;
+    weeklySlots?: WeeklySlot[];
+    recurringWeeklyPattern?: { weekday: number; rawSlots: AppointmentAvailabilityTimeSlot[] }[];
+    recurringHorizonDays?: number;
+    meetingDuration?: number;
+    minSchedulingNoticeHours?: number;
+    maxBookingsPerDay?: number;
+    preferredPlatform?: string;
+    templateWeeklySlots?: TemplateWeeklySlotRowDto[];
+}
+
+export interface ApiMessageResponse {
+    success: boolean;
+    message?: string;
+    data?: unknown;
 }

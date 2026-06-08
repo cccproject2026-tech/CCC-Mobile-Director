@@ -10,6 +10,7 @@ import {
     hasCdpPayload,
     mapProgressStatus,
 } from '@/utils/assignedAssessmentParser';
+import { buildCdpSectionRows, CdpSectionRow } from '@/utils/assessment-recommendation-view';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useAssessmentProgress } from './useProgress';
@@ -190,6 +191,48 @@ export const useAssessmentRecommendations = (
     });
 };
 
+/** CDP section list for director (web assessments/result/cdp parity). */
+export const useCdpSectionRecommendations = (
+    assessmentId: string | undefined,
+    userId: string | undefined,
+) => {
+    const assessmentQuery = useAssessment(assessmentId);
+    const recommendationsQuery = useAssessmentRecommendations(assessmentId, userId);
+    const answersQuery = useAssessmentAnswers(assessmentId, userId);
+
+    const sections = useMemo((): CdpSectionRow[] => {
+        if (!recommendationsQuery.data?.raw) return [];
+        return buildCdpSectionRows(
+            recommendationsQuery.data.raw,
+            assessmentQuery.data?.sections ?? [],
+            answersQuery.data,
+        );
+    }, [
+        recommendationsQuery.data?.raw,
+        assessmentQuery.data?.sections,
+        answersQuery.data,
+    ]);
+
+    return {
+        assessmentTitle: assessmentQuery.data?.name ?? 'Assessment',
+        sections,
+        hasCdp: recommendationsQuery.data?.hasCdp ?? false,
+        isLoading:
+            assessmentQuery.isLoading ||
+            recommendationsQuery.isLoading ||
+            answersQuery.isLoading,
+        isError:
+            assessmentQuery.isError ||
+            recommendationsQuery.isError ||
+            answersQuery.isError,
+        refetch: () => {
+            void assessmentQuery.refetch();
+            void recommendationsQuery.refetch();
+            void answersQuery.refetch();
+        },
+    };
+};
+
 export const useAssignAssessmentMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -254,6 +297,37 @@ export const useUploadBannerImageMutation = () => {
             assessmentService.uploadBannerImage(id, imageUri),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: assessmentKeys.detail(variables.id) });
+        },
+    });
+};
+
+
+export const useDeleteAssessmentMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (assessmentId: string) =>
+            assessmentService.deleteAssessment(assessmentId),
+
+        onSuccess: (_, assessmentId) => {
+            // Refresh assessment lists
+            queryClient.invalidateQueries({
+                queryKey: assessmentKeys.all,
+            });
+
+            // Remove deleted assessment detail cache
+            queryClient.removeQueries({
+                queryKey: assessmentKeys.detail(assessmentId),
+            });
+
+            // Optional refreshes
+            queryClient.invalidateQueries({
+                queryKey: ['progress'],
+            });
+
+            queryClient.invalidateQueries({
+                queryKey: ['mentees'],
+            });
         },
     });
 };

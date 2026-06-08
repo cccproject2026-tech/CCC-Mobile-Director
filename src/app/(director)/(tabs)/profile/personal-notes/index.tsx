@@ -98,7 +98,7 @@ export default function PersonalNotesScreen() {
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <Stack.Screen options={{ headerShown: false }} />
 
-                <ScreenBackHeader title="Personal Notes" onBack={() => router.back()} />
+                <ScreenBackHeader title="Personal Notes" />
 
                 {/* Tab row */}
                 <View style={styles.tabRow}>
@@ -120,7 +120,7 @@ export default function PersonalNotesScreen() {
                     <View style={styles.emptyBox}>
                         <Ionicons name="document-text-outline" size={40} color="rgba(255,255,255,0.3)" />
                         <Text style={styles.emptyText}>No notes yet</Text>
-                        <Text style={styles.emptySubtext}>Tap "New Note" to create your first note</Text>
+                        <Text style={styles.emptySubtext}>{'Tap "New Note" to create your first note'}</Text>
                     </View>
                 ) : (
                     <ScrollView

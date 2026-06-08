@@ -106,10 +106,7 @@ export default function NewPersonalNoteScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     keyboardVerticalOffset={0}
                 >
-                    <ScreenBackHeader
-                        title={isEdit ? 'Edit Note' : 'New Note'}
-                        onBack={() => router.back()}
-                    />
+                    <ScreenBackHeader title={isEdit ? 'Edit Note' : 'New Note'} />
 
                     {userName ? (
                         <View style={styles.subtitleRow}>

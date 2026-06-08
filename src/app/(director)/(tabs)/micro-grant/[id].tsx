@@ -7,13 +7,17 @@ import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-ic
 import TopBar from '@/components/Header/TopBar';
 import { GradientBackground } from '@/components/ui/design-system';
 import { useMicroGrantApplicationDetails } from '@/hooks/useMicroGrant';
+import {
+    MICROGRANT_PAGE_TITLE,
+    displayNameFromMicrograntDetail,
+} from '@/utils/microgrant';
 
 const ApplicationDetails = () => {
     const router = useRouter();
-    const { id: applicationId } = useLocalSearchParams();
+    const { id: userId } = useLocalSearchParams();
     const { bottom } = useSafeAreaInsets();
 
-    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(applicationId as string);
+    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(userId as string);
 
     const handleViewProfile = () => {
         if (application?.application.userId) {
@@ -22,7 +26,8 @@ const ApplicationDetails = () => {
     };
 
     const handleNext = () => {
-        router.push(`/(director)/(tabs)/micro-grant/review/${applicationId}` as any);
+        if (!userId) return;
+        router.push(`/(director)/(tabs)/micro-grant/review/${userId}` as any);
     };
 
     if (isLoading) {
@@ -50,8 +55,8 @@ const ApplicationDetails = () => {
         );
     }
 
-    const userName = `${userProfile?.firstName || 'Unknown'} ${userProfile?.lastName || 'User'}`.trim();
-    const role = userProfile?.role || 'Pastor';
+    const userName = displayNameFromMicrograntDetail(application, userProfile);
+    const role = userProfile?.role || application.user?.role || 'Pastor';
     const profilePicture = userProfile?.profilePicture;
 
     return (
@@ -65,9 +70,7 @@ const ApplicationDetails = () => {
             >
                 {/* Title */}
                 <View style={styles.titleContainer}>
-                    <Text style={styles.title}>
-                        {application.application.formId?.title || 'The Center for Community Change Micro-Grant Application'}
-                    </Text>
+                    <Text style={styles.title}>{MICROGRANT_PAGE_TITLE}</Text>
                 </View>
 
                 {/* User Card */}
