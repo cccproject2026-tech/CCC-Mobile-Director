@@ -1,11 +1,9 @@
-
-import TopBar from "@/components/Header/TopBar";
-import { icons } from "@/constants";
-import { useLogin } from "@/hooks/useAuth";
-import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { Stack, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { CommonCard, GradientBackground, PrimaryButton, roadmapTheme } from '@/components/ui/design-system';
+import { icons } from '@/constants';
+import { useLogin } from '@/hooks/useAuth';
+import { Ionicons } from '@expo/vector-icons';
+import { Stack } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,48 +13,35 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoginFormScreen() {
-  const { bottom } = useSafeAreaInsets();
-  const router = useRouter();
-
-  // Login Hook
+  const { top, bottom } = useSafeAreaInsets();
   const { mutate: login, isPending: isLoading, error } = useLogin();
-
-  // Refs for Accessibility/UX
   const passwordInputRef = useRef<TextInput>(null);
 
-  // Form state
-  const [email, setEmail] = useState(__DEV__ ? 'superadmin@communitychange.com' : '');
-  const [password, setPassword] = useState('SuperAdmin@2025!Secure');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Error Handling Effect
   useEffect(() => {
     if (!error) return;
 
     const status = error?.statusCode;
-    const message = error?.message?.toLowerCase() || "";
-
-    console.log("🔥 ERROR CHECK:", status, message);
+    const message = error?.message?.toLowerCase() || '';
 
     if (
       status === 400 &&
-      (message.includes("email not verified") ||
-        message.includes("verify email") ||
-        message.includes("unverified"))
+      (message.includes('email not verified') ||
+        message.includes('verify email') ||
+        message.includes('unverified'))
     ) {
-      Alert.alert(
-        "Email Not Verified",
-        "Please verify your email to continue.",
-      );
+      Alert.alert('Email Not Verified', 'Please verify your email to continue.');
     }
-  }, [error, email, router]);
+  }, [error]);
 
-  // Handle login
   const handleLogin = useCallback(() => {
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
@@ -70,241 +55,267 @@ export default function LoginFormScreen() {
       return;
     }
 
-    console.log('📤 Logging in with:', trimmedEmail);
     login({ email: trimmedEmail, password: trimmedPassword });
   }, [email, password, login]);
-
-
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <LinearGradient
-        colors={['#176192', '#1D548D', '#264387']}
-        style={styles.container}
-      >
-        <TopBar showNotifications={false} showDrawer={false} />
-
-        <KeyboardAwareScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: bottom + 20 },
+      <GradientBackground style={styles.screen}>
+        <View
+          style={[
+            styles.screenInner,
+            { paddingTop: top + 16, paddingBottom: Math.max(bottom, 16) },
           ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
         >
-          {/* CCC Logo */}
-          <View style={styles.cccLogoContainer}>
-            <Image
-              source={icons.communityImage}
-              style={styles.cccLogo}
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* Login Form */}
-          <View style={styles.formContainer}>
-            {/* Email Input */}
-            <TextInput
-              style={styles.input}
-              placeholder="Email or User Name"
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-              returnKeyType="next"
-              onSubmitEditing={() => passwordInputRef.current?.focus()}
-              blurOnSubmit={false}
-            />
-
-            {/* Password Input */}
-            <View style={styles.passwordContainer}>
-              <TextInput
-                ref={passwordInputRef}
-                style={styles.passwordInput}
-                placeholder="Password"
-                placeholderTextColor="rgba(255,255,255,0.6)"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-                returnKeyType="go"
-                onSubmitEditing={handleLogin}
-              />
-
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIcon}
-                disabled={isLoading}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={24}
-                  color="rgba(255,255,255,0.6)"
-                />
-              </TouchableOpacity>
+          <View style={styles.pageHeader}>
+            <View style={styles.pageHeaderIcon}>
+              <Ionicons name="shield-checkmark-outline" size={24} color={roadmapTheme.textPrimary} />
             </View>
+            <Text style={styles.pageHeaderEyebrow}>The Center for Community Change</Text>
+            <Text style={styles.pageHeaderTitle}>Director Portal</Text>
+            <Text style={styles.pageHeaderSubtitle}>
+              Sign in to manage mentors, pastors, and program progress
+            </Text>
+          </View>
 
-            {/* Error Message */}
-            {error && (
-              <View style={styles.errorContainer}>
-                <Ionicons
-                  name="alert-circle"
-                  size={20}
-                  color="#FF4D4D"
-                  style={styles.errorIcon}
-                />
-
-                <Text style={styles.errorText}>
-                  {error?.response?.data?.message ||
-                    error?.message ||
-                    "Something went wrong"}
-                </Text>
-              </View>
-            )}
-
-            {/* Login Button */}
-            <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-              onPress={handleLogin}
-              disabled={isLoading}
-              activeOpacity={0.8}
+          <View style={styles.formArea}>
+            <KeyboardAwareScrollView
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
             >
-              {isLoading ? (
-                <ActivityIndicator color="#1A5490" />
-              ) : (
-                <Text style={styles.loginButtonText}>Log in</Text>
-              )}
-            </TouchableOpacity>
+              <CommonCard style={styles.formCard}>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Email</Text>
+                  <View style={styles.inputWrap}>
+                    <Ionicons
+                      name="mail-outline"
+                      size={18}
+                      color={roadmapTheme.textCaption}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Email or username"
+                      placeholderTextColor={roadmapTheme.textCaption}
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                      returnKeyType="next"
+                      onSubmitEditing={() => passwordInputRef.current?.focus()}
+                      blurOnSubmit={false}
+                    />
+                  </View>
+                </View>
 
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Password</Text>
+                  <View style={styles.inputWrap}>
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={18}
+                      color={roadmapTheme.textCaption}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      ref={passwordInputRef}
+                      style={[styles.input, styles.passwordInput]}
+                      placeholder="Password"
+                      placeholderTextColor={roadmapTheme.textCaption}
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                      returnKeyType="go"
+                      onSubmitEditing={handleLogin}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword((prev) => !prev)}
+                      style={styles.eyeButton}
+                      disabled={isLoading}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color={roadmapTheme.textCaption}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {error ? (
+                  <View style={styles.errorContainer}>
+                    <Ionicons name="alert-circle" size={18} color="#FDA4AF" style={styles.errorIcon} />
+                    <Text style={styles.errorText}>
+                      {error?.response?.data?.message || error?.message || 'Something went wrong'}
+                    </Text>
+                  </View>
+                ) : null}
+
+                {isLoading ? (
+                  <View style={styles.loadingButton}>
+                    <ActivityIndicator color={roadmapTheme.textActive} />
+                  </View>
+                ) : (
+                  <PrimaryButton label="Sign in" onPress={handleLogin} disabled={isLoading} />
+                )}
+              </CommonCard>
+            </KeyboardAwareScrollView>
           </View>
 
-          {/* University Logo */}
-          <View style={styles.universityLogoContainer}>
-            <Image
-              source={icons.universityIcon}
-              style={styles.universityLogo}
-              resizeMode="contain"
-            />
+          <View style={styles.logoFooter}>
+            <Image source={icons.universityIcon} style={styles.universityLogo} resizeMode="contain" />
           </View>
-        </KeyboardAwareScrollView>
-      </LinearGradient>
+        </View>
+      </GradientBackground>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
+  },
+  screenInner: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  pageHeader: {
+    alignItems: 'center',
+    paddingBottom: 8,
+    gap: 6,
+  },
+  pageHeaderIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: roadmapTheme.frostedBorderStrong,
+    backgroundColor: roadmapTheme.frostedSurfaceStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  pageHeaderEyebrow: {
+    color: roadmapTheme.textCaption,
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  pageHeaderTitle: {
+    color: roadmapTheme.textPrimary,
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.6,
+    lineHeight: 32,
+    textAlign: 'center',
+  },
+  pageHeaderSubtitle: {
+    color: roadmapTheme.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    maxWidth: 300,
+    marginTop: 2,
+  },
+  formArea: {
+    flex: 1,
+    justifyContent: 'center',
   },
   scrollContent: {
     flexGrow: 1,
-    // Ensures the layout remains balanced even with items removed
-    justifyContent: 'flex-start',
-  },
-  cccLogoContainer: {
-    alignItems: "center",
-    marginTop: 40,
-    marginBottom: 40,
-    backgroundColor: "#fff",
-    marginHorizontal: 35,
-    paddingVertical: 35,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-  },
-  cccLogo: {
-    width: "100%",
-    height: 90,
-  },
-  formContainer: {
-    paddingHorizontal: 35,
-    marginBottom: 60,
-  },
-  input: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.8)",
-    borderRadius: 10,
-    padding: 16,
-    fontSize: 16,
-    color: "#fff",
-    marginBottom: 20,
-  },
-  passwordContainer: {
-    position: "relative",
-    marginBottom: 20,
-  },
-  passwordInput: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.8)",
-    borderRadius: 10,
-    padding: 16,
-    paddingRight: 50,
-    fontSize: 16,
-    color: "#fff",
-  },
-  loginButtonDisabled: {
-    opacity: 0.6,
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 14,
-    top: 16,
-  },
-  errorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 71, 87, 0.15)",
-    borderColor: "rgba(255, 71, 87, 0.35)",
-    borderWidth: 1,
+    justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    marginBottom: 16,
   },
-  errorIcon: {
+  formCard: {
+    gap: 14,
+    width: '100%',
+  },
+  fieldGroup: {
+    gap: 6,
+  },
+  fieldLabel: {
+    color: roadmapTheme.textSubtle,
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: roadmapTheme.frostedBorder,
+    borderRadius: 12,
+    minHeight: 50,
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
     marginRight: 8,
   },
-  errorText: {
-    color: "#FF4D4D",
+  input: {
+    flex: 1,
     fontSize: 15,
-    flexShrink: 1,
-    fontWeight: "500",
+    color: roadmapTheme.textPrimary,
+    paddingVertical: 12,
   },
-  loginButton: {
-    backgroundColor: "#fff",
-    padding: 18,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 16,
+  passwordInput: {
+    paddingRight: 36,
   },
-  loginButtonText: {
-    color: "#1A5490",
-    fontSize: 18,
-    fontWeight: "600",
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
   },
-  forgotPassword: {
-    alignItems: "flex-end",
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(253, 164, 175, 0.12)',
+    borderColor: 'rgba(253, 164, 175, 0.35)',
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    gap: 8,
   },
-  forgotPasswordText: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 16,
+  errorIcon: {
+    flexShrink: 0,
   },
-  universityLogoContainer: {
-    alignItems: "center",
-    marginBottom: 30,
-    // Pushes to bottom if content is short
-    marginTop: 'auto',
+  errorText: {
+    color: '#FDA4AF',
+    fontSize: 13,
+    flex: 1,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  loadingButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    opacity: 0.7,
+  },
+  logoFooter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 12,
+    flexShrink: 0,
   },
   universityLogo: {
-    width: 220,
-    height: 50,
+    width: 200,
+    height: 44,
+    opacity: 0.95,
   },
 });
