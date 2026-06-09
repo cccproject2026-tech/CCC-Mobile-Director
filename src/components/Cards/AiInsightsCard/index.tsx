@@ -1,4 +1,4 @@
-import { roadmapTheme } from '@/components/ui/design-system';
+import { HOME_ICON_COLOR, roadmapTheme } from '@/components/ui/design-system';
 import { isSmallDevice } from '@/utils/responsive';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -51,7 +51,7 @@ const AiInsightCard: React.FC<Props> = ({ title, desciption, iconName }) => {
             colors={['rgba(119,194,240,0.25)', 'rgba(119,194,240,0.08)']}
             style={styles.iconBg}
           >
-            <Ionicons name={iconName} size={18} color="#77C2F0" />
+            <Ionicons name={iconName} size={18} color={HOME_ICON_COLOR} />
           </LinearGradient>
           <View>
             <Text style={styles.title}>{title}</Text>
@@ -76,12 +76,12 @@ const AiInsightCard: React.FC<Props> = ({ title, desciption, iconName }) => {
           <React.Fragment key={metric.label}>
             <View style={styles.metricCell}>
               <View style={[styles.metricIconBg, { backgroundColor: metric.accent + '22' }]}>
-                <Ionicons name={metric.icon} size={15} color={metric.accent} />
+                <Ionicons name={metric.icon} size={15} color={HOME_ICON_COLOR} />
               </View>
               <Text style={styles.metricValue}>{metric.value}</Text>
               <Text style={styles.metricLabel}>{metric.label}</Text>
               <View style={styles.metricTrendRow}>
-                <Ionicons name="caret-up" size={10} color={metric.accent} />
+                <Ionicons name="caret-up" size={10} color={HOME_ICON_COLOR} />
                 <Text style={[styles.metricTrend, { color: metric.accent }]}>
                   {metric.trend}
                 </Text>
@@ -95,12 +95,12 @@ const AiInsightCard: React.FC<Props> = ({ title, desciption, iconName }) => {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Ionicons name="information-circle-outline" size={13} color="rgba(255,255,255,0.4)" />
+        <Ionicons name="information-circle-outline" size={13} color={HOME_ICON_COLOR} />
         <Text style={styles.footerText}>Updated just now</Text>
         <View style={styles.footerSpacer} />
         <Pressable style={styles.viewInsightsBtn} onPress={() => router.push('/ai-insights')}>
           <Text style={styles.viewInsightsText}>View Insights</Text>
-          <Ionicons name="arrow-forward" size={12} color="#77C2F0" />
+          <Ionicons name="arrow-forward" size={12} color={HOME_ICON_COLOR} />
         </Pressable>
       </View>
     </View>

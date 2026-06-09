@@ -6,6 +6,7 @@ export { PrimaryButton } from "./PrimaryButton";
 export { roadmapTheme } from "./roadmapTheme";
 export { homeLayout } from "./homeLayout";
 export {
+  HOME_ICON_COLOR,
   HOME_SECTION_ICON_COLORS,
   homeTileAccents,
   resolveHomeTileAccent,

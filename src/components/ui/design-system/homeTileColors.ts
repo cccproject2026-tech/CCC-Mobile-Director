@@ -8,17 +8,20 @@ export type HomeTileAccent = {
   label: string;
 };
 
+/** Unified icon color for all Home screen icons. */
+export const HOME_ICON_COLOR = '#FFFFFF';
+
 /** Section header icon accents (matches dashboard card themes). */
 export const HOME_SECTION_ICON_COLORS: Record<string, string> = {
-  'At a Glance': '#7DD3FC',
-  'Quick Actions': '#6FD4BE',
-  RoadMaps: '#7DD3FC',
-  'Assesments & CDP': '#C4B5FD',
-  'Mentorship & Support': '#6FD4BE',
-  'Tracking Progress': '#E8C88A',
-  'Directors Notes': '#FCD34D',
-  'New User': '#6FD4BE',
-  'AI Insights': '#C4B5FD',
+  'At a Glance': HOME_ICON_COLOR,
+  'Quick Actions': HOME_ICON_COLOR,
+  RoadMaps: HOME_ICON_COLOR,
+  'Assesments & CDP': HOME_ICON_COLOR,
+  'Mentorship & Support': HOME_ICON_COLOR,
+  'Tracking Progress': HOME_ICON_COLOR,
+  'Directors Notes': HOME_ICON_COLOR,
+  'New User': HOME_ICON_COLOR,
+  'AI Insights': HOME_ICON_COLOR,
 };
 
 export const homeTileAccents = {
@@ -83,12 +86,12 @@ export function resolveHomeTileAccent(key?: string): HomeTileAccent {
 }
 
 /** Icon color only — tile/label backgrounds stay unchanged. */
-export function resolveHomeTileIconColor(key?: string): string {
-  return resolveHomeTileAccent(key).icon;
+export function resolveHomeTileIconColor(_key?: string): string {
+  return HOME_ICON_COLOR;
 }
 
-export function resolveSectionIconColor(sectionTitle: string): string {
-  return HOME_SECTION_ICON_COLORS[sectionTitle] ?? '#7DD3FC';
+export function resolveSectionIconColor(_sectionTitle: string): string {
+  return HOME_ICON_COLOR;
 }
 
 export function tileSurfaceStyle(accent: HomeTileAccent): ViewStyle {

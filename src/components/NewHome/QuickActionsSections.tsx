@@ -1,4 +1,4 @@
-import { CommonCard, HomeCardHeader, useHomeGridLayout } from '../ui/design-system';
+import { CommonCard, HOME_ICON_COLOR, HomeCardHeader, useHomeGridLayout } from '../ui/design-system';
 import React from 'react';
 import { View } from 'react-native';
 import QuickActionCard from '../Cards/QuickActionsCard/QuickActionCard';
@@ -53,7 +53,7 @@ const QuickActionSection = () => {
         title="Quick Actions"
         subtitle="Pick up from the step you left off and keep going."
         iconName="grid-outline"
-        iconColor="#6FD4BE"
+        iconColor={HOME_ICON_COLOR}
       />
       <View style={gridStyle} onLayout={onGridLayout}>
         {quickActionItems.map((item, index) => (

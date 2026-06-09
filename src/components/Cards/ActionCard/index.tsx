@@ -1,5 +1,5 @@
 import { icons } from '@/constants';
-import { homeLayout, roadmapTheme } from '@/components/ui/design-system';
+import { HOME_ICON_COLOR, homeLayout, roadmapTheme } from '@/components/ui/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -23,7 +23,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ icon, title, count, onPr
     >
         <View style={styles.left}>
             <View style={styles.iconWrap}>
-                <Image source={icon} style={styles.icon} />
+                <Image source={icon} style={styles.icon} tintColor={HOME_ICON_COLOR} />
             </View>
             <Text style={styles.title} numberOfLines={1}>{title}</Text>
         </View>
@@ -34,7 +34,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({ icon, title, count, onPr
                     <Text style={styles.countText}>{count}</Text>
                 </View>
             )}
-            <Ionicons name="chevron-forward" size={16} color={roadmapTheme.textCaption} />
+            <Ionicons name="chevron-forward" size={16} color={HOME_ICON_COLOR} />
         </View>
     </Pressable>
 );

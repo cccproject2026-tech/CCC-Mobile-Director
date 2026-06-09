@@ -1,4 +1,4 @@
-import { CommonCard, roadmapTheme } from '../ui/design-system';
+import { CommonCard, HOME_ICON_COLOR, roadmapTheme } from '../ui/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
@@ -69,7 +69,7 @@ const DirectorsNotesSection = () => {
             colors={['rgba(232,200,138,0.3)', 'rgba(232,200,138,0.08)']}
             style={styles.iconBg}
           >
-            <Ionicons name="book-outline" size={18} color="#E8C88A" />
+            <Ionicons name="book-outline" size={18} color={HOME_ICON_COLOR} />
           </LinearGradient>
           <View>
             <Text style={styles.title}>Director's Notes</Text>
@@ -80,7 +80,7 @@ const DirectorsNotesSection = () => {
         </View>
         <Pressable onPress={handleViewAll} style={styles.viewAllBtn}>
           <Text style={styles.viewAllText}>View All</Text>
-          <Ionicons name="arrow-forward" size={12} color="#E8C88A" />
+          <Ionicons name="arrow-forward" size={12} color={HOME_ICON_COLOR} />
         </Pressable>
       </View>
 
@@ -94,12 +94,12 @@ const DirectorsNotesSection = () => {
       {/* Notes List */}
       {loading ? (
         <View style={styles.loadingBox}>
-          <ActivityIndicator size="small" color="#E8C88A" />
+          <ActivityIndicator size="small" color={HOME_ICON_COLOR} />
           <Text style={styles.loadingText}>Loading notes...</Text>
         </View>
       ) : notes.length === 0 ? (
         <View style={styles.emptyBox}>
-          <Ionicons name="document-text-outline" size={32} color="rgba(255,255,255,0.2)" />
+          <Ionicons name="document-text-outline" size={32} color={HOME_ICON_COLOR} />
           <Text style={styles.emptyText}>No notes yet</Text>
           <Text style={styles.emptySubtext}>Tap "Add New Note" to create your first note</Text>
         </View>
@@ -120,7 +120,7 @@ const DirectorsNotesSection = () => {
                     </View>
                     <Text style={styles.noteBody} numberOfLines={1}>{preview}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.25)" />
+                  <Ionicons name="chevron-forward" size={14} color={HOME_ICON_COLOR} />
                 </Pressable>
                 {index < notes.length - 1 && <View style={styles.noteDivider} />}
               </View>
@@ -134,10 +134,10 @@ const DirectorsNotesSection = () => {
       {/* Footer CTA */}
       <Pressable style={styles.addNoteBtn} onPress={handleAddNote}>
         <View style={styles.addNoteBtnInner}>
-          <Ionicons name="add-circle-outline" size={16} color="#E8C88A" />
+          <Ionicons name="add-circle-outline" size={16} color={HOME_ICON_COLOR} />
           <Text style={styles.addNoteText}>Add New Note</Text>
         </View>
-        <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.35)" />
+        <Ionicons name="chevron-forward" size={14} color={HOME_ICON_COLOR} />
       </Pressable>
     </CommonCard>
   );

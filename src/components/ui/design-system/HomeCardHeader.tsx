@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { HOME_ICON_COLOR } from './homeTileColors';
 import { roadmapTheme } from './roadmapTheme';
 
 type Props = {
@@ -35,7 +36,7 @@ export function HomeCardHeader({ title, subtitle, iconName, iconColor, actionLab
         {actionLabel && onAction ? (
           <Pressable onPress={onAction} style={styles.actionBtn}>
             <Text style={styles.actionText}>{actionLabel}</Text>
-            <Ionicons name="arrow-forward" size={12} color={roadmapTheme.textCaption} />
+            <Ionicons name="arrow-forward" size={12} color={HOME_ICON_COLOR} />
           </Pressable>
         ) : null}
       </View>

@@ -1,4 +1,4 @@
-import { CommonCard, HomeCardHeader, HomeGridTile, useHomeGridLayout } from '../ui/design-system';
+import { CommonCard, HOME_ICON_COLOR, HomeCardHeader, HomeGridTile, useHomeGridLayout } from '../ui/design-system';
 import React, { useMemo, useRef, useState, useCallback } from 'react';
 import {
     StyleSheet,
@@ -265,7 +265,7 @@ const handleConfirmCancel = () => {
 
             <CommonCard>
 
-                <HomeCardHeader title="At a Glance" subtitle="Your dashboard overview" iconName="flash-outline" iconColor="#77C2F0" />
+                <HomeCardHeader title="At a Glance" subtitle="Your dashboard overview" iconName="flash-outline" iconColor={HOME_ICON_COLOR} />
 
                 <View style={gridStyle} onLayout={onGridLayout}>
 
@@ -404,7 +404,7 @@ const handleConfirmCancel = () => {
                                 <Ionicons
                                     name="calendar-clear-outline"
                                     size={45}
-                                    color="rgba(255,255,255,0.5)"
+                                    color={HOME_ICON_COLOR}
                                 />
 
                                 <Text style={styles.noAppointmentsText}>

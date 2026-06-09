@@ -1,11 +1,28 @@
 import { useDirectorOverview } from '@/hooks/useProgress';
-import { CommonCard, HomeSectionHeader, roadmapTheme } from '@/components/ui/design-system';
+import {
+    CommonCard,
+    HOME_ICON_COLOR,
+    HomeSectionHeader,
+    resolveHomeTileAccent,
+    roadmapTheme,
+} from '@/components/ui/design-system';
+import type { HomeTileAccentKey } from '@/components/ui/design-system';
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, ActivityIndicator } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const CIRCLE_SIZE = SCREEN_WIDTH * 0.26;
+
+const OVERVIEW_STATS: {
+    label: string;
+    valueKey: 'totalMentors' | 'totalPastors' | 'completedPastors';
+    accentKey: HomeTileAccentKey;
+}[] = [
+    { label: 'Total Mentors', valueKey: 'totalMentors', accentKey: 'sky' },
+    { label: 'Total Pastors', valueKey: 'totalPastors', accentKey: 'violet' },
+    { label: 'Completed', valueKey: 'completedPastors', accentKey: 'mint' },
+];
 
 const OverviewSection = () => {
     const { data, isLoading } = useDirectorOverview();
@@ -34,24 +51,51 @@ const OverviewSection = () => {
                 subtitle="Mentors, pastors, and completion at a glance."
             />
             <View style={styles.circleRow}>
-                <StatCircle label="Total Mentors" value={data.totalMentors} color="#38BDF8" />
-                <StatCircle label="Total Pastors" value={data.totalPastors} color="#7C3AED" />
-                <StatCircle label="Completed" value={data.completedPastors} color={roadmapTheme.accentMint} />
+                {OVERVIEW_STATS.map((stat) => (
+                    <StatCircle
+                        key={stat.valueKey}
+                        label={stat.label}
+                        value={data[stat.valueKey]}
+                        accentKey={stat.accentKey}
+                    />
+                ))}
             </View>
         </CommonCard>
     );
 };
 
-const StatCircle = ({ label, value, color }: { label: string; value: number; color: string }) => (
-    <View style={styles.statBox}>
-        <View style={[styles.circleOuter, { borderColor: color + '55' }]}>
-            <View style={[styles.circleInner, { borderColor: color + '33' }]}>
-                <Text style={[styles.circleValue, { color }]}>{value}</Text>
-                <Text style={styles.circleLabel}>{label}</Text>
+const StatCircle = ({
+    label,
+    value,
+    accentKey,
+}: {
+    label: string;
+    value: number;
+    accentKey: HomeTileAccentKey;
+}) => {
+    const accent = resolveHomeTileAccent(accentKey);
+
+    return (
+        <View style={styles.statBox}>
+            <View
+                style={[
+                    styles.circleOuter,
+                    { backgroundColor: accent.tileBg, borderColor: accent.tileBorder },
+                ]}
+            >
+                <View
+                    style={[
+                        styles.circleInner,
+                        { backgroundColor: accent.iconBg, borderColor: accent.tileBorder },
+                    ]}
+                >
+                    <Text style={[styles.circleValue, { color: HOME_ICON_COLOR }]}>{value}</Text>
+                    <Text style={styles.circleLabel}>{label}</Text>
+                </View>
             </View>
         </View>
-    </View>
-);
+    );
+};
 
 const styles = StyleSheet.create({
     loader: { marginVertical: 24 },
@@ -68,10 +112,9 @@ const styles = StyleSheet.create({
         width: CIRCLE_SIZE,
         height: CIRCLE_SIZE,
         borderRadius: CIRCLE_SIZE / 2,
-        borderWidth: 2,
+        borderWidth: 1.5,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.04)',
     },
     circleInner: {
         width: CIRCLE_SIZE - 10,
