@@ -1,5 +1,6 @@
 
 import TopBar from '@/components/Header/TopBar';
+import AcceptInterestModal from '@/components/Modals/AcceptInterestModal';
 import AppModal from '@/components/Modals/AppModal';
 import {
     CommonCard,
@@ -85,36 +86,45 @@ export default function InterestFormScreen() {
 
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showRejectedConfirmation, setShowRejectedConfirmation] = useState(false);
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
+
+    const menteeId = String(interest?.user?._id ?? '');
+    const isPastorApplicant = (interest?.user?.role ?? '').toLowerCase() === 'pastor';
 
     /* -------------------------------------------------------
        ACTIONS
     -------------------------------------------------------- */
     const handleAccept = () => {
         if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
+
         updateStatus(
             { interestId: interest.user?._id as string, status: "accepted" },
             {
                 onSuccess: () => {
-                    Alert.alert("Success", "Request accepted", [
-                        {
-                            text: "OK",
-                            onPress: () =>
-                                router.push({
-                                    pathname:
-                                        '/(director)/(tabs)/new-interests/assign-scholorship',
-                                    params: {
-                                        menteeId: String(interest.user?._id ?? ''),
-                                        applicantRole: interest.user?.role ?? '',
-                                    },
-                                }),
-                        },
-                    ]);
+                    if (isPastorApplicant) {
+                        setShowAcceptModal(true);
+                        return;
+                    }
+                    router.back();
                 },
                 onError: (error) => {
                     Alert.alert("Error", error.message || "Failed to accept the request");
                 },
             }
         );
+    };
+
+    const handleAcceptLater = () => {
+        setShowAcceptModal(false);
+        router.push('/(director)/(tabs)/new-interests');
+    };
+
+    const handleAcceptFollowUpAssign = () => {
+        setShowAcceptModal(false);
+        router.push({
+            pathname: '/(director)/(tabs)/mentees/assign-mentors' as any,
+            params: { id: menteeId },
+        });
     };
 
 
@@ -419,6 +429,15 @@ export default function InterestFormScreen() {
                     setShowRejectedConfirmation(false);
                     router.back();
                 }}
+            />
+
+            <AcceptInterestModal
+                visible={showAcceptModal}
+                onLater={handleAcceptLater}
+                onAssign={handleAcceptFollowUpAssign}
+                assignButtonText={
+                    isPastorApplicant ? 'Assign Mentor >>' : 'Assign Mentees >>'
+                }
             />
         </GradientBackground>
     );
