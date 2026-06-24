@@ -192,12 +192,6 @@ export const progressService = {
         return mergeDirectorOverviewWithUserAggregate(apiOverview, synthetic);
     },
 
-    /** PATCH /users/:userId/mark-completed */
-    async markProgramComplete(userId: string) {
-        const { usersService } = await import('./users.service');
-        return usersService.markProgramComplete(userId);
-    },
-
 };
 
 

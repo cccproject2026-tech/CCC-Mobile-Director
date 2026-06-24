@@ -59,16 +59,6 @@ export const usersService = {
     return response.data.data;
   },
 
-  markProgramComplete: async (userId: string): Promise<User> => {
-    const response = await apiClient.patch<{ success: boolean; data: User; message?: string }>(
-      ENDPOINTS.USERS_COMPLETION.MARK_COMPLETED(userId)
-    );
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to mark programme complete");
-    }
-    return response.data.data;
-  },
-
   issueCertificate: async (userId: string, issuedBy: string): Promise<User> => {
     const response = await apiClient.post<{ success: boolean; data: User; message?: string }>(
       ENDPOINTS.USERS_COMPLETION.ISSUE_CERTIFICATE(userId),

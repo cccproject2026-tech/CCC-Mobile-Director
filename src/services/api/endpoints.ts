@@ -190,7 +190,6 @@ export const ENDPOINTS = {
   },
 
   USERS_COMPLETION: {
-    MARK_COMPLETED: (userId: string) => `/users/${userId}/mark-completed`,
     ISSUE_CERTIFICATE: (userId: string) => `/users/${userId}/issue-certificate`,
     INVITE_FIELD_MENTOR: "/users/invite-field-mentor",
     LIST: "/users",

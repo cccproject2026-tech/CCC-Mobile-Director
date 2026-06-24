@@ -20,7 +20,6 @@ import { useSafeBack } from "@/hooks/useSafeBack";
 import { useAssignedRoadmaps } from "@/hooks/roadmap/useRoadmaps";
 import {
   useAssessmentProgress,
-  useFinalComments,
   useProgress,
   useRoadmapProgress,
 } from "@/hooks/useProgress";
@@ -78,7 +77,6 @@ export default function TrackProgressDetailScreen() {
     refetch: refetchProgress,
     isRefetching,
   } = useProgress(userId);
-  const { data: finalComments = [] } = useFinalComments(userId);
   const { data: roadmaps, isLoading: roadmapsLoading, refetch: refetchRoadmaps } =
     useAssignedRoadmaps(userId);
   const { data: assessments, isLoading: assessmentsLoading, refetch: refetchAssessments } =
@@ -113,13 +111,10 @@ export default function TrackProgressDetailScreen() {
   const overallPct = progressData?.overallProgress ?? 0;
   const canInviteFieldMentor =
     !!profile?.hasCompleted &&
+    hasCertificate &&
     !profile?.fieldMentorInvitation &&
     !profile?.isFieldMentor;
   const canIssueCertificate = !!profile?.hasCompleted && !hasCertificate;
-  const canMarkFromComments =
-    overallPct >= 99 &&
-    !profile?.hasCompleted &&
-    finalComments.length > 0;
 
   const handleRefresh = useCallback(() => {
     refetchProfile();
@@ -247,7 +242,7 @@ export default function TrackProgressDetailScreen() {
               {profile?.hasCompleted ? (
                 <StatusChip label="Course completed" tone="done" />
               ) : overallPct >= 100 ? (
-                <StatusChip label="Ready to complete" tone="progress" />
+                <StatusChip label="Awaiting mentor completion" tone="progress" />
               ) : (
                 <StatusChip label="In progress" tone="pending" />
               )}
@@ -368,12 +363,7 @@ export default function TrackProgressDetailScreen() {
           )}
         </View>
 
-        <FinalCommentsSection
-          userId={userId}
-          canMarkComplete={canMarkFromComments}
-          isMarkingComplete={workflow.isMarkingComplete}
-          onMarkProgramComplete={workflow.runMarkComplete}
-        />
+        <FinalCommentsSection userId={userId} />
       </ScrollView>
     </GradientBackground>
   );

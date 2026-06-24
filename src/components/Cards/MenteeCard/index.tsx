@@ -24,7 +24,6 @@ export interface MenteeCardProps {
 
     // actions
     onMenuPress?: () => void;
-    onMarkComplete?: () => void;
     onIssueCertificate?: () => void;
     onInviteAsFieldMentor?: () => void;
     disabled?: boolean;

@@ -23,20 +23,6 @@ export const completionKeys = {
 
 const DEFAULT_PROGRAM_NAME = "12-Month Mentoring Revitalization Program";
 
-export function useMarkProgramComplete() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (userId: string) => usersService.markProgramComplete(userId),
-    onSuccess: (_data, userId) => {
-      queryClient.invalidateQueries({ queryKey: progressKeys.user(userId) });
-      queryClient.invalidateQueries({ queryKey: profileKeys.user(userId) });
-      queryClient.invalidateQueries({ queryKey: ["mentees"] });
-      queryClient.invalidateQueries({ queryKey: completionKeys.courseCompleted() });
-      queryClient.invalidateQueries({ queryKey: ["directorOverview"] });
-    },
-  });
-}
-
 export function useIssueCertificate() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -193,40 +179,24 @@ export function useCompletedPastorsCount() {
   });
 }
 
-/** Shared handlers for MenteeCard / progress detail / course completed */
+/** Certificate + field mentor actions for director post-completion workflow. */
 export function useCompletionWorkflow(userId: string, user?: Partial<Mentee> | null) {
   const { user: director } = useAuthStore();
   const directorId = director?.id ?? "";
 
-  const markComplete = useMarkProgramComplete();
   const issueCertificate = useIssueCertificate();
   const inviteFieldMentor = useInviteFieldMentor();
-
-  const runMarkComplete = () => {
-    if (!userId) return;
-    Alert.alert(
-      "Mark as complete",
-      "Mark this programme as completed for this user?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: () => {
-            markComplete.mutate(userId, {
-              onSuccess: () =>
-                Alert.alert("Success", "Programme marked as completed."),
-              onError: (e: Error) =>
-                Alert.alert("Error", e.message || "Could not mark complete."),
-            });
-          },
-        },
-      ]
-    );
-  };
 
   const runIssueCertificate = () => {
     if (!userId || !directorId) {
       Alert.alert("Error", "You must be logged in to issue a certificate.");
+      return;
+    }
+    if (!user?.hasCompleted) {
+      Alert.alert(
+        "Not completed",
+        "This pastor must be marked complete by their mentor before a certificate can be issued.",
+      );
       return;
     }
     Alert.alert("Issue certificate", "Issue certificate for this user?", [
@@ -241,7 +211,7 @@ export function useCompletionWorkflow(userId: string, user?: Partial<Mentee> | n
                 Alert.alert("Success", "Certificate issued successfully."),
               onError: (e: Error) =>
                 Alert.alert("Error", e.message || "Could not issue certificate."),
-            }
+            },
           );
         },
       },
@@ -277,25 +247,20 @@ export function useCompletionWorkflow(userId: string, user?: Partial<Mentee> | n
                   Alert.alert("Success", "Field mentor invitation sent."),
                 onError: (e: Error) =>
                   Alert.alert("Error", e.message || "Could not send invitation."),
-              }
+              },
             );
           },
         },
-      ]
+      ],
     );
   };
 
   return {
-    runMarkComplete,
     runIssueCertificate,
     runInviteFieldMentor,
-    isMarkingComplete: markComplete.isPending,
     isIssuingCertificate: issueCertificate.isPending,
     isInvitingFieldMentor: inviteFieldMentor.isPending,
-    isBusy:
-      markComplete.isPending ||
-      issueCertificate.isPending ||
-      inviteFieldMentor.isPending,
+    isBusy: issueCertificate.isPending || inviteFieldMentor.isPending,
   };
 }
 
@@ -303,21 +268,24 @@ export function useMenteeCardCompletionHandlers(mentee?: Mentee | null) {
   const workflow = useCompletionWorkflow(mentee?.id ?? "", mentee ?? undefined);
   if (!mentee?.id) {
     return {
-      onMarkComplete: undefined,
       onIssueCertificate: undefined,
       onInviteAsFieldMentor: undefined,
       isBusy: false,
     };
   }
   return {
-    onMarkComplete: workflow.runMarkComplete,
-    onIssueCertificate: workflow.runIssueCertificate,
-    onInviteAsFieldMentor: () => workflow.runInviteFieldMentor(mentee.email),
+    onIssueCertificate:
+      mentee.hasCompleted && !mentee.hasIssuedCertificate
+        ? workflow.runIssueCertificate
+        : undefined,
+    onInviteAsFieldMentor:
+      mentee.hasCompleted && mentee.hasIssuedCertificate && !mentee.isFieldMentor
+        ? () => workflow.runInviteFieldMentor(mentee.email)
+        : undefined,
     isBusy: workflow.isBusy,
   };
 }
 
-/** Tab filters aligned with CCC-Web course-completed page. */
 export function filterCourseCompletedByTab(
   users: CourseCompletedUser[],
   tab: CourseCompletedStatus,
@@ -327,7 +295,7 @@ export function filterCourseCompletedByTab(
       return Boolean(u.hasCompleted) && !u.hasRealCertificate;
     }
     if (tab === "certificate_issued") {
-      return Boolean(u.hasRealCertificate);
+      return Boolean(u.hasRealCertificate) && !u.fieldMentorInvitation;
     }
     if (tab === "invited") {
       return Boolean(u.fieldMentorInvitation);
