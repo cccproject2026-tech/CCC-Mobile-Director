@@ -97,10 +97,7 @@ const HeaderHero: React.FC<Props> = ({
             ) : null}
 
             <View style={{ position: "absolute", top: 0, left: 0, right: 0 }}>
-                <TopBar
-                    notifications={3}
-                    showUserName={false}
-                />
+                <TopBar showUserName={false} />
             </View>
 
             {showClockDate ? (

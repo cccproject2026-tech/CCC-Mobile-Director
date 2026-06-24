@@ -26,6 +26,7 @@ export interface UserMentorRespose {
     firstName: string;
     lastName: string;
     email: string;
+    phoneNumber?: string;
     profilePicture: string;
     role: string;
     roleId: string;

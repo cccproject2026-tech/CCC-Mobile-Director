@@ -7,8 +7,9 @@ import { useAssignMenteesToMentor } from '@/hooks/useMentors';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     FlatList,
     Platform,
@@ -32,8 +33,20 @@ export default function AssignNewPastorsScreen() {
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState('Latest Join');
 
-    const { data, isLoading } = useMentees();
+    const {
+        data,
+        isLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useMentees(50);
     const mentees: Mentee[] = data?.pages.flatMap((page: any) => page.mentees) ?? [];
+
+    const handleLoadMore = useCallback(() => {
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
     const assignMutation = useAssignMenteesToMentor();
 
@@ -194,6 +207,15 @@ export default function AssignNewPastorsScreen() {
                         { paddingBottom: 120 + bottom },
                     ]}
                     showsVerticalScrollIndicator={false}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={
+                        isFetchingNextPage ? (
+                            <View style={styles.footerLoading}>
+                                <ActivityIndicator size="small" color="#fff" />
+                            </View>
+                        ) : null
+                    }
                     ListEmptyComponent={
                         !isLoading ? (
                             <View style={styles.emptyContainer}>
@@ -317,6 +339,10 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 16,
+    },
+    footerLoading: {
+        paddingVertical: 16,
+        alignItems: 'center',
     },
     emptyContainer: {
         paddingVertical: 48,

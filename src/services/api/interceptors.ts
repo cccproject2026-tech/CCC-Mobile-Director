@@ -8,9 +8,11 @@
  * - Queue handling
  */
 
+import { API_CONFIG } from '@/config';
 import { useAuthStore } from '@/stores/auth.store';
+import { unwrapAuthTokens } from '@/utils/authTokenResponse';
 import { tokenStorage as storage } from '@/utils/tokenStorage';
-import { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { apiClient } from './client';
 import { ENDPOINTS } from './endpoints';
 
@@ -33,6 +35,42 @@ const devLog = (...args: any[]) => {
     if (__DEV__) console.log("[API]", ...args);
 };
 
+const getFullEndpoint = (config: InternalAxiosRequestConfig) => {
+    const method = (config.method || 'get').toUpperCase();
+
+    const fullUrl = axios.getUri({
+        ...config,
+        baseURL: config.baseURL || API_CONFIG.BASE_URL,
+    });
+
+    return { method, fullUrl };
+};
+
+const logApiRequest = (config: InternalAxiosRequestConfig) => {
+    const { method, fullUrl } = getFullEndpoint(config);
+
+    devLog('────────────────────────────────────────');
+    devLog(`${method} ${fullUrl}`);
+
+    if (config.params && Object.keys(config.params).length > 0) {
+        devLog('Query:', config.params);
+    }
+
+    if (config.data !== undefined && config.data !== null && config.data !== '') {
+        devLog('Body:', config.data);
+    }
+};
+
+const logApiResponse = (config: InternalAxiosRequestConfig, status: number, data?: unknown) => {
+    const { method, fullUrl } = getFullEndpoint(config);
+
+    devLog(`${method} ${fullUrl} → ${status}`);
+    if (data !== undefined) {
+        devLog('Response:', data);
+    }
+    devLog('────────────────────────────────────────');
+};
+
 const processQueue = (error: any, token: string | null = null) => {
     devLog("Processing Failed Queue → count:", failedQueue.length);
 
@@ -42,17 +80,41 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
+function requestUrlMatchesEndpoint(url: string | undefined, endpoint: string): boolean {
+    if (!url) return false;
+    return url === endpoint || url.endsWith(endpoint) || url.includes(endpoint);
+}
+
+function isAuthRequestUrl(url: string | undefined): boolean {
+    return (
+        requestUrlMatchesEndpoint(url, ENDPOINTS.AUTH.LOGIN) ||
+        requestUrlMatchesEndpoint(url, ENDPOINTS.AUTH.REFRESH_TOKEN) ||
+        requestUrlMatchesEndpoint(url, ENDPOINTS.AUTH.SEND_OTP) ||
+        requestUrlMatchesEndpoint(url, ENDPOINTS.AUTH.VERIFY_OTP) ||
+        requestUrlMatchesEndpoint(url, ENDPOINTS.AUTH.SET_PASSWORD)
+    );
+}
+
+function shouldLogoutAfterRefreshFailure(error: unknown): boolean {
+    if (error instanceof Error && error.message === 'No refresh token available') {
+        return true;
+    }
+    if (error instanceof Error && error.message === 'Invalid refresh token response') {
+        return true;
+    }
+    const status = (error as AxiosError)?.response?.status;
+    // Only end the session when the server rejects the refresh token — not on transient network errors.
+    return status === 401 || status === 403;
+}
+
 // =========================================
 // REQUEST INTERCEPTOR
 // =========================================
 apiClient.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
-        devLog("↗ REQUEST:", config.url);
-
         // Attach tokens
         const { accessToken } = await storage.getTokens();
         if (accessToken && config.headers) {
-            devLog("→ Attached Access Token");
             config.headers.Authorization = `Bearer ${accessToken}`;
             config.headers['Cache-Control'] = 'no-cache';
             config.headers['Pragma'] = 'no-cache';
@@ -60,8 +122,6 @@ apiClient.interceptors.request.use(
 
         // Clean Params
         if (config.params) {
-            devLog("→ Cleaning Query Params");
-
             const cleaned: Record<string, any> = {};
             for (const [key, value] of Object.entries(config.params)) {
                 const str = String(value);
@@ -87,6 +147,8 @@ apiClient.interceptors.request.use(
                 .replace(/[?&]$/, "");
         }
 
+        logApiRequest(config);
+
         return config;
     },
     (error) => {
@@ -100,7 +162,7 @@ apiClient.interceptors.request.use(
 // =========================================
 apiClient.interceptors.response.use(
     (response) => {
-        devLog("✔ RESPONSE:", response.config.url, "Status:", JSON.stringify(response?.data));
+        logApiResponse(response.config, response.status, response.data);
         return response;
     },
 
@@ -113,12 +175,7 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             devLog("⚠️ 401 RECEIVED → Starting Refresh Flow");
 
-            const isAuthEndpoint =
-                originalRequest.url === ENDPOINTS.AUTH.LOGIN ||
-                originalRequest.url === ENDPOINTS.AUTH.REFRESH_TOKEN ||
-                originalRequest.url === ENDPOINTS.AUTH.SEND_OTP ||
-                originalRequest.url === ENDPOINTS.AUTH.VERIFY_OTP ||
-                originalRequest.url === ENDPOINTS.AUTH.SET_PASSWORD;
+            const isAuthEndpoint = isAuthRequestUrl(originalRequest.url);
 
             if (isAuthEndpoint) {
                 devLog("❌ 401 from Auth Endpoint — Not Refreshing");
@@ -152,7 +209,12 @@ apiClient.interceptors.response.use(
                     refreshToken,
                 });
 
-                const { accessToken, refreshToken: newRefreshToken } = response.data;
+                const tokens = unwrapAuthTokens(response.data);
+                if (!tokens?.accessToken || !tokens.refreshToken) {
+                    throw new Error('Invalid refresh token response');
+                }
+
+                const { accessToken, refreshToken: newRefreshToken } = tokens;
 
                 devLog("✔ Refresh Success — New Tokens Saved");
 
@@ -168,7 +230,9 @@ apiClient.interceptors.response.use(
 
                 processQueue(refreshError, null);
 
-                await useAuthStore.getState().logout();
+                if (shouldLogoutAfterRefreshFailure(refreshError)) {
+                    await useAuthStore.getState().logout();
+                }
                 return Promise.reject(refreshError);
             } finally {
                 devLog("🔚 Refresh flow ended");
@@ -190,7 +254,14 @@ apiClient.interceptors.response.use(
         // ---------------------------
         // Other API Errors
         // ---------------------------
-        devLog("❌ API ERROR:", error.response.status, error.response.data);
+        if (originalRequest) {
+            const { method, fullUrl } = getFullEndpoint(originalRequest);
+            devLog(`${method} ${fullUrl} → ERROR ${error.response.status}`);
+            devLog('Error Response:', error.response.data);
+            devLog('────────────────────────────────────────');
+        } else {
+            devLog("❌ API ERROR:", error.response.status, error.response.data);
+        }
 
         const apiError = {
             message: (error.response.data as any)?.message || 'An error occurred',

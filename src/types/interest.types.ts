@@ -30,6 +30,12 @@ export type UpdateInterestStatusRequest = {
     status: 'accepted' | 'rejected' | 'pending';
 };
 
+export type DeleteInterestResponse = {
+    success: boolean;
+    message: string;
+    data: null;
+};
+
 export type InterestsApiResponse = {
     success: boolean;
     message: string;

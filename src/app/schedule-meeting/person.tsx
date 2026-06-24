@@ -1,5 +1,7 @@
 import AppGradientBackground from "@/components/layout/AppGradientBackground";
 import TopBar from "@/components/Header/TopBar";
+import { TabSwitcher } from "@/components/Header/TabSwitcher";
+import { ScreenBackHeader } from "@/components/ui/design-system";
 import { useAuthStore } from "@/stores/auth.store";
 import { useScheduleMeetingStore, type SchedulePerson } from "@/stores/scheduleMeeting.store";
 import { useAssignedMentors } from "@/hooks/mentors/useGetAssignedMentors";
@@ -10,13 +12,18 @@ import {
 } from "@/lib/scheduling/scheduleMeetingNavigation";
 import { getReturnToParam } from "@/utils/navigation";
 import { useMentees } from "@/hooks/useMentees";
-import { useMentors } from "@/hooks/useMentors";
+import {
+  useScheduleMentorsList,
+  useSchedulePastors,
+} from "@/hooks/scheduling/useScheduleMeetingUsers";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import { ScrollView } from "react-native";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+type DirectorPersonTab = "pastor" | "mentor";
 
 export default function ScheduleMeetingPersonScreen() {
   const { user } = useAuthStore();
@@ -51,6 +58,7 @@ export default function ScheduleMeetingPersonScreen() {
   } = useScheduleMeetingStore();
 
   const [search, setSearch] = useState("");
+  const [directorTab, setDirectorTab] = useState<DirectorPersonTab>("pastor");
 
   // Drawer screens are frozen between visits — reset when starting a new flow (not when backing from time).
   useFocusEffect(
@@ -104,7 +112,8 @@ export default function ScheduleMeetingPersonScreen() {
     !isMentor && !isDirector ? (user?.id ?? null) : null,
   );
 
-  const { data: mentorsData, isLoading: isLoadingAllMentors } = useMentors(100);
+  const { data: pastors = [], isLoading: isLoadingPastors } = useSchedulePastors(isDirector);
+  const { data: mentors = [], isLoading: isLoadingAllMentors } = useScheduleMentorsList(isDirector);
 
   const { data: menteesData, isLoading: isLoadingMentees } = useMentees();
 
@@ -119,11 +128,11 @@ export default function ScheduleMeetingPersonScreen() {
       }));
     }
     if (isDirector) {
-      const mentors = mentorsData?.pages?.flatMap((p) => p.mentors) ?? [];
-      return mentors.map((m: any) => ({
+      const source = directorTab === "pastor" ? pastors : mentors;
+      return source.map((m: any) => ({
         id: String(m.id),
-        name: `${m.firstName || ""} ${m.lastName || ""}`.trim() || "Mentor",
-        role: String(m.role || "mentor"),
+        name: `${m.firstName || ""} ${m.lastName || ""}`.trim() || (directorTab === "pastor" ? "Pastor" : "Mentor"),
+        role: String(m.role || (directorTab === "pastor" ? "pastor" : "mentor")),
         profilePicture: m.profilePicture,
       }));
     }
@@ -133,7 +142,7 @@ export default function ScheduleMeetingPersonScreen() {
       role: String(m.role || "mentor"),
       profilePicture: m.profilePicture,
     }));
-  }, [assignedMentors, isDirector, isMentor, menteesData, mentorsData]);
+  }, [assignedMentors, directorTab, isDirector, isMentor, menteesData, mentors, pastors]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -149,7 +158,9 @@ export default function ScheduleMeetingPersonScreen() {
   const loading = isMentor
     ? isLoadingMentees
     : isDirector
-      ? isLoadingAllMentors
+      ? directorTab === "pastor"
+        ? isLoadingPastors
+        : isLoadingAllMentors
       : isLoadingMentors;
 
   const handleBack = useCallback(() => {
@@ -162,12 +173,23 @@ export default function ScheduleMeetingPersonScreen() {
         role={String(user?.role || "pastor")}
         showUserName
         showDrawer={false}
-        showBackButton
-        onPressBack={handleBack}
       />
+      <ScreenBackHeader title="Schedule" onPressBack={handleBack} />
       <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Pick person</Text>
         <Text style={styles.subtitle}>Select who you want to meet with.</Text>
+
+        {isDirector ? (
+          <TabSwitcher
+            tabs={[
+              { key: "pastor", label: "Pastor" },
+              { key: "mentor", label: "Mentor" },
+            ]}
+            activeTab={directorTab}
+            onChange={(key) => setDirectorTab(key as DirectorPersonTab)}
+            variant="frosted"
+          />
+        ) : null}
 
         <View style={styles.searchRow}>
           <Ionicons name="search" size={18} color="rgba(255,255,255,0.75)" />
@@ -229,11 +251,11 @@ export default function ScheduleMeetingPersonScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
   title: { color: "#FFFFFF", fontSize: 20, fontWeight: "900" },
-  subtitle: { marginTop: 6, color: "rgba(255,255,255,0.7)", fontWeight: "600" },
+  subtitle: { marginVertical: 6,marginBottom: 12, color: "rgba(255,255,255,0.7)", fontWeight: "600" },
   subtle: { color: "rgba(255,255,255,0.75)", fontWeight: "600" },
   center: { paddingTop: 24, alignItems: "center", gap: 10 },
   searchRow: {
-    marginTop: 14,
+    marginTop: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
@@ -272,4 +294,3 @@ const styles = StyleSheet.create({
   personName: { color: "#FFFFFF", fontWeight: "900", fontSize: 15 },
   personRole: { marginTop: 3, color: "rgba(255,255,255,0.65)", fontWeight: "700", fontSize: 12 },
 });
-

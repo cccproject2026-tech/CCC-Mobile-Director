@@ -10,6 +10,8 @@ type Props = {
   route: string;
   accentKey?: string;
   tileStyle?: StyleProp<ViewStyle>;
+  routeParams?: Record<string, string>;
+  onBeforeNavigate?: () => void;
 };
 
 const QuickActionCard: React.FC<Props> = ({
@@ -18,18 +20,21 @@ const QuickActionCard: React.FC<Props> = ({
   route,
   accentKey,
   tileStyle,
+  routeParams,
+  onBeforeNavigate,
 }) => {
   return (
     <HomeGridTile
       iconName={iconName}
       label={itemName}
       accentKey={accentKey}
-      onPress={() =>
+      onPress={() => {
+        onBeforeNavigate?.();
         router.push({
           pathname: route as any,
-          params: { type: 'home' },
-        })
-      }
+          ...(routeParams ? { params: routeParams } : {}),
+        });
+      }}
       style={tileStyle}
     />
   );

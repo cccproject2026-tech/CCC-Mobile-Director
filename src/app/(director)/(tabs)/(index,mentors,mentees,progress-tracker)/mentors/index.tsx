@@ -4,36 +4,51 @@ import SearchBar from "@/components/Header/SearchBar";
 import { TabSwitcher } from "@/components/Header/TabSwitcher";
 import TopBar from "@/components/Header/TopBar";
 import FilterModal, { FilterOption } from "@/components/Modals/FilterModal";
-import ActionBottomSheet from "@/components/Sheets/ActionBottomSheet";
-import { GradientBackground, ScreenBackHeader } from "@/components/ui/design-system";
-import { roadmapTheme } from "@/components/ui/design-system/roadmapTheme";
+import ActionBottomSheet, { ActionItem } from "@/components/Sheets/ActionBottomSheet";
+import { GradientBackground } from "@/components/ui/design-system";
 import { useMentors } from "@/hooks/useMentors";
 import { Mentor } from "@/types/user.types";
-import { useLocalSearchParams } from 'expo-router';
-
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
+    InteractionManager,
     Pressable,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
     RefreshControl,
-    Linking
 } from "react-native";
+import { useMentorsNavigationStore } from "@/stores/mentorsNavigation.store";
 import {
     dialPhone,
     featureNotAvailableYet,
     openWhatsApp,
     sendEmail,
-    openSMS
+    openSMS,
 } from "@/utils/contactActions";
+
+function getRouteParam(value: string | string[] | undefined): string | undefined {
+    if (Array.isArray(value)) return value[0];
+    return value;
+}
+
+function isAssignMenteeDashboardFlow(params: Record<string, string | string[] | undefined>): boolean {
+    const flow = getRouteParam(params.flow);
+    if (flow === "full") return false;
+    const type = getRouteParam(params.type);
+    return type === "home" || flow === "assign-mentee";
+}
+
+function isFieldMentorRole(role: string | undefined): boolean {
+    const r = (role ?? "").toLowerCase();
+    return r === "field mentor" || r === "field_mentor";
+}
 
 export default function Mentors() {
     const router = useRouter();
@@ -43,185 +58,231 @@ export default function Mentors() {
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState("");
     const [viewMode, setViewMode] = useState<"card" | "list">("list");
-    const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
+    const [menuMentor, setMenuMentor] = useState<Mentor | null>(null);
     const params = useLocalSearchParams();
     const bottomSheetRef = useRef<BottomSheetModal>(null);
+    const menuMode = useMentorsNavigationStore((s) => s.menuMode);
+    const setAssignMenteeOnlyMenu = useMentorsNavigationStore((s) => s.setAssignMenteeOnlyMenu);
+    const setFullMenu = useMentorsNavigationStore((s) => s.setFullMenu);
+
+    useFocusEffect(
+        useCallback(() => {
+            const flow = getRouteParam(params.flow);
+            if (flow === "full") {
+                setFullMenu();
+                return;
+            }
+            if (isAssignMenteeDashboardFlow(params)) {
+                setAssignMenteeOnlyMenu();
+            }
+        }, [params, setAssignMenteeOnlyMenu, setFullMenu]),
+    );
+
+    const handleCloseModal = useCallback(() => {
+        bottomSheetRef.current?.dismiss();
+        setMenuMentor(null);
+    }, []);
+
+    const buildMenuItems = useCallback(
+        (mentor: Mentor): ActionItem[] => {
+            const mentorId = mentor.id;
+            const afterClose = (action: () => void) => {
+                handleCloseModal();
+                setTimeout(action, 200);
+            };
+
+            if (menuMode === "assign-mentee-only") {
+                return [
+                    {
+                        icon: "person-add-outline",
+                        label: "Assign New Mentee",
+                        onPress: () =>
+                            afterClose(() =>
+                                router.push({
+                                    pathname: "/mentors/assign-mentees",
+                                    params: {
+                                        id: mentorId,
+                                        flow: "assign-mentee",
+                                        type: "home",
+                                    },
+                                }),
+                            ),
+                    },
+                ];
+            }
+
+            if (isFieldMentorRole(mentor.role)) {
+                return [
+                    {
+                        icon: "people-outline",
+                        label: "List of Mentees",
+                        onPress: () =>
+                            afterClose(() =>
+                                router.push({
+                                    pathname: "/mentors/mentor-mentees",
+                                    params: { id: mentorId },
+                                }),
+                            ),
+                    },
+                    {
+                        icon: "person-add-outline",
+                        label: "Assign New Mentee",
+                        onPress: () =>
+                            afterClose(() =>
+                                router.push({
+                                    pathname: "/mentors/assign-mentees",
+                                    params: { id: mentorId },
+                                }),
+                            ),
+                    },
+                    {
+                        icon: "person-remove-outline",
+                        label: "Remove a Mentee",
+                        onPress: () =>
+                            afterClose(() =>
+                                router.push({
+                                    pathname: "/mentors/remove-mentee",
+                                    params: { id: mentorId },
+                                }),
+                            ),
+                    },
+                    {
+                        icon: "calendar-outline",
+                        label: "Schedule a Meeting",
+                        onPress: () => router.push("/(director)/(tabs)/appointments"),
+                    },
+                    {
+                        icon: "create-outline",
+                        label: "Edit Profile",
+                        onPress: () =>
+                            afterClose(() =>
+                                router.push(`/(director)/(tabs)/mentors/${mentorId}` as any),
+                            ),
+                    },
+                    {
+                        icon: "person-remove-outline",
+                        label: "Remove as Field Mentor",
+                        onPress: () => featureNotAvailableYet("Removing a field mentor"),
+                    },
+                ];
+            }
+
+            return [
+                {
+                    icon: "people-outline",
+                    label: "List of Mentees",
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: "/mentors/mentor-mentees",
+                                params: { id: mentorId },
+                            }),
+                        ),
+                },
+                {
+                    icon: "person-add-outline",
+                    label: "Assign New Mentee",
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: "/mentors/assign-mentees",
+                                params: { id: mentorId },
+                            }),
+                        ),
+                },
+                {
+                    icon: "person-remove-outline",
+                    label: "Remove a Mentee",
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: "/mentors/remove-mentee",
+                                params: { id: mentorId },
+                            }),
+                        ),
+                },
+                {
+                    icon: "clipboard-outline",
+                    label: "Roadmaps of Mentees",
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: "/mentors/mentor-mentees",
+                                params: { id: mentorId },
+                            }),
+                        ),
+                },
+                {
+                    icon: "checkmark-done-outline",
+                    label: "Assessments of Mentees",
+                    onPress: () => router.push("/(director)/(tabs)/assessments"),
+                },
+                {
+                    icon: "book-outline",
+                    label: "Assignments of Mentees",
+                    onPress: () => router.push("/(director)/(tabs)/assignments"),
+                },
+                {
+                    icon: "stats-chart-outline",
+                    label: "Progress of Mentees",
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push(
+                                `/(director)/(tabs)/progress-tracker/mentors/${mentorId}` as any,
+                            ),
+                        ),
+                },
+                {
+                    icon: "calendar-outline",
+                    label: "Schedule a Meeting",
+                    onPress: () => router.push("/(director)/(tabs)/appointments"),
+                },
+                {
+                    icon: "create-outline",
+                    label: "Edit Profile",
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push(`/(director)/(tabs)/mentors/${mentorId}` as any),
+                        ),
+                },
+            ];
+        },
+        [handleCloseModal, menuMode, router],
+    );
+
+    const sheetActions = useMemo(
+        () => (menuMentor ? buildMenuItems(menuMentor) : []),
+        [buildMenuItems, menuMentor],
+    );
+
+    const handleMenuPress = useCallback((mentor: Mentor) => {
+        setMenuMentor(mentor);
+    }, []);
+
+    useEffect(() => {
+        if (!menuMentor) return;
+        const task = InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                bottomSheetRef.current?.present();
+            });
+        });
+        return () => task.cancel();
+    }, [menuMentor]);
+
     const {
         data: mentorsData,
         isLoading,
+        isFetching,
         refetch,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage
     } = useMentors(10);
-console.log("mentorsData",mentorsData);
-
 
     const mentorList = useMemo(() => {
         return mentorsData?.pages.flatMap(page => page.mentors) || [];
     }, [mentorsData]);
 
-    console.log("mentorList",mentorList);
-    const menuItemsMentor = [
-        {
-            icon: "people-outline",
-            label: "List of Mentees",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    router.push({
-                        pathname: "/mentors/mentor-mentees",
-                        params: { id: selectedMentor.id },
-                    });
-                }
-            }
-        }, 
-        {
-            icon: "person-add-outline",
-            label: "Assign New Mentee",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    router.push({
-                        pathname: "/mentors/assign-mentees",
-                        params: { id: selectedMentor.id },
-                    });
-                }
-            },
-        },
-        {
-            icon: "person-remove-outline",
-            label: "Remove a Mentee", 
-            onPress: () => { 
-                if (selectedMentor?.id) {
-                    router.push({
-                        pathname: "/mentors/remove-mentee",
-                        params: { id: selectedMentor.id },
-                    });
-                }
-            },
-        },
-        {
-            icon: "clipboard-outline",
-            label: "Roadmaps of Mentees",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    router.push({
-                        pathname: "/mentors/mentor-mentees",
-                        params: { id: selectedMentor.id },
-                    });
-                }
-            },
-        },
-        {
-            icon: "checkmark-done-outline",
-            label: "Assessments of Mentees",
-            onPress: () => router.push("/(director)/(tabs)/assessments"),
-        },
-        {
-            icon: "book-outline",
-            label: "Assignments of Mentees",
-            onPress: () => router.push("/(director)/(tabs)/assignments"),
-        },
-        {
-            icon: "stats-chart-outline",
-            label: "Progress of Mentees",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    bottomSheetRef.current?.dismiss();
-                    router.push(`/(director)/(tabs)/progress-tracker/mentors/${selectedMentor.id}` as any);
-                }
-            },
-        },
-        {
-            icon: "calendar-outline",
-            label: "Schedule a Meeting",
-            onPress: () => router.push("/(director)/(tabs)/appointments"),
-        },
-        {
-            icon: "create-outline",
-            label: "Edit Profile",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    router.push(`/(director)/(tabs)/mentors/${selectedMentor.id}` as any);
-                }
-            },
-        },
-    ];
-
-
-
-    const fromhomeScreenmenuItems = [
-
-        {
-            icon: "person-add-outline",
-            label: "Assign New Mentee",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    router.push({
-                        pathname: "/mentors/assign-mentees",
-                        params: { id: selectedMentor.id },
-                    });
-                }
-            },
-        },
-
-    ];
-
-
-    const menuItemsFieldMentor = [
-        {
-            icon: "people-outline",
-            label: "List of Mentees",
-            onPress: () =>
-                router.push({
-                    pathname: "/mentors/mentor-mentees",
-                    params: { id: selectedMentor?.id ?? "" },
-                }),
-        },
-        {
-            icon: "person-add-outline",
-            label: "Assign New Mentee",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    router.push({
-                        pathname: "/mentors/assign-mentees",
-                        params: { id: selectedMentor.id },
-                    });
-                }
-            },
-        },
-        {
-            icon: "person-remove-outline",
-            label: "Remove a Mentee",
-            onPress: () =>
-                router.push({
-                    pathname: "/mentors/remove-mentee",
-                    params: { id: selectedMentor?.id ?? "" },
-                }),
-        },
-        {
-            icon: "calendar-outline",
-            label: "Schedule a Meeting",
-            onPress: () => router.push("/(director)/(tabs)/appointments"),
-        },
-        {
-            icon: "create-outline",
-            label: "Edit Profile",
-            onPress: () => {
-                if (selectedMentor?.id) {
-                    router.push(`/(director)/(tabs)/mentors/${selectedMentor.id}` as any);
-                }
-            },
-        },
-        {
-            icon: "person-remove-outline",
-            label: "Remove as Field Mentor",
-            onPress: () => featureNotAvailableYet("Removing a field mentor"),
-        },
-    ];
-
-    // const filterOptions: FilterOption[] = [
-    //     { label: "Least number of Mentees" },
-    // ];
     const filterOptions: FilterOption[] = [
     {
         label: "Sort By",
@@ -345,11 +406,6 @@ console.log("mentorsData",mentorsData);
     return list;
 }, [mentorList, search, activeTab, selectedFilter]);
 
-    const openMenu = useCallback((mentor: Mentor) => {
-        setSelectedMentor(mentor);
-        setTimeout(() => bottomSheetRef.current?.present(), 10);
-    }, []);
-
 
     const renderItem = ({ item }: { item: Mentor }) => (
         <MentorCard
@@ -370,7 +426,7 @@ console.log("mentorsData",mentorsData);
             onWhatsApp={() => openWhatsApp(item.phoneNumber)}
             onMail={() => sendEmail(item.email)}
             onChat={() => openSMS(item.phoneNumber)}
-            onMenu={() => openMenu(item)}
+            onMenu={() => handleMenuPress(item)}
         />
     );
 
@@ -440,7 +496,7 @@ console.log("mentorsData",mentorsData);
                     </View>
 
                     {/* MENTOR LIST / SKELETON */}
-                    {isLoading ? (
+                    {isLoading && mentorList.length === 0 ? (
                         <View style={styles.flatListContent}>
                             <UserCardSkeleton layout={viewMode} />
                             <UserCardSkeleton layout={viewMode} />
@@ -454,7 +510,7 @@ console.log("mentorsData",mentorsData);
                             keyExtractor={m => m.id}
                             refreshControl={
                                 <RefreshControl
-                                    refreshing={isLoading}
+                                    refreshing={isFetching && !isFetchingNextPage}
                                     onRefresh={refetch}
                                     tintColor="#fff"
                                 />
@@ -496,22 +552,16 @@ console.log("mentorsData",mentorsData);
                     filterOptions={filterOptions}
                 />
 
-                {selectedMentor && (
+                {menuMentor ? (
                     <ActionBottomSheet
                         ref={bottomSheetRef}
-                        title={`${selectedMentor.firstName} ${selectedMentor.lastName ?? ""}`}
-                        subtitle={`${selectedMentor.assignedId?.length ?? 0} Mentees`}
-                        image={selectedMentor.profilePicture}
-                        actions={
-                            params?.type === "home" ? fromhomeScreenmenuItems :
-                                selectedMentor.role === "mentor"
-                                    ? menuItemsMentor
-                                    : menuItemsFieldMentor
-                        }
-                        onClose={() => bottomSheetRef.current?.dismiss()}
+                        title={`${menuMentor.firstName} ${menuMentor.lastName ?? ""}`}
+                        subtitle={`${menuMentor.assignedId?.length ?? 0} Mentees`}
+                        image={menuMentor.profilePicture}
+                        actions={sheetActions}
+                        onClose={handleCloseModal}
                     />
-
-                )}
+                ) : null}
             </View>
         </GradientBackground>
     );

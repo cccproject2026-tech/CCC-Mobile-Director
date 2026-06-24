@@ -11,7 +11,8 @@ import {
     Image,
     Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -36,6 +37,7 @@ export default function RoadmapEditScreen() {
     } = useAllRoadmaps();
 
     const router = useRouter();
+    const pathname = usePathname();
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
 
@@ -207,18 +209,21 @@ export default function RoadmapEditScreen() {
         } else {
             // ✅ For single roadmaps: Open roadmap form in edit mode
             setTimeout(() => {
-                console.log("roadmap", roadmap);
                 router.push({
                     pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                    params: {
-                        isEditMode: 'true',
-                        roadmapId: roadmap._id,
-                        type: 'single',
-                        name: roadmap.name || '',
-                        subheading: roadmap.roadMapDetails || roadmap.description || '',
-                        completionTime: roadmap.duration || '',
-                        bannerImage: headerBannerImage || roadmap.roadmaps[0]?.imageUrl || '',
-                    },
+                    params: appendReturnTo(
+                        {
+                            isEditMode: 'true',
+                            roadmapId: roadmap._id,
+                            type: 'single',
+                            name: roadmap.name || '',
+                            subheading: roadmap.roadMapDetails || roadmap.description || '',
+                            completionTime: roadmap.duration || '',
+                            bannerImage:
+                                headerBannerImage || roadmap.roadmaps[0]?.imageUrl || '',
+                        },
+                        buildReturnTo(pathname, params),
+                    ),
                 });
             }, 300);
         }

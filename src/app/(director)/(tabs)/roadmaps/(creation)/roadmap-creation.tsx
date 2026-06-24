@@ -15,7 +15,8 @@ import {
     Platform,
 } from 'react-native';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { appendReturnTo, buildReturnTo, getReturnToParam } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -24,8 +25,10 @@ import { useRoadmap } from '@/hooks/roadmap/useRoadmaps';
 
 export default function RoadmapCreationScreen() {
     const router = useRouter();
+    const pathname = usePathname();
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams();
+    const returnTo = getReturnToParam(params);
 
     const roadmapId = params.roadmapId as string;
     const roadmapType = (params.type as 'single' | 'phase') || 'single';
@@ -88,25 +91,37 @@ export default function RoadmapCreationScreen() {
             selectedDivision: selectedDivision || 'All',
             bannerImage: bannerImage || '',
             ...(params.nestedRoadmapId && { nestedRoadmapId: params.nestedRoadmapId }),
+            ...(returnTo ? { returnTo } : {}),
         };
 
+        const formReturnTo = buildReturnTo(pathname, {
+            roadmapId,
+            type: roadmapType,
+            isEditMode: isEditMode ? 'true' : 'false',
+            ...(params.nestedRoadmapId ? { nestedRoadmapId: params.nestedRoadmapId as string } : {}),
+        });
+
         if (roadmapType === 'phase') {
-            console.log('Routing to here : roadmap-form for phase')
-            console.log('commonParams', commonParams);
             router.push({
                 pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                params: {
-                    ...commonParams,
-                    type: 'phase',
-                },
+                params: appendReturnTo(
+                    {
+                        ...commonParams,
+                        type: 'phase',
+                    },
+                    formReturnTo,
+                ),
             });
         } else {
             router.push({
                 pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                params: {
-                    ...commonParams,
-                    type: 'single',
-                },
+                params: appendReturnTo(
+                    {
+                        ...commonParams,
+                        type: 'single',
+                    },
+                    formReturnTo,
+                ),
             });
         }
     };

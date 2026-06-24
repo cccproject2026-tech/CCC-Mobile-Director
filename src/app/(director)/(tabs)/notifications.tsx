@@ -6,62 +6,120 @@ import {
     roadmapTheme,
     ScreenBackHeader,
 } from "@/components/ui/design-system";
+import { useNotifications } from "@/hooks/useNotifications";
+import { useAuthStore } from "@/stores/auth.store";
+import { AppNotification } from "@/types/notification.types";
+import {
+    formatNotificationTime,
+    getNotificationRoute,
+    mapNotificationModuleToCardType,
+} from "@/utils/notificationNavigation";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack } from "expo-router";
-import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Stack, useRouter } from "expo-router";
+import React, { useCallback, useMemo } from "react";
+import {
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
+import { RefreshControl as GestureRefreshControl } from "react-native-gesture-handler";
 
-const dummyNotifications: Notification[] = [
-    {
-        title: "4 PASTORS COMPLETED THEIR COURSE TODAY !",
-        description: "Pr. John Doe , Pr. John Doe and two more.",
-        time: "9:43 am",
-        type: "course",
-        read: false,
-    },
-    {
-        title: "NEW MENTOR HAS BEEN ASSIGNED TO PR. MICHAEL",
-        description: "Mentor John Doe Loream Ipsum Interested in receiving mento",
-        time: "9:43 am",
-        type: "note",
-        read: false,
-    },
-    {
-        title: "5 NEW INTERESTS RECIEVED TODAY !",
-        description: "Loream Ipsum Interested in receiving mentoring in",
-        time: "9:43 am",
-        type: "assignment",
-        read: true,
-    },
-    {
-        title: "PR. MICHAEL HAS SUBMITTED ASSIGNMENT",
-        description: "Loream Ipsum Interested in receiving mentoring in",
-        time: "9:43 am",
-        type: "course",
-        read: true,
-    },
-    {
-        title: "YOUR PROFILE IS INCOMPLETE",
-        description: "Loream Ipsum Interested in receiving mentoring in",
-        time: "9:43 am",
-        type: "profile",
-        read: true,
-    },
-];
+function toCardData(item: AppNotification): Notification {
+    return {
+        id: item.id,
+        title: item.title,
+        description: item.details,
+        time: formatNotificationTime(item.createdAt),
+        type: mapNotificationModuleToCardType(item.module),
+        read: item.read,
+        module: item.module,
+    };
+}
 
-const unreadCount = dummyNotifications.filter((n) => !n.read).length;
+function ListSeparator() {
+    return <View style={styles.listSeparator} />;
+}
 
 export default function NotificationScreen() {
+    const router = useRouter();
+    const { user } = useAuthStore();
+    const {
+        data,
+        isSuccess,
+        isError,
+        isFetching,
+        refetch,
+    } = useNotifications(user?.role);
+
+    const notifications = data?.items ?? [];
+    const unreadCount = data?.unreadCount ?? 0;
+    const showLoading = !data && isFetching;
+    const showEmpty = isSuccess && notifications.length === 0;
+
+    const handleNotificationPress = useCallback(
+        (item: AppNotification) => {
+            const route = getNotificationRoute(item.module);
+            if (route) {
+                router.push(route);
+            }
+        },
+        [router],
+    );
+
+    const renderItem = useCallback(
+        ({ item }: { item: AppNotification }) => (
+            <NotificationCard
+                data={toCardData(item)}
+                onPress={() => handleNotificationPress(item)}
+            />
+        ),
+        [handleNotificationPress],
+    );
+
+    const keyExtractor = useCallback((item: AppNotification) => item.id, []);
+
+    const listEmptyComponent = useMemo(() => {
+        if (showLoading) {
+            return (
+                <View style={styles.centerBox}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={styles.stateText}>Loading alerts...</Text>
+                </View>
+            );
+        }
+
+        if (isError) {
+            return (
+                <View style={styles.centerBox}>
+                    <Ionicons name="alert-circle-outline" size={40} color={roadmapTheme.textMuted} />
+                    <Text style={styles.stateText}>Failed to load alerts</Text>
+                </View>
+            );
+        }
+
+        if (!showEmpty) {
+            return null;
+        }
+
+        return (
+            <View style={styles.centerBox}>
+                <Ionicons name="notifications-off-outline" size={40} color={roadmapTheme.textMuted} />
+                <Text style={styles.stateText}>No alerts yet</Text>
+            </View>
+        );
+    }, [isError, showEmpty, showLoading]);
+
     return (
         <>
-            <Stack.Screen options={{ headerShown: false, title: "Notifications" }} />
+            <Stack.Screen options={{ headerShown: false, title: "Alerts" }} />
             <GradientBackground>
                 <View style={styles.root}>
                     <TopBar showNotifications={false} />
 
-                    <ScreenBackHeader title="Notifications" />
+                    <ScreenBackHeader title="Alerts" />
 
-                    {/* unread badge row */}
                     {unreadCount > 0 && (
                         <View style={styles.badgeRow}>
                             <View style={styles.unreadBadge}>
@@ -73,14 +131,29 @@ export default function NotificationScreen() {
                         </View>
                     )}
 
-                    <ScrollView
+                    <FlatList
+                        data={notifications}
+                        keyExtractor={keyExtractor}
+                        renderItem={renderItem}
+                        ItemSeparatorComponent={ListSeparator}
                         showsVerticalScrollIndicator={false}
-                        contentContainerStyle={styles.listContent}
-                    >
-                        {dummyNotifications.map((n, idx) => (
-                            <NotificationCard key={`${n.title}-${idx}`} data={n} />
-                        ))}
-                    </ScrollView>
+                        contentContainerStyle={[
+                            styles.listContent,
+                            notifications.length === 0 && styles.listContentEmpty,
+                        ]}
+                        initialNumToRender={12}
+                        maxToRenderPerBatch={10}
+                        windowSize={7}
+                        removeClippedSubviews
+                        refreshControl={
+                            <GestureRefreshControl
+                                refreshing={isFetching && Boolean(data)}
+                                onRefresh={refetch}
+                                tintColor="#fff"
+                            />
+                        }
+                        ListEmptyComponent={listEmptyComponent}
+                    />
                 </View>
             </GradientBackground>
         </>
@@ -114,6 +187,24 @@ const styles = StyleSheet.create({
         paddingHorizontal: homeLayout.screenPaddingH,
         paddingTop: 4,
         paddingBottom: 32,
+    },
+    listSeparator: {
+        height: 10,
+    },
+    listContentEmpty: {
+        flexGrow: 1,
+    },
+    centerBox: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
         gap: 10,
+        paddingHorizontal: homeLayout.screenPaddingH,
+        minHeight: 280,
+    },
+    stateText: {
+        color: roadmapTheme.textMuted,
+        fontSize: 15,
+        textAlign: "center",
     },
 });

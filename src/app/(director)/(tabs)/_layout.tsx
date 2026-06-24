@@ -1,9 +1,10 @@
 // app/(director)/(tabs)/_layout.tsx
 import { icons } from "@/constants";
+import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs, usePathname } from "expo-router";
 import { useMemo } from "react";
-import { Image } from "react-native";
+import { Image, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /** Hide route from tab bar (Expo Router — use href only, not tabBarButton). */
@@ -24,7 +25,7 @@ export default function DirectorTabLayout() {
             /remove-mentor$/,
             /remove-mentee$/,
             /select-roadmap$/,
-            /^\/new-interests\/.+/,
+            /\/new-interests/,
             /modal/,
             /overlay/,
             /assessments\/assign-assessments$/,
@@ -52,7 +53,6 @@ export default function DirectorTabLayout() {
         "appointments",
         "ccc",
         "assessments",
-        "notifications",
         "assignments",
         "course-completed",
         "discover",
@@ -63,6 +63,8 @@ export default function DirectorTabLayout() {
         "ai-insights",
     ];
 
+    const tabBarHeight = 60 + bottom;
+
     return (
         <Tabs
         initialRouteName="index" 
@@ -71,19 +73,39 @@ export default function DirectorTabLayout() {
             screenOptions={{
                 headerShown: false,
                 tabBarHideOnKeyboard: true,
+                sceneStyle: {
+                    backgroundColor: Colors.appBgGradient[0],
+                },
                 tabBarActiveTintColor: "#fff",
                 tabBarInactiveTintColor: "#BFC6DF",
+                tabBarBackground: () => (
+                    <View
+                        style={{
+                            flex: 1,
+                            backgroundColor: isTabBarVisible ? "#0D3656" : Colors.appBgGradient[0],
+                        }}
+                    />
+                ),
                 tabBarStyle: isTabBarVisible
                     ? {
                           backgroundColor: "#0D3656",
                           borderTopWidth: 0,
-                          height: 60 + bottom,
+                          height: tabBarHeight,
                           paddingBottom: bottom,
                           paddingTop: 8,
                       }
                     : {
-                          display: "none",
-                               position: "absolute",
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: 0,
+                          opacity: 0,
+                          overflow: "hidden",
+                          pointerEvents: "none",
+                          backgroundColor: "transparent",
+                          borderTopWidth: 0,
+                          elevation: 0,
                       },
                 tabBarLabelStyle: {
                     fontSize: 12,
@@ -93,12 +115,11 @@ export default function DirectorTabLayout() {
             }}
         >
             <Tabs.Screen
-                name="alerts"
+                name="notifications"
                 options={{
                     title: "Alerts",
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="notifications-outline" size={24} color={color} />
-
                     ),
                 }}
             />

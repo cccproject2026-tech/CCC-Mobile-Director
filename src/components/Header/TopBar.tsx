@@ -1,8 +1,10 @@
+import { useUnreadNotificationCount } from '@/hooks/useNotifications';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import { useAuthStore } from '@/stores/auth.store';
+import { formatNotificationBadgeCount } from '@/utils/notificationNavigation';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeBack } from '@/hooks/useSafeBack';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -28,7 +30,7 @@ type Props = {
 
 const TopBar: React.FC<Props> = ({
     showUserName = false,
-    notifications = 0,
+    notifications,
     showNotifications = true,
     showDrawer = true,
     showBackButton = false,
@@ -45,6 +47,12 @@ const TopBar: React.FC<Props> = ({
     const router = useRouter();
     const safeBack = useSafeBack();
     const { user } = useAuthStore();
+    const liveUnreadCount = useUnreadNotificationCount(
+        user?.role,
+        showNotifications && notifications === undefined,
+    );
+    const badgeCount = notifications ?? liveUnreadCount;
+    const badgeLabel = formatNotificationBadgeCount(badgeCount);
     const onMenuPress = () => navigation.dispatch(DrawerActions.openDrawer());
     const handleNotificationsPress = () => {
         router.push('/(director)/(tabs)/notifications');
@@ -121,10 +129,20 @@ const TopBar: React.FC<Props> = ({
                 {showNotifications && (
                     <Pressable onPress={handleNotificationsPress} hitSlop={10} style={styles.notificationButton}>
                         <Ionicons name="notifications-outline" size={size - 10} color={color} />
-                        {notifications > 0 && (
-                            <View style={styles.notificationBadge}>
-                                <Text style={styles.notificationBadgeText}>
-                                    {notifications > 9 ? '9+' : notifications}
+                        {badgeCount > 0 && (
+                            <View
+                                style={[
+                                    styles.notificationBadge,
+                                    badgeLabel.length > 2 && styles.notificationBadgeWide,
+                                ]}
+                            >
+                                <Text
+                                    style={[
+                                        styles.notificationBadgeText,
+                                        badgeLabel.length > 2 && styles.notificationBadgeTextSmall,
+                                    ]}
+                                >
+                                    {badgeLabel}
                                 </Text>
                             </View>
                         )}
@@ -219,18 +237,26 @@ const styles = StyleSheet.create({
     notificationBadge: {
         position: "absolute",
         backgroundColor: "#FACC15",
-        width: 18,
+        minWidth: 18,
         height: 18,
         borderRadius: 9,
         right: -10,
         top: -7,
         alignItems: "center",
         justifyContent: "center",
+        paddingHorizontal: 4,
+    },
+    notificationBadgeWide: {
+        minWidth: 26,
+        right: -14,
     },
     notificationBadgeText: {
         color: "#000",
         fontWeight: "700",
         fontSize: 11,
+    },
+    notificationBadgeTextSmall: {
+        fontSize: 9,
     },
     searchButton: {
         marginRight: 4,

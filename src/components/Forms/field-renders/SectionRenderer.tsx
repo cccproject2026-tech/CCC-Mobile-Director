@@ -1,6 +1,6 @@
 // components/FieldRenderers/SectionRenderer.tsx
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,7 +15,7 @@ interface SectionRendererProps {
     nestedFields: any[];
     onEdit: (fieldId: string) => void;
     onDelete: (fieldId: string) => void;
-    onAddNestedField: () => void;
+    onAddNestedField: (anchorRef: React.ComponentRef<typeof TouchableOpacity> | null) => void;
     renderNestedField: (field: any) => React.ReactNode;
 }
 
@@ -27,6 +27,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     onAddNestedField,
     renderNestedField,
 }) => {
+    const addNestedFieldRef = useRef<React.ComponentRef<typeof TouchableOpacity>>(null);
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -74,8 +76,9 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             <View style={styles.insertFieldContainer}>
                 <Text style={styles.insertFieldText}>Insert Field</Text>
                 <TouchableOpacity
+                    ref={addNestedFieldRef}
                     style={styles.inlineAddButton}
-                    onPress={onAddNestedField}
+                    onPress={() => onAddNestedField(addNestedFieldRef.current)}
                     activeOpacity={0.7}
                 >
                     <Ionicons name="add" size={18} color="#1A4882" />

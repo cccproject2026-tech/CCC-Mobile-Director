@@ -1,6 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from 'react-native';
 
 export type FilterOption = {
     label: string;
@@ -23,7 +32,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
     onFilterSelect,
     filterOptions,
 }) => {
+    const { height: windowHeight } = useWindowDimensions();
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
+    const optionsMaxHeight = Math.min(windowHeight * 0.45, 420);
 
     const toggleExpand = useCallback((label: string) => {
         setExpandedSection(prev => (prev === label ? null : label));
@@ -56,8 +67,8 @@ const FilterModal: React.FC<FilterModalProps> = ({
         >
             {/* Background Overlay */}
             <Pressable style={styles.overlay} onPress={onClose}>
-                {/* Inner Modal */}
-                <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
+                {/* Inner Modal — block overlay dismiss when tapping modal content */}
+                <Pressable onPress={() => {}} style={styles.modalContainer}>
                     {/* Filter Sections */}
                     {filterOptions.map((opt, index) => {
                         const expanded = expandedSection === opt.label;
@@ -71,10 +82,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                 ]}
                             >
                                 {/* Section Header */}
-                                <View style={styles.sectionHeader}>
-                                    <Text style={styles.sectionTitle}>{opt.label}</Text>
-
-                                    {(opt.options || opt.isExpandable) ? (
+                                {(opt.options || opt.isExpandable) ? (
+                                    <View style={styles.sectionHeader}>
+                                        <Text style={styles.sectionTitle}>{opt.label}</Text>
                                         <Pressable
                                             onPress={() => toggleExpand(opt.label)}
                                             style={[
@@ -88,21 +98,30 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                                 color={expanded ? '#fff' : '#1a5b77'}
                                             />
                                         </Pressable>
-                                    ) : (
-                                        <Pressable
-                                            onPress={() => handleFilterSelect(opt.label, opt)}
-                                            style={styles.radioOuter}
-                                        >
+                                    </View>
+                                ) : (
+                                    <Pressable
+                                        onPress={() => handleFilterSelect(opt.label, opt)}
+                                        style={styles.sectionHeader}
+                                    >
+                                        <Text style={styles.sectionTitle}>{opt.label}</Text>
+                                        <View style={styles.radioOuter}>
                                             {selectedFilter === opt.label && (
                                                 <View style={styles.radioInner} />
                                             )}
-                                        </Pressable>
-                                    )}
-                                </View>
+                                        </View>
+                                    </Pressable>
+                                )}
 
                                 {/* Expanded Options */}
                                 {expanded && opt.options && (
-                                    <View style={{ marginTop: 6 }}>
+                                    <ScrollView
+                                        style={[styles.optionsList, { maxHeight: optionsMaxHeight }]}
+                                        contentContainerStyle={styles.optionsListContent}
+                                        showsVerticalScrollIndicator
+                                        nestedScrollEnabled
+                                        keyboardShouldPersistTaps="handled"
+                                    >
                                         {opt.options.map(option => (
                                             <Pressable
                                                 key={option}
@@ -122,7 +141,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                                                 <Text style={styles.optionLabel}>{option}</Text>
                                             </Pressable>
                                         ))}
-                                    </View>
+                                    </ScrollView>
                                 )}
                             </View>
                         );
@@ -154,9 +173,18 @@ const styles = StyleSheet.create({
     modalContainer: {
         width: '90%',
         maxWidth: Platform.OS === 'android' ? 350 : 400,
+        maxHeight: '80%',
         backgroundColor: '#fff',
         borderRadius: Platform.OS === 'android' ? 16 : 20,
         overflow: 'hidden',
+    },
+
+    optionsList: {
+        marginTop: 6,
+    },
+
+    optionsListContent: {
+        paddingBottom: 4,
     },
 
     section: {

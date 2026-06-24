@@ -327,10 +327,13 @@ export const useDeleteUser = () => {
 
     return useMutation({
         mutationFn: (userId: string) => profileService.deleteUser(userId),
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: profileKeys.all });
-            await queryClient.invalidateQueries({ queryKey: ["mentees"] });
-            await queryClient.invalidateQueries({ queryKey: ["mentors"] });
+        onSuccess: (_data, userId) => {
+            void queryClient.cancelQueries({ queryKey: profileKeys.user(userId) });
+            queryClient.removeQueries({ queryKey: profileKeys.user(userId) });
+            queryClient.removeQueries({ queryKey: profileKeys.combined(userId) });
+
+            void queryClient.invalidateQueries({ queryKey: ["mentees"] });
+            void queryClient.invalidateQueries({ queryKey: ["mentors"] });
         },
     });
 };

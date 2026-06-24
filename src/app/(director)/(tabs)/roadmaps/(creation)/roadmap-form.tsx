@@ -1,6 +1,6 @@
 // app/(director)/(tabs)/revitalization-roadmaps/(creation)/roadmap-form.tsx
 
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -10,15 +10,19 @@ import {
     Alert,
     ActivityIndicator,
     StyleSheet,
-    Dimensions,
     KeyboardAvoidingView,
     Platform,
+    Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useSafeBack } from '@/hooks/useSafeBack';
+import { useReturnToAwareBack } from '@/hooks/useReturnToAwareBack';
+import { getReturnToParam } from '@/utils/navigation';
+import { Routes } from '@/navigation/routes';
 
 import {
     useRoadmap,
@@ -27,7 +31,7 @@ import {
 } from '@/hooks/roadmap/useRoadmaps';
 import { RoadmapExtra, CreateNestedRoadmapRequest } from '@/types/roadmap.types';
 import { AddFieldSheetContext } from '@/contexts/AddFieldSheetContext';
-import CustomMenu, { MenuItem } from '@/components/Menu/CustomMenu';
+import CustomMenu, { MenuItem, openAnchoredMenu } from '@/components/Menu/CustomMenu';
 import { AssessmentRenderer, ButtonRenderer, CheckboxRenderer, DatePickerRenderer, DigitalSignatureRenderer, SectionRenderer, TextAreaRenderer, TextDisplayRenderer, TextFieldRenderer, UploadButtonRenderer } from '@/components/Forms/field-renders';
 import RoadMapFormHeader from '@/components/Header/RoadMapFormHeader';
 import TopBar from '@/components/Header/TopBar';
@@ -35,18 +39,26 @@ import TopBar from '@/components/Header/TopBar';
 export type FieldType = 'text' | 'textarea' | 'upload' | 'datepicker' | 'assessment' | 'section' | 'checkbox_item' | 'text_display' | 'button' | 'digital_signature';
 
 export default function RoadmapFormScreen() {
-    const router = useRouter();
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams();
     const addFieldSheet = useContext(AddFieldSheetContext);
-
-    const navigation = useNavigation();
 
     // ✅ Parse params
     const isEditMode = params.isEditMode === 'true';
     const roadmapId = params.roadmapId as string;
     const nestedRoadmapId = params.nestedRoadmapId as string;
     const roadmapType = (params.type as 'single' | 'phase') || 'single';
+    const returnTo = getReturnToParam(params);
+
+    const backFallback = useMemo((): Href => {
+        if (roadmapType === 'phase') {
+            return Routes.roadmaps.phaseListFor(roadmapId);
+        }
+        return Routes.roadmaps.index;
+    }, [roadmapType, roadmapId]);
+
+    const safeBack = useSafeBack({ returnTo, fallback: backFallback });
+    useReturnToAwareBack(returnTo);
 
     console.log('RoadmapFormScreen params:', params);
     console.log('Roadmap Type:', roadmapType);
@@ -84,18 +96,13 @@ export default function RoadmapFormScreen() {
         left?: number;
         right?: number;
     }>({ top: 0, right: 16 });
+    const [uploadedBannerImage, setUploadedBannerImage] = useState<string | null>(
+        (params.bannerImage as string) || null,
+    );
+    const [isUploading, setIsUploading] = useState(false);
 
     // ✅ Ref for "Add Field" button to get position
     const addFieldButtonRef = useRef<any>(null);
-
-    const handleDateChange = (fieldId: string, date: Date) => {
-        setFormData((prev) => ({
-            ...prev,
-            customFields: prev.customFields.map((f) =>
-                f.id === fieldId ? { ...f, date } : f
-            ),
-        }));
-    };
 
     // ✅ Transform extras helpers
     const transformExtrasToFields = (extras: RoadmapExtra[]): any[] => {
@@ -520,9 +527,41 @@ export default function RoadmapFormScreen() {
                     descriptionVerbiage: selectedRoadmap.description || '',
                     customFields: transformExtrasToFields(extras),
                 });
+                setUploadedBannerImage(
+                    selectedRoadmap.imageUrl || (params.bannerImage as string) || null,
+                );
             }
         }
-    }, [isEditMode, parentRoadmap, nestedRoadmapId, roadmapType]);
+    }, [isEditMode, parentRoadmap, nestedRoadmapId, roadmapType, params.bannerImage]);
+
+    const handleUploadBanner = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'We need permission to access your photos.');
+                return;
+            }
+
+            setIsUploading(true);
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [16, 9],
+                quality: 0.8,
+            });
+
+            if (!result.canceled) {
+                setUploadedBannerImage(result.assets[0].uri);
+                Alert.alert('Success', 'Banner uploaded successfully.');
+            }
+        } catch (error) {
+            console.error('Image picker error:', error);
+            Alert.alert('Error', 'Failed to upload banner. Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     // ✅ Menu items for field types
     const fieldTypeMenuItems: MenuItem[] = [
@@ -589,27 +628,26 @@ export default function RoadmapFormScreen() {
     ];
 
     // ✅ Field handlers
-    const handleAddField = () => {
-        if (addFieldButtonRef.current) {
-            addFieldButtonRef.current.measure(
-                (x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-                    const screenHeight = Dimensions.get('window').height;
-                    setMenuPosition({
-                        bottom: screenHeight - pageY -60,
-                        right: 16,
-                    });
-                    setMenuVisible(true);
-                }
-            );
-        } else {
-            setMenuVisible(true);
-        }
+    const openFieldTypeMenu = (anchorRef: React.ComponentRef<typeof TouchableOpacity> | null) => {
+        openAnchoredMenu(anchorRef, {
+            itemCount: fieldTypeMenuItems.length,
+            onOpen: (position) => {
+                setMenuPosition(position);
+                setMenuVisible(true);
+            },
+        });
     };
 
-    const handleAddNestedField = (sectionId: string) => {
+    const handleAddField = () => {
+        openFieldTypeMenu(addFieldButtonRef.current);
+    };
+
+    const handleAddNestedField = (
+        sectionId: string,
+        anchorRef: React.ComponentRef<typeof TouchableOpacity> | null,
+    ) => {
         setCurrentSectionId(sectionId);
-        setMenuPosition({ top: 0, right: 16 });
-        setMenuVisible(true);
+        openFieldTypeMenu(anchorRef);
     };
 
     const handleFieldTypeSelect = (fieldType: FieldType) => {
@@ -680,6 +718,10 @@ export default function RoadmapFormScreen() {
             }
         }
 
+        if (type === 'datepicker' && processedData.date) {
+            processedData.date = new Date(processedData.date);
+        }
+
         if (editingFieldId) {
             setFormData((prev) => ({
                 ...prev,
@@ -699,9 +741,9 @@ export default function RoadmapFormScreen() {
             ...processedData,
         };
 
-        // ✅ Add default date if datepicker and no date provided
-        if (type === 'datepicker' && !newField.date) {
-            newField.date = new Date();
+        // Default date is optional for datepicker fields
+        if (type === 'datepicker' && newField.date) {
+            newField.date = new Date(newField.date);
         }
 
         setFormData((prev) => ({
@@ -729,14 +771,28 @@ export default function RoadmapFormScreen() {
         }
 
         setIsSubmitting(true);
-        console.log("----------------------------------------------")
+
+        const logPayload = (action: string, payload: unknown) => {
+            console.log(`[Roadmap Tasks] ${action} — payload:`, payload);
+            console.log(
+                `[Roadmap Tasks] ${action} — payload (JSON):`,
+                JSON.stringify(payload, null, 2),
+            );
+        };
+
+        const logResponse = (action: string, response: unknown) => {
+            console.log(`[Roadmap Tasks] ${action} — response:`, response);
+            console.log(
+                `[Roadmap Tasks] ${action} — response (JSON):`,
+                JSON.stringify(response, null, 2),
+            );
+        };
 
         try {
             const extras = transformFieldsToExtras(formData.customFields);
-            console.log('Final extras to send:', JSON.stringify(extras, null, 2));
-          
+            console.log('[Roadmap Tasks] Extras / task fields:', extras);
+
             // ✅ CASE 1: Single Roadmap
-            console.log("----------------------------------------------")
             if (roadmapType === 'single') {
                 const hasNested = parentRoadmap?.roadmaps && parentRoadmap.roadmaps.length > 0;
 
@@ -744,20 +800,21 @@ export default function RoadmapFormScreen() {
                     const safeDuration = roadmapData.completionTime || parentRoadmap?.duration || '1 month';
                     const payload: CreateNestedRoadmapRequest = {
                         name: roadmapData.name,
-                        roadMapDetails: roadmapData.subheading,
+                        roadMapDetails: formData.churchVerbiage,
                         description: formData.descriptionVerbiage,
                         duration: safeDuration,
-                        ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
+                        ...(uploadedBannerImage && { imageUrl: uploadedBannerImage }),
                         ...(roadmapData.selectedDivision && {
                             phase: roadmapData.selectedDivision,
                         }),
                         status: 'not started',
                         extras,
                     };
-                    console.log('payload (create nested)----->', payload);
-                    await createNestedMutation.mutateAsync({ roadmapId, payload });
+                    logPayload('Create single roadmap with tasks', { roadmapId, payload });
+                    const response = await createNestedMutation.mutateAsync({ roadmapId, payload });
+                    logResponse('Create single roadmap with tasks', response);
                     Alert.alert('Success', 'Roadmap created successfully!', [
-                        { text: 'OK', onPress: () => router.back() },
+                        { text: 'OK', onPress: () => safeBack() },
                     ]);
                 } else {
                     const nested = parentRoadmap?.roadmaps?.[0];
@@ -765,53 +822,53 @@ export default function RoadmapFormScreen() {
                     const updatedNested = {
                         _id: nested?._id,
                         name: roadmapData.name,
-                        roadMapDetails: roadmapData.subheading,
+                        roadMapDetails: formData.churchVerbiage,
                         description: formData.descriptionVerbiage,
                         duration: safeDuration,
-                        ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
+                        ...(uploadedBannerImage && { imageUrl: uploadedBannerImage }),
                         phase: roadmapData.selectedDivision || nested?.phase || '',
                         extras,
                         status: nested?.status || 'not started',
                         meetings: nested?.meetings || [],
                     };
-                    console.log('updatedNested (update single)----->', updatedNested);
-                    await updateRoadmapMutation.mutateAsync({
+                    const payload = {
+                        name: parentRoadmap?.name || roadmapData.name,
+                        roadmaps: [updatedNested],
+                        ...(parentRoadmap?.divisions && { divisions: parentRoadmap.divisions }),
+                    };
+                    logPayload('Update single roadmap with tasks', { roadmapId, payload });
+                    const response = await updateRoadmapMutation.mutateAsync({
                         roadmapId,
-                        payload: {
-                            name: parentRoadmap?.name || roadmapData.name,
-                            roadmaps: [updatedNested],
-                            ...(parentRoadmap?.divisions && { divisions: parentRoadmap.divisions }),
-                        },
+                        payload,
                     });
+                    logResponse('Update single roadmap with tasks', response);
 
                     Alert.alert('Success', 'Roadmap updated successfully!', [
-                        { text: 'OK', onPress: () => router.back() },
+                        { text: 'OK', onPress: () => safeBack() },
                     ]);
                 }
             }
             // ✅ CASE 2: Phase Roadmap
             else if (roadmapType === 'phase') {
-              
                 if (!isEditMode) {
                     const safeDuration = roadmapData.completionTime || parentRoadmap?.duration || '1 month';
                     const payload: CreateNestedRoadmapRequest = {
                         name: roadmapData.name,
-                        roadMapDetails: roadmapData.subheading,
+                        roadMapDetails: formData.churchVerbiage,
                         description: formData.descriptionVerbiage,
                         duration: safeDuration,
-                        ...(roadmapData.bannerImage && { imageUrl: roadmapData.bannerImage }),
+                        ...(uploadedBannerImage && { imageUrl: uploadedBannerImage }),
                         ...(roadmapData.selectedDivision && {
                             phase: roadmapData.selectedDivision,
                         }),
                         status: 'not started',
                         extras,
                     };
-                    console.log('payload (create phase)----->', payload);
-
-                    await createNestedMutation.mutateAsync({ roadmapId, payload });
+                    logPayload('Create phase task', { roadmapId, payload });
+                    const response = await createNestedMutation.mutateAsync({ roadmapId, payload });
+                    logResponse('Create phase task', response);
                     Alert.alert('Success', 'Phase created successfully!', [
-                        // @ts-ignore
-                        { text: 'OK', onPress: () => navigation.pop(2) },
+                        { text: 'OK', onPress: () => safeBack() },
                     ]);
                 } else {
                     const updatedRoadmaps =
@@ -821,11 +878,11 @@ export default function RoadmapFormScreen() {
                                 return {
                                     _id: nested._id,
                                     name: roadmapData.name,
-                                    roadMapDetails: roadmapData.subheading,
+                                    roadMapDetails: formData.churchVerbiage,
                                     description: formData.descriptionVerbiage,
                                     duration: safeDuration,
-                                    ...(roadmapData.bannerImage && {
-                                        imageUrl: roadmapData.bannerImage,
+                                    ...(uploadedBannerImage && {
+                                        imageUrl: uploadedBannerImage,
                                     }),
                                     phase: roadmapData.selectedDivision || nested.phase || '',
                                     extras,
@@ -835,23 +892,29 @@ export default function RoadmapFormScreen() {
                             }
                             return nested;
                         }) || [];
-                    console.log('updatedRoadmaps (update phase)----->', updatedRoadmaps);
-                    await updateRoadmapMutation.mutateAsync({
+                    const payload = {
+                        name: parentRoadmap?.name || roadmapData.name,
+                        roadmaps: updatedRoadmaps,
+                        ...(parentRoadmap?.divisions && { divisions: parentRoadmap.divisions }),
+                    };
+                    logPayload('Update phase task', { roadmapId, payload });
+                    const response = await updateRoadmapMutation.mutateAsync({
                         roadmapId,
-                        payload: {
-                            name: parentRoadmap?.name || roadmapData.name,
-                            roadmaps: updatedRoadmaps,
-                            ...(parentRoadmap?.divisions && { divisions: parentRoadmap.divisions }),
-                        },
+                        payload,
                     });
+                    logResponse('Update phase task', response);
 
                     Alert.alert('Success', 'Phase updated successfully!', [
-                        // @ts-ignore
-                        { text: 'OK', onPress: () => navigation.pop(2) },
+                        { text: 'OK', onPress: () => safeBack() },
                     ]);
                 }
             }
         } catch (error: any) {
+            console.error('[Roadmap Tasks] Error:', error);
+            console.error(
+                '[Roadmap Tasks] Error response:',
+                error?.response?.data ?? error?.message ?? error,
+            );
             Alert.alert('Error', error.message || 'Failed to save roadmap');
         } finally {
             setIsSubmitting(false);
@@ -859,7 +922,7 @@ export default function RoadmapFormScreen() {
     };
 
     const handleCancel = () => {
-        router.back();
+        safeBack();
     };
 
     // ✅ Render fields with all renderers
@@ -900,7 +963,6 @@ export default function RoadmapFormScreen() {
                         field={field}
                         onEdit={handleEditField}
                         onDelete={handleDeleteField}
-                        onDateChange={handleDateChange}
                     />
                 );
             case 'assessment':
@@ -959,7 +1021,7 @@ export default function RoadmapFormScreen() {
                         nestedFields={nestedFields}
                         onEdit={handleEditField}
                         onDelete={handleDeleteField}
-                        onAddNestedField={() => handleAddNestedField(field.id)}
+                        onAddNestedField={(anchorRef) => handleAddNestedField(field.id, anchorRef)}
                         renderNestedField={(nestedField) => renderField(nestedField)}
                     />
                 );
@@ -981,7 +1043,7 @@ export default function RoadmapFormScreen() {
     }
 
     const handleBack = () => {
-        router.back();
+        safeBack();
     };
 
     return (
@@ -1012,7 +1074,7 @@ export default function RoadmapFormScreen() {
                 <RoadMapFormHeader
                     name={roadmapData.name}
                     subheading={roadmapData.subheading}
-                    bannerImage={roadmapData.bannerImage}
+                    bannerImage={uploadedBannerImage}
                     division={roadmapData.selectedDivision}
                 />
 
@@ -1062,6 +1124,56 @@ export default function RoadmapFormScreen() {
                         <Text style={styles.inlineAddButtonText}>Add Field</Text>
                     </TouchableOpacity>
                 </View>
+
+                <View style={styles.section}>
+                    <View style={styles.uploadBannerContainer}>
+                        <Ionicons name="cloud-upload-outline" size={16} color="white" />
+                        <Text style={styles.label}>Upload Banner</Text>
+                    </View>
+
+                    <View style={styles.imageContainer}>
+                        {uploadedBannerImage ? (
+                            <>
+                                <Image
+                                    source={{ uri: uploadedBannerImage }}
+                                    style={styles.bannerPreview}
+                                />
+                                <View style={styles.imageBottomContent}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.changeImageButton,
+                                            isUploading && styles.uploadButtonDisabled,
+                                        ]}
+                                        onPress={handleUploadBanner}
+                                        disabled={isUploading}
+                                    >
+                                        <Text style={styles.changeImageButtonText}>
+                                            {isUploading ? 'Changing...' : 'Change Image'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        ) : (
+                            <TouchableOpacity
+                                style={styles.uploadPlaceholder}
+                                onPress={handleUploadBanner}
+                                disabled={isUploading}
+                            >
+                                <Ionicons
+                                    name="cloud-upload-outline"
+                                    size={34}
+                                    color="rgba(255,255,255,0.7)"
+                                />
+                                <Text style={styles.uploadPlaceholderText}>
+                                    Upload Banner Image For the Roadmap
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    <Text style={styles.imageInfoText}>PNG, JPG — optional</Text>
+                </View>
+
                 <View style={[styles.inlineActionButtons, { paddingBottom: bottom + 20 }]}>
                     <TouchableOpacity
                         style={styles.imageStyleCancelButton}
@@ -1247,4 +1359,71 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
     submitButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    uploadBannerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    imageContainer: {
+        backgroundColor: 'rgba(255,255,255,0.06)',
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.08)',
+    },
+    bannerPreview: {
+        width: '100%',
+        height: 180,
+        borderRadius: 14,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+    },
+    imageBottomContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    changeImageButton: {
+        flex: 1,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderBottomLeftRadius: 12,
+        borderBottomRightRadius: 12,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+    },
+    changeImageButtonText: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    uploadPlaceholder: {
+        height: 150,
+        borderWidth: 2,
+        borderStyle: 'dashed',
+        borderColor: 'rgba(255,255,255,0.35)',
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        gap: 10,
+    },
+    uploadPlaceholderText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    imageInfoText: {
+        color: 'rgba(255,255,255,0.55)',
+        fontSize: 15,
+        marginTop: 6,
+    },
+    uploadButtonDisabled: {
+        opacity: 0.6,
+    },
 });

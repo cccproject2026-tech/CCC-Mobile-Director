@@ -11,6 +11,7 @@ const MENTOR_TABS_GROUPED_PREFIX = '/(mentor)/(tabs)';
 
 /** Updated by NavigationBackHandler — used when router.back() is patched. */
 export const currentPathnameRef = { current: '' };
+export const currentReturnToRef = { current: undefined as string | undefined };
 
 /** Expand tab-relative paths (e.g. `/review-center/pastor`) to full Expo Router hrefs. */
 export function normalizeReturnToHref(href?: string | null): string | undefined {
@@ -22,15 +23,39 @@ export function normalizeReturnToHref(href?: string | null): string | undefined 
   const path = qIndex >= 0 ? trimmed.slice(0, qIndex) : trimmed;
   const query = qIndex >= 0 ? trimmed.slice(qIndex) : '';
 
+  // Director uses `/roadmaps` (plural); mentor tab routes use `/roadmap` (singular).
   if (
     path.startsWith('/review-center') ||
-    path.startsWith('/roadmap') ||
+    (path.startsWith('/roadmap') && !path.startsWith('/roadmaps')) ||
     path.startsWith('/assessments')
   ) {
     return `${MENTOR_TABS_GROUPED_PREFIX}${path}${query}`;
   }
 
   return trimmed;
+}
+
+/** Parse `pathname?query` into an Expo Router href object. */
+export function parseStringHref(href: string): Href {
+  const qIndex = href.indexOf('?');
+  if (qIndex < 0) return href as Href;
+
+  const pathname = href.slice(0, qIndex);
+  const params: Record<string, string> = {};
+  new URLSearchParams(href.slice(qIndex + 1)).forEach((value, key) => {
+    params[key] = value;
+  });
+
+  return { pathname, params } as Href;
+}
+
+function coerceHref(href?: Href | string | null): Href {
+  if (href == null || href === '') return DIRECTOR_HOME_HREF;
+  if (typeof href === 'object') return href;
+
+  const normalized = normalizeReturnToHref(href);
+  if (!normalized) return DIRECTOR_HOME_HREF;
+  return parseStringHref(normalized);
 }
 
 /** Read `returnTo` route param (href to restore when leaving a cross-stack screen). */
@@ -125,20 +150,18 @@ export function safeGoBack(
   const returnTo = normalizeReturnToHref(options?.returnTo);
 
   if (returnTo) {
-    router.replace(returnTo as Href);
+    router.replace(parseStringHref(returnTo));
     return;
   }
 
   const pathname =
     options?.currentPathname ?? currentPathnameRef.current ?? '';
-  const fallback =
-    normalizeReturnToHref(String(options?.fallback ?? DIRECTOR_HOME_HREF)) ??
-    DIRECTOR_HOME_HREF;
+  const fallback = coerceHref(options?.fallback);
 
   if (pathname) {
     const parent = getParentPathname(pathname);
     if (parent && parent !== pathname.replace(/\/$/, '')) {
-      router.replace(parent as Href);
+      router.replace(parseStringHref(parent));
       return;
     }
   }

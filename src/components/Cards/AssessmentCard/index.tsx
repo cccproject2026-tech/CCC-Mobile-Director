@@ -5,7 +5,7 @@ import {
     isOverdue,
 } from '@/utils/assignedAssessmentParser';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
@@ -105,12 +105,8 @@ export const AssessmentCard: React.FC<Props> = ({
     );
 
     return (
-        <TouchableOpacity
-            style={styles.card}
-            onPress={handlePress}
-            activeOpacity={0.7}
-        >
-            <View style={styles.content}>
+        <View style={styles.card}>
+            <Pressable style={styles.content} onPress={handlePress}>
                 {/* Checkbox - only in selection mode */}
                 {selectionMode && (
                     <View style={styles.checkboxContainer}>
@@ -126,10 +122,9 @@ export const AssessmentCard: React.FC<Props> = ({
                         style={styles.image}
                     />
                     {renderTypeBadge()}
-                       
                 </View>
 
-                <View style={styles.textContent}>
+                <View style={[styles.textContent, showMenu && onMenuPress && styles.textContentWithMenu]}>
                     <Text style={styles.title} numberOfLines={2}>{displayName}</Text>
                     {data.description && (
                         <Text style={styles.description} numberOfLines={2}>
@@ -163,22 +158,25 @@ export const AssessmentCard: React.FC<Props> = ({
                         </Text>
                     ) : null}
                 </View>
+            </Pressable>
 
-                
-                        <TouchableOpacity
-                            onPress={onMenuPress}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            style={{ padding: 8 }}
-                        >
-                            <Ionicons
-                                name="ellipsis-vertical"
-                                size={15}
-                                color="rgba(255,255,255,0.6)"
-                            />
-                        </TouchableOpacity>
-           
-            </View>
-        </TouchableOpacity>
+            {showMenu && onMenuPress ? (
+                <TouchableOpacity
+                    style={styles.menuButton}
+                    activeOpacity={1}
+                    hitSlop={16}
+                    onPress={onMenuPress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open menu"
+                >
+                    <Ionicons
+                        name="ellipsis-vertical"
+                        size={20}
+                        color="#fff"
+                    />
+                </TouchableOpacity>
+            ) : null}
+        </View>
     );
 };
 
@@ -190,6 +188,14 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255, 255, 255, 0.12)',
         overflow: 'hidden',
         marginBottom: 14,
+        position: 'relative',
+    },
+    menuButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 20,
+        padding: 4,
     },
     content: {
         flexDirection: 'row',
@@ -251,6 +257,9 @@ const styles = StyleSheet.create({
         flex: 1,
         minWidth: 0,
         justifyContent: 'flex-start',
+    },
+    textContentWithMenu: {
+        paddingRight: 24,
     },
     title: {
         fontSize: 17,

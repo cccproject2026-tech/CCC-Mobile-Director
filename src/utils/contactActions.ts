@@ -65,6 +65,20 @@ export function chatNotAvailableYet() {
   Alert.alert("Chat", "In-app chat is not available in the mobile app yet.");
 }
 
+export function getInterestContact(item: {
+  phoneNumber?: string | null;
+  email?: string | null;
+  churchDetails?: { churchPhone?: string | null }[];
+}) {
+  return {
+    phone:
+      item.phoneNumber?.trim() ||
+      item.churchDetails?.[0]?.churchPhone?.trim() ||
+      undefined,
+    email: item.email?.trim() || undefined,
+  };
+}
+
 export function featureNotAvailableYet(name: string) {
   Alert.alert("Not available", `${name} is not available in the mobile app yet.`);
 }

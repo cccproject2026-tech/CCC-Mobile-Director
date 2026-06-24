@@ -9,6 +9,7 @@ interface HeaderProps {
     showBackButton?: boolean;
     showNewMeeting?: boolean;
     onNewMeetingPress?: () => void;
+    onPressBack?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,15 +17,17 @@ export const Header: React.FC<HeaderProps> = ({
     showBackButton = false,
     showNewMeeting = false,
     onNewMeetingPress,
+    onPressBack,
 }) => {
     const safeBack = useSafeBack();
+    const handleBack = onPressBack ?? safeBack;
     const { top } = useSafeAreaInsets();
 
     return (
         <View style={styles.container}>
             <View style={styles.left}>
                 {showBackButton && (
-                    <Pressable onPress={safeBack} style={styles.backButton}>
+                    <Pressable onPress={handleBack} style={styles.backButton}>
                         <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                     </Pressable>
                 )}

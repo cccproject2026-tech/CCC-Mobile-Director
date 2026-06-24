@@ -15,11 +15,13 @@ import React, {
     useState,
 } from "react";
 import {
+    Platform,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export type FieldType =
@@ -58,6 +60,21 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
         const bottomSheetRef = useRef<BottomSheetModal>(null);
         const openingWithExistingDataRef = useRef(false);
         const [showAssessmentModal, setShowAssessmentModal] = useState(false);
+        const [activeDateFieldKey, setActiveDateFieldKey] = useState<string | null>(null);
+
+        const formatDdMmYyyy = (date: Date) => {
+            const day = String(date.getDate()).padStart(2, "0");
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        };
+
+        const parseFormDate = (value: unknown): Date | null => {
+            if (!value) return null;
+            if (value instanceof Date) return value;
+            const parsed = new Date(String(value));
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        };
 
         const getConfig = () => {
             switch (fieldType) {
@@ -168,14 +185,19 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                     };
                 case "datepicker":
                     return {
-                        title: "Add Date Picker",
-                        snapPoint: "65%",
+                        title: "Add field",
+                        snapPoint: "75%",
                         fields: [
                             {
                                 key: "label",
-                                label: "Text",
-                                placeholder: "Enter Text for the Date",
+                                label: "Label",
+                                placeholder: "Enter label",
                                 type: "input",
+                            },
+                            {
+                                key: "date",
+                                label: "Default date (optional)",
+                                type: "date",
                             },
                             {
                                 key: "allowPastorSelect",
@@ -187,12 +209,6 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                 label: "Show Date on Info card",
                                 type: "checkbox",
                             },
-                            // {
-                            //     key: "buttonName",
-                            //     label: "Button",
-                            //     placeholder: "Enter Button Name",
-                            //     type: "input",
-                            // },
                         ],
                     };
                 case "assessment":
@@ -420,6 +436,12 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
             if (type === "section" && "showDuplicateButton" in data && !("addDuplicateButton" in data)) {
                 normalized.addDuplicateButton = !!data.showDuplicateButton;
             }
+            if (type === "datepicker" && data.date) {
+                const parsed = parseFormDate(data.date);
+                if (parsed) {
+                    normalized.date = parsed.toISOString();
+                }
+            }
             return normalized;
         }, []);
 
@@ -557,6 +579,75 @@ const AddFieldSheet = forwardRef<AddFieldSheetRef, AddFieldSheetProps>(
                                                     </Text>
                                                 </TouchableOpacity>
                                             )}
+                                        </View>
+                                    );
+                                }
+
+                                if (field.type === "date") {
+                                    const selectedDate = parseFormDate(formData[field.key]);
+
+                                    return (
+                                        <View key={field.key} style={styles.fieldSection}>
+                                            <Text style={styles.fieldLabel}>{field.label}</Text>
+                                            <TouchableOpacity
+                                                style={styles.dateInputRow}
+                                                onPress={() =>
+                                                    setActiveDateFieldKey(
+                                                        activeDateFieldKey === field.key
+                                                            ? null
+                                                            : field.key,
+                                                    )
+                                                }
+                                            >
+                                                <Text
+                                                    style={[
+                                                        styles.dateInputText,
+                                                        !selectedDate && styles.datePlaceholderText,
+                                                    ]}
+                                                >
+                                                    {selectedDate
+                                                        ? formatDdMmYyyy(selectedDate)
+                                                        : "dd/mm/yyyy"}
+                                                </Text>
+                                                <Ionicons
+                                                    name="calendar-outline"
+                                                    size={20}
+                                                    color="#fff"
+                                                />
+                                            </TouchableOpacity>
+
+                                            {activeDateFieldKey === field.key && (
+                                                <DateTimePicker
+                                                    value={selectedDate ?? new Date()}
+                                                    mode="date"
+                                                    display={
+                                                        Platform.OS === "ios" ? "spinner" : "default"
+                                                    }
+                                                    onChange={(_event, pickedDate) => {
+                                                        if (Platform.OS === "android") {
+                                                            setActiveDateFieldKey(null);
+                                                        }
+                                                        if (pickedDate) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                [field.key]: pickedDate.toISOString(),
+                                                            });
+                                                        }
+                                                    }}
+                                                />
+                                            )}
+
+                                            {activeDateFieldKey === field.key &&
+                                                Platform.OS === "ios" && (
+                                                    <TouchableOpacity
+                                                        style={styles.dateDoneButton}
+                                                        onPress={() => setActiveDateFieldKey(null)}
+                                                    >
+                                                        <Text style={styles.dateDoneButtonText}>
+                                                            Done
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                )}
                                         </View>
                                     );
                                 }
@@ -862,5 +953,38 @@ const styles = StyleSheet.create({
     },
     editIconButton: {
         padding: 4,
+    },
+    dateInputRow: {
+        backgroundColor: "rgba(255,255,255,0.1)",
+        borderWidth: 2,
+        borderColor: "rgba(255,255,255,0.3)",
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    dateInputText: {
+        fontSize: 16,
+        color: "#fff",
+        fontWeight: "500",
+    },
+    datePlaceholderText: {
+        color: "rgba(255,255,255,0.6)",
+        fontWeight: "400",
+    },
+    dateDoneButton: {
+        marginTop: 8,
+        alignSelf: "flex-end",
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 8,
+        backgroundColor: "rgba(255,255,255,0.15)",
+    },
+    dateDoneButtonText: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "600",
     },
 });

@@ -12,8 +12,16 @@ import {
     roadmapTheme,
     ScreenBackHeader,
 } from '@/components/ui/design-system';
-import { useInterests } from '@/hooks/useInterest';
+import { Colors } from '@/constants/Colors';
+import { useDeleteInterest, useInterests } from '@/hooks/useInterest';
 import { InterestItem, InterestStatus } from '@/types/interest.types';
+import {
+    dialPhone,
+    getInterestContact,
+    openSMS,
+    openWhatsApp,
+    sendEmail,
+} from '@/utils/contactActions';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -38,10 +46,11 @@ export default function InterestReceivedScreen() {
 
     const router = useRouter();
     const { data: interestsData, isLoading, error, isRefetching, refetch } = useInterests();
-
+    const deleteInterest = useDeleteInterest();
+ 
     const countryOptions = useMemo(() => {
         const list = Array.isArray(interestsData) ? interestsData : [];
-
+ 
         const countries = list
             .map(i => i.churchDetails?.[0]?.country)
             .filter((c): c is string => typeof c === 'string' && !!c);
@@ -50,7 +59,7 @@ export default function InterestReceivedScreen() {
 
         return ['All', ...unique];
     }, [interestsData]);
-
+ 
     const groupedInterests = useMemo(() => {
         const list = Array.isArray(interestsData) ? interestsData : [];
 
@@ -119,6 +128,49 @@ export default function InterestReceivedScreen() {
         });
     }, [assignPickerItem, router]);
 
+    const getInterestContactHandlers = useCallback((item: InterestItem) => {
+        const { phone, email } = getInterestContact(item);
+
+        return {
+            onCall: () => dialPhone(phone),
+            onChat: () => openSMS(phone),
+            onMail: () => sendEmail(email),
+            onWhatsApp: () => openWhatsApp(phone),
+        };
+    }, []);
+
+    const handleDeleteInterest = useCallback((item: InterestItem) => {
+        const interestId = String(item.id ?? '');
+        if (!interestId) {
+            Alert.alert('Unable to delete', 'Interest ID is missing for this record.');
+            return;
+        }
+
+        const fullName =
+            `${item.firstName ?? ''} ${item.lastName ?? ''}`.trim() || 'this interest';
+
+        Alert.alert(
+            'Delete Interest',
+            `Are you sure you want to delete "${fullName}"?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete', 
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await deleteInterest.mutateAsync(interestId);
+                            Alert.alert('Success', 'Interest form deleted successfully!');
+                        } catch (deleteError) {
+                            console.error('Error deleting interest:', deleteError);
+                            Alert.alert('Error', 'Failed to delete interest. Please try again.');
+                        }
+                    },
+                },
+            ],
+        );
+    }, [deleteInterest]);
+
     const tabs = [
         { key: 'new' as InterestTab, label: 'New', badge: groupedInterests.new.length },
         { key: 'pending' as InterestTab, label: 'Pending', badge: groupedInterests.pending.length },
@@ -127,6 +179,7 @@ export default function InterestReceivedScreen() {
     ];
 
     return (
+        <View style={styles.screenRoot}>
         <GradientBackground>
             <View style={styles.container}>
                 <TopBar notifications={3} showUserName showNotifications />
@@ -199,7 +252,17 @@ export default function InterestReceivedScreen() {
                                                         params: { id: item?.user?._id || '' },
                                                     });
                                                 }} />
-                                            : <InterestCard key={item.id} data={item} />
+                                            : <InterestCard
+                                                key={item.id}
+                                                data={item}
+                                                {...getInterestContactHandlers(item)}
+                                                showDelete={activeTab === 'rejected'}
+                                                onDeletePress={() => handleDeleteInterest(item)}
+                                                isDeleting={
+                                                    deleteInterest.isPending &&
+                                                    deleteInterest.variables === String(item.id)
+                                                }
+                                            />
                                     )
                                 ) : (
                                     <Text style={styles.noData}>
@@ -235,10 +298,15 @@ export default function InterestReceivedScreen() {
 
             </View>
         </GradientBackground>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+    screenRoot: {
+        flex: 1,
+        backgroundColor: Colors.appBgGradient[0],
+    },
     container: { flex: 1 },
     inner: { flex: 1, paddingTop: 8 },
     searchWrapper: {

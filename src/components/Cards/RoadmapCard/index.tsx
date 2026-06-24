@@ -2,18 +2,17 @@
 import { RoadmapCardData } from '@/types/roadmap.types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Props {
     data: RoadmapCardData & { phaseNumber?: number };
     onPress?: () => void;
     showMenu?: boolean;
     onMenuPress?: () => void;
-    // ✅ Optional selection mode props
     selectionMode?: boolean;
     isSelected?: boolean;
     onToggleSelection?: () => void;
-    paramsData?:any
+    paramsData?: unknown;
 }
 
 export const RoadmapCard: React.FC<Props> = ({
@@ -21,7 +20,6 @@ export const RoadmapCard: React.FC<Props> = ({
     onPress,
     showMenu,
     onMenuPress,
-    // ✅ Default values for selection mode
     selectionMode = false,
     isSelected = false,
     onToggleSelection,
@@ -29,8 +27,8 @@ export const RoadmapCard: React.FC<Props> = ({
     const isCompleted = data.status === 'completed';
     const hasProgress = data.taskProgress && !isCompleted;
     const showArrow = data.showArrow && !isCompleted;
-
     const hasActions = showMenu || showArrow;
+    const cardPressHandler = selectionMode ? onToggleSelection : onPress;
 
     const progressPercentage = useMemo(() => {
         return data.taskProgress
@@ -38,21 +36,7 @@ export const RoadmapCard: React.FC<Props> = ({
             : 0;
     }, [data.taskProgress]);
 
-    const statusConfig = useMemo(() => {
-        const configs = {
-            completed: { text: 'Completed', color: '#fff' },
-            due: { text: 'Due', color: '#FFD700' },
-            'in-progress': { text: 'In Progress', color: '#fff' },
-            initial: { text: 'Not Started Yet', color: 'rgba(255,255,255,0.8)' },
-        };
-        return data.status ? configs[data.status as keyof typeof configs] : null;
-    }, [data.status]);
-
     const showCompletionTimeOnLeft = data.completionTime && data.status;
-
-    // ✅ Choose wrapper and handler based on selection mode
-    const CardWrapper = selectionMode ? TouchableOpacity : (onPress ? TouchableOpacity : View);
-    const cardPressHandler = selectionMode ? onToggleSelection : onPress;
 
     const renderImage = () => (
         <View style={styles.imageContainer}>
@@ -61,26 +45,26 @@ export const RoadmapCard: React.FC<Props> = ({
                     typeof data.image === 'number'
                         ? data.image
                         : {
-                            uri:
-                                data.image ||
-                                'https://via.placeholder.com/300x200?text=No+Image',
-                        }
+                              uri:
+                                  data.image ||
+                                  'https://via.placeholder.com/300x200?text=No+Image',
+                          }
                 }
                 style={styles.image}
                 resizeMode="cover"
             />
 
-            {data.phaseNumber && (
+            {data.phaseNumber ? (
                 <View style={styles.phaseBadge}>
                     <Text style={styles.phaseBadgeText}>Phase {data.phaseNumber}</Text>
                 </View>
-            )}
+            ) : null}
 
-            {isCompleted && (
+            {isCompleted ? (
                 <View style={styles.checkmarkOverlay}>
                     <Ionicons name="checkmark" size={32} color="#fff" />
                 </View>
-            )}
+            ) : null}
         </View>
     );
 
@@ -104,24 +88,29 @@ export const RoadmapCard: React.FC<Props> = ({
         );
     };
 
-    return (
-        <CardWrapper
-            style={[
-                styles.card,
-                // ✅ Highlight card when selected
-                selectionMode && isSelected && styles.cardSelected
-            ]}
-            onPress={cardPressHandler}
-            activeOpacity={0.7}
-        >
-            {/* ✅ Selection Checkbox - only show in selection mode */}
-            {selectionMode && (
+    const menuButton =
+        showMenu && onMenuPress ? (
+            <TouchableOpacity
+                style={styles.menuButton}
+                activeOpacity={1}
+                hitSlop={16}
+                onPress={onMenuPress}
+                accessibilityRole="button"
+                accessibilityLabel="Open menu"
+            >
+                <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
+            </TouchableOpacity>
+        ) : null;
+
+    const cardBody = (
+        <>
+            {selectionMode ? (
                 <View style={styles.selectionCheckbox}>
                     <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                        {isSelected && <Ionicons name="checkmark" size={18} color="#fff" />}
+                        {isSelected ? <Ionicons name="checkmark" size={18} color="#fff" /> : null}
                     </View>
                 </View>
-            )}
+            ) : null}
 
             <View style={[styles.inner, !hasActions && styles.innerNoActions]}>
                 <View style={[styles.left, !hasActions && styles.leftNoActions]}>
@@ -131,52 +120,44 @@ export const RoadmapCard: React.FC<Props> = ({
                 <View style={[styles.right, !hasActions && styles.rightNoActions]}>
                     <View style={styles.titleRow}>
                         <Text
-                            style={[styles.title, !hasActions && styles.titleNoActions]}
+                            style={[
+                                styles.title,
+                                !hasActions && styles.titleNoActions,
+                                menuButton && styles.titleWithMenu,
+                            ]}
                             numberOfLines={2}
                         >
                             {data.title}
                         </Text>
-                        {/* {renderActions()} */}
-                        {showMenu && onMenuPress && hasActions && (
-                            <TouchableOpacity
-                                onPress={onMenuPress}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <Ionicons
-                                    name="ellipsis-vertical"
-                                    size={15}
-                                    color="rgba(255,255,255,0.6)"
-                                />
-                            </TouchableOpacity>
-                        )}
                     </View>
 
-                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                        {data.description && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        {data.description ? (
                             <Text
                                 style={[
                                     styles.description,
                                     !hasActions && styles.descriptionNoActions,
                                 ]}
-                                // numberOfLines={2}
                             >
                                 {data.description}
                             </Text>
-                        )}
-                        {showArrow && hasActions &&(
+                        ) : null}
+                        {showArrow && hasActions ? (
                             <Ionicons
                                 name="chevron-forward"
                                 size={20}
                                 color="rgba(255,255,255,0.6)"
                             />
-                        )}
+                        ) : null}
                     </View>
-                    
-                    {showCompletionTimeOnLeft && (
-                        <Text style={styles.completionTime}>{data.completionTime?.replace('\n', '')}</Text>
-                    )}
 
-                    {data.completionTime && !data.status && (
+                    {showCompletionTimeOnLeft ? (
+                        <Text style={styles.completionTime}>
+                            {data.completionTime?.replace('\n', '')}
+                        </Text>
+                    ) : null}
+
+                    {data.completionTime && !data.status ? (
                         <Text
                             style={[
                                 styles.completionTimeText,
@@ -185,31 +166,11 @@ export const RoadmapCard: React.FC<Props> = ({
                         >
                             {data.completionTime}
                         </Text>
-                    )}
-
-                    {/* {statusConfig && (
-                        <View
-                            style={[
-                                styles.statusRow,
-                                !hasActions && styles.statusRowNoActions,
-                            ]}
-                        >
-                            <View style={styles.statusPill}>
-                                <Text
-                                    style={[
-                                        styles.statusPillText,
-                                        { color: statusConfig.color },
-                                    ]}
-                                >
-                                    Status  •  {statusConfig.text}
-                                </Text>
-                            </View>
-                        </View>
-                    )} */}
+                    ) : null}
 
                     {renderProgressSection()}
 
-                    {isCompleted && data.completedDate && (
+                    {isCompleted && data.completedDate ? (
                         <Text
                             style={[
                                 styles.completedDate,
@@ -218,37 +179,66 @@ export const RoadmapCard: React.FC<Props> = ({
                         >
                             Completed on : {data.completedDate}
                         </Text>
-                    )}
+                    ) : null}
                 </View>
             </View>
-        </CardWrapper>
+        </>
+    );
+
+    if (selectionMode || onPress) {
+        const Wrapper = selectionMode ? TouchableOpacity : Pressable;
+        return (
+            <View style={styles.cardOuter} pointerEvents="box-none">
+                <Wrapper
+                    style={[styles.card, selectionMode && isSelected && styles.cardSelected]}
+                    onPress={cardPressHandler}
+                >
+                    {cardBody}
+                </Wrapper>
+                {menuButton}
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.cardOuter} pointerEvents="box-none">
+            <View style={styles.card}>{cardBody}</View>
+            {menuButton}
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
+    cardOuter: {
+        position: 'relative',
+        marginBottom: 18,
+    },
     card: {
         backgroundColor: 'rgba(255, 255, 255, 0.06)',
         borderRadius: 16,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.12)',
         overflow: 'hidden',
-        marginBottom: 18,
         padding: 12,
     },
-    // ✅ Selected card style
+    menuButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 20,
+        padding: 4,
+    },
     cardSelected: {
         borderColor: '#7B3FF2',
         borderWidth: 2,
         backgroundColor: 'rgba(123, 63, 242, 0.1)',
     },
-    // ✅ Selection checkbox container
     selectionCheckbox: {
         position: 'absolute',
         top: 12,
         right: 12,
         zIndex: 10,
     },
-    // ✅ Checkbox styles
     checkbox: {
         width: 28,
         height: 28,
@@ -345,18 +335,11 @@ const styles = StyleSheet.create({
         paddingRight: 40,
         minWidth: 0,
     },
+    titleWithMenu: {
+        paddingRight: 28,
+    },
     titleNoActions: {
         paddingRight: 0,
-    },
-    actionsContainer: {
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        gap: 12,
-        flexShrink: 0,
-        width: 32,
     },
     description: {
         fontSize: 12,
@@ -364,33 +347,10 @@ const styles = StyleSheet.create({
         color: 'rgba(255, 255, 255, 0.75)',
         marginBottom: 10,
         lineHeight: 18,
-        width: '80%'
-        // paddingRight: 40,
-        // minWidth: 0,
+        width: '80%',
     },
     descriptionNoActions: {
         paddingRight: 0,
-    },
-    statusRow: {
-        marginTop: 6,
-        paddingRight: 40,
-    },
-    statusRowNoActions: {
-        paddingRight: 0,
-    },
-    statusPill: {
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 12,
-        alignSelf: 'flex-start',
-        backgroundColor: 'rgba(0,0,0,0.08)',
-        flexShrink: 1,
-    },
-    statusPillText: {
-        fontSize: 13,
-        fontWeight: '600',
     },
     progressSection: {
         marginTop: 12,

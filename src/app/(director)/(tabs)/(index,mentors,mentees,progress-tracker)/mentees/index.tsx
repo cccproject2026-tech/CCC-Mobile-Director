@@ -4,31 +4,43 @@ import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
-import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
+import ActionBottomSheet, { ActionItem } from '@/components/Sheets/ActionBottomSheet';
 import { GradientBackground } from '@/components/ui/design-system';
 import { useMentees } from '@/hooks/useMentees';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
+    InteractionManager,
     Pressable,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useMenteesNavigationStore } from '@/stores/menteesNavigation.store';
 import {
     chatNotAvailableYet,
     dialPhone,
-    featureNotAvailableYet,
     openWhatsApp,
     sendEmail,
 } from '@/utils/contactActions';
-import { useLocalSearchParams } from 'expo-router';
+
+function getRouteParam(value: string | string[] | undefined): string | undefined {
+    if (Array.isArray(value)) return value[0];
+    return value;
+}
+
+function isAssignMentorDashboardFlow(params: Record<string, string | string[] | undefined>): boolean {
+    const flow = getRouteParam(params.flow);
+    if (flow === 'full') return false;
+    const type = getRouteParam(params.type);
+    return type === 'home' || flow === 'assign-mentor';
+}
 
 export default function Mentees() {
     const router = useRouter();
@@ -39,8 +51,168 @@ export default function Mentees() {
     const [selectedFilter, setSelectedFilter] = useState('Course Completion : Oldest');
     const [selectedStateFilter, setSelectedStateFilter] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
-    const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
+    const [menuMentee, setMenuMentee] = useState<Mentee | null>(null);
     const params = useLocalSearchParams();
+    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+    const menuMode = useMenteesNavigationStore((s) => s.menuMode);
+    const setAssignMentorOnlyMenu = useMenteesNavigationStore((s) => s.setAssignMentorOnlyMenu);
+    const setFullMenu = useMenteesNavigationStore((s) => s.setFullMenu);
+
+    // URL params can set mode on entry; store keeps it across profile / assign / back.
+    useFocusEffect(
+        useCallback(() => {
+            const flow = getRouteParam(params.flow);
+            const type = getRouteParam(params.type);
+            if (flow === 'full' || type === 'Field-Mentor-Home') {
+                setFullMenu();
+                return;
+            }
+            if (isAssignMentorDashboardFlow(params)) {
+                setAssignMentorOnlyMenu();
+            }
+        }, [params.flow, params.type, setAssignMentorOnlyMenu, setFullMenu]),
+    );
+
+    const handleCloseModal = useCallback(() => {
+        bottomSheetModalRef.current?.dismiss();
+        setMenuMentee(null);
+    }, []);
+
+    const buildMenuItems = useCallback(
+        (mentee: Mentee): ActionItem[] => {
+            const menteeId = mentee.id;
+            const afterClose = (action: () => void) => {
+                handleCloseModal();
+                setTimeout(action, 200);
+            };
+
+            if (menuMode === 'assign-mentor-only') {
+                return [
+                    {
+                        icon: 'person-add-outline',
+                        label: 'Assign Mentor',
+                        onPress: () =>
+                            afterClose(() =>
+                                router.push({
+                                    pathname: '/mentees/assign-mentors',
+                                    params: {
+                                        id: menteeId,
+                                        flow: 'assign-mentor',
+                                        type: 'home',
+                                    },
+                                }),
+                            ),
+                    },
+                ];
+            }
+
+            return [
+                {
+                    icon: 'people-outline',
+                    label: 'Revitalization Roadmaps',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: '/(director)/(tabs)/roadmaps',
+                                params: { id: menteeId },
+                            }),
+                        ),
+                },
+                {
+                    icon: 'person-add-outline',
+                    label: 'Assign Mentor',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: '/mentees/assign-mentors',
+                                params: { id: menteeId },
+                            }),
+                        ),
+                },
+                {
+                    icon: 'person-remove-outline',
+                    label: 'Remove Mentor',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: '/mentees/remove-mentors',
+                                params: { id: menteeId },
+                            }),
+                        ),
+                },
+                {
+                    icon: 'people-outline',
+                    label: 'List of Mentors',
+                    onPress: () =>
+                        afterClose(() => router.push({ pathname: '/(director)/(tabs)/mentors' })),
+                },
+                {
+                    icon: 'person-add-outline',
+                    label: 'Assessments',
+                    onPress: () => router.push('/(director)/(tabs)/assessments'),
+                },
+                {
+                    icon: 'person-remove-outline',
+                    label: 'Assignments',
+                    onPress: () =>
+                        afterClose(() => router.push('/(director)/(tabs)/assignments')),
+                },
+                {
+                    icon: 'clipboard-outline',
+                    label: 'Roadmaps of Mentees',
+                    onPress: () =>
+                        afterClose(() => {
+                            router.push(`/(director)/(tabs)/mentees/${menteeId}/progress`);
+                        }),
+                },
+                {
+                    icon: 'checkmark-done-outline',
+                    label: 'Mentor Notes',
+                    onPress: () => afterClose(() => router.push('/mentees/notes')),
+                },
+                {
+                    icon: 'book-outline',
+                    label: 'View Progress Report',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push('/(director)/(tabs)/progress-tracker/report' as any),
+                        ),
+                },
+                {
+                    icon: 'stats-chart-outline',
+                    label: 'Micro Grant',
+                    onPress: () =>
+                        afterClose(() => router.push('/(director)/(tabs)/micro-grant')),
+                },
+                {
+                    icon: 'calendar-outline',
+                    label: 'Product and Services',
+                    onPress: () =>
+                        afterClose(() => router.push('/(director)/(tabs)/product-and-services')),
+                },
+            ];
+        },
+        [handleCloseModal, menuMode, router],
+    );
+
+    const sheetActions = useMemo(
+        () => (menuMentee ? buildMenuItems(menuMentee) : []),
+        [buildMenuItems, menuMentee],
+    );
+
+    const handleMenuPress = useCallback((mentee: Mentee) => {
+        setMenuMentee(mentee);
+    }, []);
+
+    useEffect(() => {
+        if (!menuMentee) return;
+        const task = InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                bottomSheetModalRef.current?.present();
+            });
+        });
+        return () => task.cancel();
+    }, [menuMentee]);
 
     const {
         data: mentees,
@@ -68,118 +240,6 @@ export default function Mentees() {
         { label: 'State', options: dynamicStates, isExpandable: true },
         { label: 'Conference', isExpandable: true },
     ];
-
-    const menuItems = [
-        {
-            icon: 'people-outline',
-            label: 'Revitalization Roadmaps',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push({ pathname: '/(director)/(tabs)/roadmaps', params: { id: selectedMentee?.id || '' } }), 300);
-            },
-        },
-        {
-            icon: 'person-add-outline',
-            label: 'Assign Mentor',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push({ pathname: '/mentees/assign-mentors', params: { id: selectedMentee?.id || '' } }), 300);
-            },
-        },
-        {
-            icon: 'person-remove-outline',
-            label: 'Remove Mentor',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push({ pathname: '/mentees/remove-mentors', params: { id: selectedMentee?.id || '' } }), 300);
-            },
-        },
-        {
-            icon: 'people-outline',
-            label: 'List of Mentors',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push({ pathname: '/(director)/(tabs)/mentors' }), 300);
-            },
-        },
-        { icon: 'person-add-outline', label: 'Assessments', onPress: () => router.push('/(director)/(tabs)/assessments') },
-        {
-            icon: 'person-remove-outline',
-            label: 'Assignments',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/assignments'), 300);
-            },
-        },
-        {
-            icon: 'clipboard-outline',
-            label: 'Roadmaps of Mentees',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => {
-                    if (!selectedMentee?.id) return;
-                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress`);
-                }, 300);
-            },
-        },
-        {
-            icon: 'checkmark-done-outline',
-            label: 'Mentor Notes',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push('/mentees/notes'), 300);
-            },
-        },
-        {
-            icon: 'book-outline',
-            label: 'View Progress Report',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/progress-tracker/report' as any), 300);
-            },
-        },
-        {
-            icon: 'stats-chart-outline',
-            label: 'Micro Grant',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/micro-grant'), 300);
-            },
-        },
-        {
-            icon: 'calendar-outline',
-            label: 'Product and Services',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push('/(director)/(tabs)/product-and-services'), 300);
-            },
-        },
-    ];
-
-    const fromhomeScreenmenuItems = [
-
-        {
-            icon: 'person-add-outline',
-            label: 'Assign Mentor',
-            onPress: () => {
-                handleCloseModal();
-                setTimeout(() => router.push({ pathname: '/mentees/assign-mentors', params: { id: selectedMentee?.id || '' } }), 300);
-            },
-        },
-
-    ];
-
-    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-
-    const handleMenuPress = useCallback((mentee: Mentee) => {
-        setSelectedMentee(mentee);
-        setTimeout(() => bottomSheetModalRef.current?.present(), 0);
-    }, []);
-
-    const handleCloseModal = useCallback(() => {
-        bottomSheetModalRef.current?.dismiss();
-        setTimeout(() => setSelectedMentee(null), 300);
-    }, []);
 
     const handleTabChange = (key: string) => {
         if (key === 'all' || key === 'not-started' || key === 'in-progress' || key === 'completed') {
@@ -321,7 +381,7 @@ export default function Mentees() {
                     </View> }
 
                     {/* List / Skeleton */}
-                    {isLoading ? ( 
+                    {isLoading && menteeList.length === 0 ? (
                         <View style={styles.flatListContent}>
                             <UserCardSkeleton layout={viewMode} />
                             <UserCardSkeleton layout={viewMode} />
@@ -355,7 +415,7 @@ export default function Mentees() {
                             )}
                             contentContainerStyle={styles.flatListContent}
                             showsVerticalScrollIndicator={false}
-                            removeClippedSubviews
+                            removeClippedSubviews={false}
                             maxToRenderPerBatch={10}
                             onEndReached={() => { if (hasNextPage && !isFetchingNextPage) fetchNextPage(); }}
                             onEndReachedThreshold={0.5}
@@ -376,13 +436,15 @@ export default function Mentees() {
                     )}
                 </View>
 
-                <ActionBottomSheet
-                    ref={bottomSheetModalRef}
-                    title={selectedMentee?.username || selectedMentee?.firstName || ''}
-                    image={selectedMentee?.profilePicture}
-                    actions={params?.type === "home" ? fromhomeScreenmenuItems : menuItems}
-                    onClose={handleCloseModal}
-                />
+                {menuMentee ? (
+                    <ActionBottomSheet
+                        ref={bottomSheetModalRef}
+                        title={menuMentee.username || menuMentee.firstName || ''}
+                        image={menuMentee.profilePicture}
+                        actions={sheetActions}
+                        onClose={handleCloseModal}
+                    />
+                ) : null}
 
                 <FilterModal
                     visible={filterModalVisible}

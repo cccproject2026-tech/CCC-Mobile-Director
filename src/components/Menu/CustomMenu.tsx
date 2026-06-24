@@ -1,6 +1,93 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    Dimensions,
+    Keyboard,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    type View as RNView,
+} from 'react-native';
+
+export type MenuAnchorRect = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
+
+export type MenuPosition = {
+    top?: number;
+    right?: number;
+    left?: number;
+    bottom?: number;
+};
+
+const MENU_MAX_HEIGHT = 300;
+const MENU_MARGIN = 8;
+
+/** Position a dropdown below the anchor, or above if there is not enough room. */
+export function computeAnchoredMenuPosition(
+    anchor: MenuAnchorRect,
+    options?: { itemCount?: number; maxHeight?: number; margin?: number },
+): MenuPosition {
+    const windowHeight = Dimensions.get('window').height;
+    const maxHeight = options?.maxHeight ?? MENU_MAX_HEIGHT;
+    const margin = options?.margin ?? MENU_MARGIN;
+    const estimatedHeight = Math.min(
+        maxHeight,
+        (options?.itemCount ?? 8) * 50 + 16,
+    );
+
+    const spaceBelow = windowHeight - (anchor.y + anchor.height) - margin;
+    const spaceAbove = anchor.y - margin;
+
+    if (spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove) {
+        return {
+            top: anchor.y + anchor.height + margin,
+            right: 16,
+        };
+    }
+
+    return {
+        top: Math.max(margin, anchor.y - estimatedHeight - margin),
+        right: 16,
+    };
+}
+
+/** Dismiss keyboard, measure anchor in window coords, then open menu near the button. */
+export function openAnchoredMenu(
+    anchorRef: RNView | null,
+    options: {
+        itemCount: number;
+        onOpen: (position: MenuPosition) => void;
+        keyboardDismissDelay?: number;
+    },
+): void {
+    Keyboard.dismiss();
+
+    const measureAndOpen = () => {
+        if (!anchorRef) {
+            options.onOpen({ bottom: 100, right: 16 });
+            return;
+        }
+
+        anchorRef.measureInWindow((x, y, width, height) => {
+            options.onOpen(
+                computeAnchoredMenuPosition(
+                    { x, y, width, height },
+                    { itemCount: options.itemCount },
+                ),
+            );
+        });
+    };
+
+    const delay = options.keyboardDismissDelay ?? (Platform.OS === 'ios' ? 120 : 60);
+    setTimeout(measureAndOpen, delay);
+}
 
 export interface MenuItem {
     id: string;
@@ -18,12 +105,7 @@ export interface CustomMenuProps {
     items: MenuItem[];
     visible: boolean;
     onClose?: () => void;
-    position?: {
-        top?: number;
-        right?: number;
-        left?: number;
-        bottom?: number;
-    };
+    position?: MenuPosition;
     backgroundColor?: string;
     borderRadius?: number;
     shadowColor?: string;

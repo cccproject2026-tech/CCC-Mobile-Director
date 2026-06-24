@@ -2,9 +2,9 @@ import { ScheduleMonthCalendarFromSelection } from "@/components/calendar/Schedu
 import GoogleCalendarScheduleBanner from "@/components/GoogleCalendarScheduleBanner";
 import { useAppointmentCalendarSelection } from "@/hooks/appointments/useAppointmentCalendarSelection";
 import SimpleSuccessModal from "@/components/Appointments/SimpleSuccessModal";
-import { Header } from "@/components/Header/Header";
-import AppointmentCard, { MenuItem } from "@/components/director/AppointmentCard";
 import TopBar from "@/components/Header/TopBar";
+import { ScreenBackHeader } from "@/components/ui/design-system";
+import AppointmentCard, { MenuItem } from "@/components/director/AppointmentCard";
 import { Colors } from "@/constants/Colors";
 import { icons } from "@/constants";
 import {
@@ -391,10 +391,14 @@ const Appointments: React.FC = () => {
           </View>
           <View style={{ flex: 1 }}>
             {/* Header */}
-            <Header
+            <ScreenBackHeader
               title="Schedule"
-              showNewMeeting={true}
-              onNewMeetingPress={handleNewMeeting}
+              rightElement={
+                <Pressable onPress={handleNewMeeting} style={styles.newMeetingButton}>
+                  <Ionicons name="add" size={20} color="#FFFFFF" style={styles.newMeetingIcon} />
+                  <Text style={styles.newMeetingText}>New Meetings</Text>
+                </Pressable>
+              }
             />
 
             <View style={{ paddingHorizontal: 16 }}>
@@ -478,6 +482,7 @@ const Appointments: React.FC = () => {
                     visibleMonthYmd={visibleMonthYmd}
                     viewYear={viewYear}
                     viewMonth={viewMonth}
+                    disablePastDates
                     onSelectDay={onSelectCalendarDay}
                     onMonthChange={onCalendarMonthChange}
                     getDayVariant={(ymd, ctx) =>
@@ -860,6 +865,25 @@ const Appointments: React.FC = () => {
 
 export default Appointments;
 const styles = StyleSheet.create({
+  newMeetingButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    flexShrink: 0,
+  },
+  newMeetingIcon: {
+    marginRight: 6,
+  },
+  newMeetingText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
   screenContent: {
     width: "100%",
     flexDirection: "column",

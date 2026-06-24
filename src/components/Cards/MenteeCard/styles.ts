@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
     // LIST layout
@@ -36,7 +36,33 @@ export const styles = StyleSheet.create({
         padding: 14,
         marginBottom: 12,
     },
-    menuButton: { position: "absolute", top: 14, right: 14, zIndex: 10 },
+    menuButton: {
+        position: "absolute",
+        top: 14,
+        right: 14,
+        zIndex: 30,
+        backgroundColor: "transparent",
+    },
+    chevronButton: {
+        position: "absolute",
+        top: 14,
+        right: 14,
+        zIndex: 30,
+        elevation: Platform.OS === "android" ? 12 : 0,
+        padding: 4,
+    },
+    chevronButtonMid: {
+        position: "absolute",
+        top: "50%",
+        right: 14,
+        zIndex: 30,
+        elevation: Platform.OS === "android" ? 12 : 0,
+        padding: 4,
+        transform: [{ translateY: -11 }],
+    },
+    contentSectionWithMenu: {
+        paddingRight: 28,
+    },
 
     topSection: { flexDirection: "row" },
     contentSection: { flex: 1 },

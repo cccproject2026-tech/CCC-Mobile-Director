@@ -1,6 +1,8 @@
 import { MenuItem } from '@/constants';
 import { homeLayout, roadmapTheme } from '@/components/ui/design-system';
 import { Colors } from '@/constants/Colors';
+import { useMenteesNavigationStore } from '@/stores/menteesNavigation.store';
+import { useMentorsNavigationStore } from '@/stores/mentorsNavigation.store';
 import { useAuthStore } from '@/stores/auth.store';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
@@ -95,6 +97,22 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
                         if (hasChildren) { toggleExpand(item.id); return; }
                         if (item.route) {
                             props.navigation.closeDrawer();
+                            if (item.id === 'all-pastors') {
+                                useMenteesNavigationStore.getState().setFullMenu();
+                                router.push({
+                                    pathname: item.route as any,
+                                    params: { flow: 'full' },
+                                });
+                                return;
+                            }
+                            if (item.id === 'all-mentors') {
+                                useMentorsNavigationStore.getState().setFullMenu();
+                                router.push({
+                                    pathname: item.route as any,
+                                    params: { flow: 'full' },
+                                });
+                                return;
+                            }
                             router.push(item.route as any);
                         }
                     }}

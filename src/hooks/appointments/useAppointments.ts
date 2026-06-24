@@ -24,10 +24,21 @@ export const useAppointments = (options?: UseAppointmentsOptions) => {
     queryKey: [...appointmentKeys.user(userId || ""), { futureOnly }] as const,
     queryFn: () => appointmentService.getUserAppointments(userId!, { futureOnly }),
     enabled: !!userId,
-    staleTime: 20000, // 2 seconds (was 5 minutes)
+    staleTime: 20000,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: true,
+    retry: (failureCount, error: unknown) => {
+      const status =
+        error &&
+        typeof error === 'object' &&
+        'statusCode' in error &&
+        typeof (error as { statusCode?: number }).statusCode === 'number'
+          ? (error as { statusCode: number }).statusCode
+          : undefined;
+      if (status === 401 || status === 403) return false;
+      return failureCount < 1;
+    },
   });
 
   // Fetch mentor appointments

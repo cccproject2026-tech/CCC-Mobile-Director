@@ -14,9 +14,17 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // staleTime: 5 * 60 * 1000, // 5 minutes
-      // retry: 2,
-      // refetchOnWindowFocus: false,
+      retry: (failureCount, error: unknown) => {
+        const status =
+          error &&
+          typeof error === 'object' &&
+          'statusCode' in error &&
+          typeof (error as { statusCode?: number }).statusCode === 'number'
+            ? (error as { statusCode: number }).statusCode
+            : undefined;
+        if (status === 401 || status === 403) return false;
+        return failureCount < 2;
+      },
     },
   },
 });
@@ -65,7 +73,7 @@ function RootNav() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0F3B5C' }}>
       <QueryClientProvider client={queryClient}>
         <BottomSheetModalProvider>
           <KeyboardProvider>

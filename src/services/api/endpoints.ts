@@ -57,6 +57,7 @@ export const ENDPOINTS = {
   HOME: {
     MENTEES: "/home/mentees",
     MENTORS: "/home/mentors",
+    NOTIFICATIONS: "/home/notifications",
     GET_MENTOR_BY_EMAIL: (email: string) => `/home/mentor/${email}`,
     GET_MENTEE_BY_EMAIL: (email: string) => `/home/mentee/${email}`,
   },
@@ -169,6 +170,7 @@ export const ENDPOINTS = {
     GET_ALL: "/interests",
     GET_METADATA: "/interests/metadata",
     UPDATE_STATUS: (id: string) => `/interests/request/${id}`,
+    DELETE_BY_ID: (id: string) => `/interests/by-id/${id}`,
     FORM_CONFIG: "/interests/form-fields",
     ADD_DYNAMIC_FIELD: "/interests/dynamic-fields",
     REMOVE_DYNAMIC_FIELD: (fieldId: string) =>

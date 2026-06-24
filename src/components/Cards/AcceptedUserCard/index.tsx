@@ -2,8 +2,9 @@ import { roadmapTheme } from "@/components/ui/design-system";
 import { InterestItem } from "@/types/interest.types";
 import { Mentee } from "@/types/user.types";
 import {
-    chatNotAvailableYet,
     dialPhone,
+    getInterestContact,
+    openSMS,
     openWhatsApp,
     sendEmail,
 } from "@/utils/contactActions";
@@ -41,17 +42,12 @@ const formatDate = (dateString?: string) => {
 };
 
 function contactFromCardData(data: InterestItem | Mentee) {
-    const email =
-        "email" in data && data.email ? String(data.email).trim() : undefined;
-    if ("churchDetails" in data && data.churchDetails?.length) {
-        const phone =
-            (data as InterestItem).phoneNumber?.trim() ||
-            data.churchDetails[0]?.churchPhone?.trim() ||
-            undefined;
-        return { phone, email };
+    if ("churchDetails" in data) {
+        return getInterestContact(data);
     }
-    const phone =
-        "phoneNumber" in data ? data.phoneNumber?.trim() || undefined : undefined;
+
+    const email = "email" in data && data.email ? String(data.email).trim() : undefined;
+    const phone = "phoneNumber" in data ? data.phoneNumber?.trim() || undefined : undefined;
     return { phone, email };
 }
 
@@ -150,7 +146,7 @@ const AcceptedUserCard = memo(
 
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={(e) => stopPropagation(e, chatNotAvailableYet)}
+                            onPress={(e) => stopPropagation(e, () => openSMS(contactPhone))}
                         >
                             <Ionicons name="chatbubble-outline" size={20} color={roadmapTheme.textPrimary} />
                         </TouchableOpacity>

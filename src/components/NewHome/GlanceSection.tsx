@@ -28,9 +28,17 @@ import MeetingDetailsModal from '../Modals/MeetingDetailsModal';
 import { isSmallDevice } from '@/utils/responsive';
 import { openScheduleMeeting } from '@/lib/scheduling/scheduleMeetingNavigation';
 import { useAuthStore } from '@/stores/auth.store';
+import {
+    chatNotAvailableYet,
+    dialPhone,
+    sendEmail,
+} from '@/utils/contactActions';
+import { getAppointmentContactDetails } from '@/utils/appointments/appointmentContact';
+
 type Props = {}
 
 const GlanceSection = (props: Props) => {
+    const { user } = useAuthStore();
     const GLANCE_TILE_COUNT = 3;
     const { gridStyle, onGridLayout, getTileStyle } = useHomeGridLayout(
         GLANCE_TILE_COUNT,
@@ -76,7 +84,6 @@ const [showCancelConfirmModal, setShowCancelConfirmModal] =
         interestsData?.filter((item: any) => item?.status === 'new')?.length || 0;
 
 
-        console.log("appointments",appointments);
     const filteredAppointments = useMemo(() => {
 
         return appointments
@@ -109,7 +116,6 @@ const [showCancelConfirmModal, setShowCancelConfirmModal] =
         searchQuery,
         selectedStatus,
     ]); 
-  console.log("filteredAppointments",filteredAppointments);
 
     const glanceCards = [
         {
@@ -182,6 +188,7 @@ const handleConfirmCancel = () => {
     const renderAppointmentCard = ({ item }: any) => {
 
         const meetingDate = new Date(item?.meetingDate);
+        const contact = getAppointmentContactDetails(item, user?.id);
 
         const menuItems: MenuItem[] = [
             {
@@ -248,9 +255,9 @@ const handleConfirmCancel = () => {
     setShowOptionsModal(true);
     
 }}
-                onCall={() => { }}
-                onChat={() => { }}
-                onMail={() => { }}
+                onCall={() => dialPhone(contact.phone)}
+                onChat={() => chatNotAvailableYet()}
+                onMail={() => sendEmail(contact.email)}
                 onJoinMeeting={() => {
     if (item?.meetingLink) {
         Linking.openURL(item.meetingLink);

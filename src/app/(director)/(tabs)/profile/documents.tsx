@@ -1,5 +1,6 @@
 import TopBar from '@/components/Header/TopBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
+import DocumentPreviewModal from '@/components/Modals/DocumentPreviewModal';
 import {
     GradientBackground,
     homeLayout,
@@ -12,7 +13,6 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Document } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
@@ -35,7 +35,6 @@ const TABS = [
 ];
 
 export default function PastorDocumentsScreen() {
-    const router = useRouter();
     const { bottom } = useSafeAreaInsets();
     const { user } = useAuthStore();
 
@@ -44,6 +43,7 @@ export default function PastorDocumentsScreen() {
     const deleteDocument = useDeleteDocument();
 
     const [activeTab, setActiveTab] = useState<DocTab>('myDocuments');
+    const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
 
     const pickDocument = async () => {
         try {
@@ -106,22 +106,28 @@ export default function PastorDocumentsScreen() {
 
     const renderDocument = ({ item }: { item: Document }) => (
         <View style={styles.documentCard}>
-            <View style={styles.documentIconWrap}>
-                {isImage(item.fileType) && item.fileUrl ? (
-                    <Image source={{ uri: item.fileUrl }} style={styles.documentThumbnail} />
-                ) : (
-                    <Image source={icons.certificateImage} style={styles.pdfIcon} />
-                )}
-            </View>
-            <View style={styles.documentInfo}>
-                <Text style={styles.documentName} numberOfLines={1}>
-                    {item.fileName}
-                </Text>
-                <View style={styles.documentMeta}>
-                    <Ionicons name="time-outline" size={12} color={roadmapTheme.textCaption} />
-                    <Text style={styles.documentDate}>{formatDate(item.uploadedAt)}</Text>
+            <TouchableOpacity
+                style={styles.documentPressable}
+                activeOpacity={0.85}
+                onPress={() => setPreviewDocument(item)}
+            >
+                <View style={styles.documentIconWrap}>
+                    {isImage(item.fileType) && item.fileUrl ? (
+                        <Image source={{ uri: item.fileUrl }} style={styles.documentThumbnail} />
+                    ) : (
+                        <Image source={icons.certificateImage} style={styles.pdfIcon} />
+                    )}
                 </View>
-            </View>
+                <View style={styles.documentInfo}>
+                    <Text style={styles.documentName} numberOfLines={1}>
+                        {item.fileName}
+                    </Text>
+                    <View style={styles.documentMeta}>
+                        <Ionicons name="time-outline" size={12} color={roadmapTheme.textCaption} />
+                        <Text style={styles.documentDate}>{formatDate(item.uploadedAt)}</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
             <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => handleDeleteDocument(item.fileUrl, item.fileName)}
@@ -214,6 +220,11 @@ export default function PastorDocumentsScreen() {
                     <Text style={styles.stateText}>No mentor documents</Text>
                 </View>
             )}
+            <DocumentPreviewModal
+                visible={!!previewDocument}
+                document={previewDocument}
+                onClose={() => setPreviewDocument(null)}
+            />
         </GradientBackground>
     );
 }
@@ -268,6 +279,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: roadmapTheme.frostedBorder,
         borderRadius: homeLayout.cardRadiusCompact,
+        paddingRight: 12,
+        gap: 8,
+    },
+    documentPressable: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
         padding: 12,
         gap: 12,
     },

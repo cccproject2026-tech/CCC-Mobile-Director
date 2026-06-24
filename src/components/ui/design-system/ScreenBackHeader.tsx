@@ -10,18 +10,31 @@ type Props = {
   fallback?: Href;
   returnTo?: string;
   style?: StyleProp<ViewStyle>;
+  onPressBack?: () => void;
+  rightElement?: React.ReactNode;
 };
 
-export function ScreenBackHeader({ title, fallback, returnTo, style }: Props) {
-  const handleBack = useSafeBack({ fallback, returnTo });
+export function ScreenBackHeader({
+  title,
+  fallback,
+  returnTo,
+  style,
+  onPressBack,
+  rightElement,
+}: Props) {
+  const defaultBack = useSafeBack({ fallback, returnTo });
+  const handleBack = onPressBack ?? defaultBack;
 
   return (
-    <Pressable onPress={handleBack} style={[styles.row, style]} hitSlop={8}>
-      <View style={styles.backIconWrap}>
-        <Ionicons name="chevron-back" size={22} color={roadmapTheme.textPrimary} />
-      </View>
-      <Text style={styles.title}>{title}</Text>
-    </Pressable>
+    <View style={[styles.row, style]}>
+      <Pressable onPress={handleBack} style={styles.backTitleArea} hitSlop={8}>
+        <View style={styles.backIconWrap}>
+          <Ionicons name="chevron-back" size={22} color={roadmapTheme.textPrimary} />
+        </View>
+        <Text style={styles.title}>{title}</Text>
+      </Pressable>
+      {rightElement}
+    </View>
   );
 }
 
@@ -29,12 +42,20 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 12,
     marginBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: roadmapTheme.divider,
     gap: 8,
+  },
+  backTitleArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
   },
   backIconWrap: {
     width: 34,

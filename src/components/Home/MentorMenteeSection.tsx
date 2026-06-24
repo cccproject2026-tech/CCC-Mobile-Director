@@ -2,6 +2,8 @@
 import { useMentees } from '@/hooks/useMentees';
 import { useMentors } from '@/hooks/useMentors';
 import { CommonCard, roadmapTheme } from '@/components/ui/design-system';
+import { useMenteesNavigationStore } from '@/stores/menteesNavigation.store';
+import { useMentorsNavigationStore } from '@/stores/mentorsNavigation.store';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -44,8 +46,10 @@ const MentorMenteeSection: React.FC = () => {
 
     const handleSeeAll = () => {
         if (activeTab === 'mentors') {
+            useMentorsNavigationStore.getState().setFullMenu();
             router.push('/(director)/(tabs)/mentors');
         } else {
+            useMenteesNavigationStore.getState().setFullMenu();
             router.push('/(director)/(tabs)/mentees');
         }
     };

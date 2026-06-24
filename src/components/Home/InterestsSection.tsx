@@ -1,8 +1,9 @@
 import { useInterests } from '@/hooks/useInterest';
 import { CommonCard, HomeSectionHeader, roadmapTheme } from '@/components/ui/design-system';
 import {
-    chatNotAvailableYet,
     dialPhone,
+    getInterestContact,
+    openSMS,
     openWhatsApp,
     sendEmail,
 } from '@/utils/contactActions';
@@ -24,10 +25,7 @@ const InterestsSection = () => {
         .slice(0, 3);
     const pendingInterestsLength = interests.filter((item: any) => item.status === 'pending' || item.status === 'new').length;
 
-    const interestPhone = (item: InterestItem) =>
-        item.phoneNumber?.trim() ||
-        item.churchDetails?.[0]?.churchPhone?.trim() ||
-        undefined;
+    const interestPhone = (item: InterestItem) => getInterestContact(item).phone;
 
     const badge = (
         <View style={styles.badge}>
@@ -68,7 +66,7 @@ const InterestsSection = () => {
                             key={item.id}
                             data={item}
                             onCall={() => dialPhone(interestPhone(item))}
-                            onChat={chatNotAvailableYet}
+                            onChat={() => openSMS(interestPhone(item))}
                             onMail={() => sendEmail(item.email)}
                             onWhatsApp={() => openWhatsApp(interestPhone(item))}
                             onPress={() =>

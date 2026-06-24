@@ -72,14 +72,14 @@ export function useAppointmentCalendarSelection() {
 
   const onSelectCalendarDay = useCallback((ymd: string) => {
     const normalized = normalizeYmd(ymd);
-    if (!normalized) return;
+    if (!normalized || normalized < today) return;
     setSelectedDate(normalized);
     const parts = ymdParts(normalized);
     if (parts) {
       setViewYear(parts.year);
       setViewMonth(parts.month);
     }
-  }, []);
+  }, [today]);
 
   const onCalendarMonthChange = useCallback((year: number, month: number) => {
     setViewYear(clampViewYear(year));

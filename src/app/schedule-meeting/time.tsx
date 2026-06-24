@@ -2,6 +2,7 @@ import GradientCalendar from "@/components/Appointments/calendar";
 import GoogleCalendarConnectButton from "@/components/GoogleCalendarConnectButton";
 import TopBar from "@/components/Header/TopBar";
 import AppGradientBackground from "@/components/layout/AppGradientBackground";
+import { ScreenBackHeader } from "@/components/ui/design-system";
 import {
   calendarYearMonthFromYmd,
   formatTimeSlot,
@@ -25,6 +26,7 @@ import {
   GOOGLE_CALENDAR_COPY,
   shortenGoogleCalendarMessage,
 } from "@/utils/google-calendar/display-messages";
+import { SCHEDULE_MEETING_PLATFORMS } from "@/utils/appointments/platform";
 import { filterTimeSlotsAgainstGoogleCalendar } from "@/utils/google-calendar/google-calendar-scheduling";
 import {
   filterSlotsByExistingBookings,
@@ -36,7 +38,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function ymdToday() {
@@ -71,7 +73,8 @@ export default function ScheduleMeetingTimeScreen() {
     returnTo?: string;
   }>();
   const { drawerContext, assessmentId } = routeParams;
-  const { draft, setDay, setSlot, setPlatformLabel } = useScheduleMeetingStore();
+  const { draft, setDay, setSlot, setMeetingTitle, setMeetingDescription, setPlatformLabel } =
+    useScheduleMeetingStore();
   const insets = useSafeAreaInsets();
   const scheduleBase = getScheduleMeetingBase(drawerContext, user?.role);
   const flowParams = useMemo(
@@ -97,13 +100,14 @@ export default function ScheduleMeetingTimeScreen() {
   }, [draft.appointmentId, draft.mode, flowParams, scheduleBase]);
 
   const topBar = (
-    <TopBar
-      role={String(user?.role || "pastor")}
-      showUserName
-      showDrawer={false}
-      showBackButton
-      onPressBack={handleBack}
-    />
+    <>
+      <TopBar
+        role={String(user?.role || "pastor")}
+        showUserName
+        showDrawer={false}
+      />
+      <ScreenBackHeader title="Schedule" onPressBack={handleBack} />
+    </>
   );
 
   const hasPerson = Boolean(draft.person?.id);
@@ -143,6 +147,7 @@ export default function ScheduleMeetingTimeScreen() {
   const [googleFilteredSlots, setGoogleFilteredSlots] = useState<
     { id: string; label: string; apiSlot: APITimeSlot }[] | null
   >(null);
+  const [showPlatformOptions, setShowPlatformOptions] = useState(false);
 
   const now = new Date();
   const [currentMonth, setCurrentMonth] = useState(now.getMonth() + 1);
@@ -533,7 +538,12 @@ export default function ScheduleMeetingTimeScreen() {
     timeSlots.length,
   ]);
 
-  const canContinue = Boolean(draft.person?.id && draft.selectedDayYmd && draft.selectedSlot);
+  const canContinue = Boolean(
+    draft.person?.id &&
+      draft.meetingTitle.trim() &&
+      draft.selectedDayYmd &&
+      draft.selectedSlot,
+  );
 
   const visibleMonthLabel = useMemo(() => {
     const d = new Date(currentYear, currentMonth - 1, 1);
@@ -588,23 +598,6 @@ export default function ScheduleMeetingTimeScreen() {
             Meeting with {draft.person?.name}
           </Text>
 
-          <View style={styles.googleCalendarSection}>
-            <GoogleCalendarConnectButton
-              variant="dark"
-              onStatusChange={(status) => setGoogleCalendarConnected(status === "connected")}
-              onConnectionSynced={() => {
-                queryClient.invalidateQueries({ queryKey: ["weekly-availability"] });
-                queryClient.invalidateQueries({ queryKey: ["monthly-availability"] });
-              }}
-            />
-          </View>
-
-          {calendarConnectBanners.map((msg) => (
-            <Text key={msg.slice(0, 80)} style={styles.calendarBanner}>
-              {msg}
-            </Text>
-          ))}
-
           <View style={styles.calendarCard}>
             <GradientCalendar
               selected={draft.selectedDayYmd}
@@ -632,7 +625,7 @@ export default function ScheduleMeetingTimeScreen() {
             </Text>
           ) : null}
 
-          <Text style={styles.sectionTitle}>Available times</Text>
+          <Text style={styles.sectionTitle}>Available time slots</Text>
           {calendarSlotSyncLoading ? (
             <View style={styles.syncRow}>
               <ActivityIndicator color="#8ec5eb" size="small" />
@@ -683,28 +676,86 @@ export default function ScheduleMeetingTimeScreen() {
             </View>
           )}
 
-          <Text style={styles.sectionTitle}>Platform</Text>
-          <View style={styles.platformRow}>
-            {["Zoom"].map((p) => {
-              const selected = draft.meetingOptionLabel === p;
-              return (
-                <Pressable
-                  key={p}
-                  style={[styles.platformChip, selected && styles.platformChipSelected]}
-                  onPress={() => setPlatformLabel(p)}
-                >
-                  <Ionicons
-                    name="videocam-outline"
-                    size={16}
-                    color={selected ? "#1E3A6F" : "#FFFFFF"}
-                  />
-                  <Text style={[styles.platformChipText, selected && styles.platformChipTextSelected]}>
-                    {p}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View style={styles.googleCalendarSection}>
+            <GoogleCalendarConnectButton
+              variant="dark"
+              onStatusChange={(status) => setGoogleCalendarConnected(status === "connected")}
+              onConnectionSynced={() => {
+                queryClient.invalidateQueries({ queryKey: ["weekly-availability"] });
+                queryClient.invalidateQueries({ queryKey: ["monthly-availability"] });
+              }}
+            />
           </View>
+
+          {calendarConnectBanners.map((msg) => (
+            <Text key={msg.slice(0, 80)} style={styles.calendarBanner}>
+              {msg}
+            </Text>
+          ))}
+
+          <Text style={styles.fieldLabel}>Meeting title</Text>
+          <TextInput
+            value={draft.meetingTitle}
+            onChangeText={setMeetingTitle}
+            placeholder="Enter meeting title"
+            placeholderTextColor="rgba(255,255,255,0.45)"
+            style={styles.textInput}
+            autoCapitalize="sentences"
+            returnKeyType="next"
+          />
+
+          <Text style={styles.fieldLabel}>Meeting description (optional)</Text>
+          <TextInput
+            value={draft.meetingDescription}
+            onChangeText={setMeetingDescription}
+            placeholder="Add meeting details"
+            placeholderTextColor="rgba(255,255,255,0.45)"
+            style={[styles.textInput, styles.textArea]}
+            multiline
+            textAlignVertical="top"
+            autoCapitalize="sentences"
+          />
+
+          <Text style={styles.sectionTitle}>Meeting platform</Text>
+          <Pressable
+            style={styles.dropdownButton}
+            onPress={() => setShowPlatformOptions((open) => !open)}
+          >
+            <Text style={styles.dropdownText}>{draft.meetingOptionLabel}</Text>
+            <Ionicons
+              name={showPlatformOptions ? "chevron-up" : "chevron-down"}
+              size={16}
+              color="#FFFFFF"
+            />
+          </Pressable>
+
+          {showPlatformOptions ? (
+            <View style={styles.dropdownOptions}>
+              {SCHEDULE_MEETING_PLATFORMS.map((option) => {
+                const selected = draft.meetingOptionLabel === option.label;
+                return (
+                  <Pressable
+                    key={option.id}
+                    style={styles.dropdownOption}
+                    onPress={() => {
+                      setPlatformLabel(option.label);
+                      setShowPlatformOptions(false);
+                    }}
+                  >
+                    <Ionicons
+                      name={(option.iconName as any) || "videocam-outline"}
+                      size={16}
+                      color="#FFFFFF"
+                    />
+                    <Text style={styles.dropdownOptionText}>{option.label}</Text>
+                    {selected ? (
+                      <Ionicons name="checkmark" size={16} color="#8ec5eb" />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
         </ScrollView>
 
         <View style={[styles.footerOuter, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
@@ -735,7 +786,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },
   title: { color: "#FFFFFF", fontSize: 20, fontWeight: "900" },
   subtitle: { marginTop: 6, color: "rgba(255,255,255,0.75)", fontWeight: "700" },
-  googleCalendarSection: { marginTop: 12, marginBottom: 4 },
+  googleCalendarSection: { marginTop: 18, marginBottom: 4 },
   calendarBanner: {
     color: "#fef3c7",
     fontSize: 11,
@@ -788,6 +839,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   sectionTitle: { marginTop: 14, color: "#FFFFFF", fontWeight: "900" },
+  fieldLabel: {
+    marginTop: 14,
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 14,
+  },
+  textInput: {
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  textArea: {
+    minHeight: 96,
+    paddingTop: 12,
+  },
   noticeHint: {
     marginTop: 6,
     color: "rgba(255,255,255,0.65)",
@@ -799,11 +872,37 @@ const styles = StyleSheet.create({
   slotSelected: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
   slotText: { color: "#FFFFFF", fontWeight: "800", fontSize: 12 },
   slotTextSelected: { color: "#1E3A6F" },
-  platformRow: { flexDirection: "row", gap: 10, marginTop: 10 },
-  platformChip: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: "rgba(255,255,255,0.25)", backgroundColor: "rgba(255,255,255,0.06)" },
-  platformChipSelected: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
-  platformChipText: { color: "#FFFFFF", fontWeight: "900", fontSize: 12 },
-  platformChipTextSelected: { color: "#1E3A6F" },
+  dropdownButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  dropdownText: { color: "#FFFFFF", fontWeight: "700", fontSize: 14 },
+  dropdownOptions: {
+    marginTop: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    overflow: "hidden",
+    backgroundColor: "rgba(13, 51, 81, 0.65)",
+  },
+  dropdownOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.1)",
+    gap: 10,
+  },
+  dropdownOptionText: { flex: 1, color: "#FFFFFF", fontWeight: "600", fontSize: 14 },
   footerOuter: { paddingHorizontal: 16, paddingTop: 12, backgroundColor: "transparent" },
   footerBar: { flexDirection: "row", gap: 12 },
   secondaryBtn: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 14, paddingVertical: 12, alignItems: "center" },

@@ -1,5 +1,6 @@
 import AppGradientBackground from "@/components/layout/AppGradientBackground";
 import TopBar from "@/components/Header/TopBar";
+import { ScreenBackHeader } from "@/components/ui/design-system";
 import { useAuthStore } from "@/stores/auth.store";
 import { useScheduleMeetingStore } from "@/stores/scheduleMeeting.store";
 import { useMeetingScheduler } from "@/hooks/appointments/useMeetingScheduler";
@@ -63,7 +64,12 @@ export default function ScheduleMeetingConfirmScreen() {
     }, []),
   );
 
-  const canSubmit = Boolean(draft.person?.id && draft.selectedDayYmd && draft.selectedSlot);
+  const canSubmit = Boolean(
+    draft.person?.id &&
+      draft.meetingTitle.trim() &&
+      draft.selectedDayYmd &&
+      draft.selectedSlot,
+  );
 
   const isMentor = String(user?.role || "").toLowerCase() === "mentor";
   const availabilityOwnerId = isMentor ? user?.id : draft.person?.id;
@@ -98,6 +104,8 @@ export default function ScheduleMeetingConfirmScreen() {
     existingAppointment,
     selectedDayYmd: draft.selectedDayYmd,
     selectedSlot: draft.selectedSlot,
+    meetingTitle: draft.meetingTitle,
+    meetingDescription: draft.meetingDescription,
     meetingOptionLabel: draft.meetingOptionLabel,
     settings: weeklyAvailability ?? undefined,
     mentorAppointments,
@@ -113,15 +121,27 @@ export default function ScheduleMeetingConfirmScreen() {
         role={String(user?.role || "pastor")}
         showUserName
         showDrawer={false}
-        showBackButton
-        onPressBack={handleBack}
       />
+      <ScreenBackHeader title="Schedule" onPressBack={handleBack} />
       <View style={styles.container}>
         <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 16 }}>
           <Text style={styles.title}>Confirm meeting</Text>
           <Text style={styles.subtitle}>Review details before scheduling.</Text>
 
           <View style={styles.card}>
+            <Row label="Title" value={draft.meetingTitle.trim() || "—"} icon="document-text-outline" />
+            <Divider />
+            {draft.meetingDescription.trim() ? (
+              <>
+                <Row
+                  label="Description"
+                  value={draft.meetingDescription.trim()}
+                  icon="reader-outline"
+                  multiline
+                />
+                <Divider />
+              </>
+            ) : null}
             <Row label="Person" value={draft.person?.name} icon="person-outline" />
             <Divider />
             <Row label="Date" value={draft.selectedDayYmd} icon="calendar-outline" />
@@ -238,10 +258,12 @@ function Row({
   label,
   value,
   icon,
+  multiline,
 }: {
   label: string;
   value?: string | null;
   icon: any;
+  multiline?: boolean;
 }) {
   return (
     <View style={styles.row}>
@@ -250,7 +272,7 @@ function Row({
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={styles.value} numberOfLines={1}>
+        <Text style={styles.value} numberOfLines={multiline ? undefined : 1}>
           {value || "—"}
         </Text>
       </View>

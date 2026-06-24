@@ -101,7 +101,7 @@ export default function AiInsightsScreen() {
               <View style={[styles.metricIconBg, { backgroundColor: m.accent + '22' }]}>
                 <Ionicons name={m.icon} size={18} color={m.accent} />
               </View>
-              <Text style={styles.metricValue}>{m.value}</Text>
+              {/* <Text style={styles.metricValue}>{m.value}</Text> */}
               <Text style={styles.metricLabel}>{m.label}</Text>
               <View style={styles.metricTrendRow}>
                 <Ionicons name="caret-up" size={10} color={m.accent} />

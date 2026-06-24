@@ -1,4 +1,4 @@
-import { AddDynamicFieldResponse, DynamicFieldRequest, InterestFormResponse, InterestItem, InterestsApiResponse, UpdateInterestStatusRequest, UpdateInterestStatusResponse } from "@/types/interest.types";
+import { AddDynamicFieldResponse, DeleteInterestResponse, DynamicFieldRequest, InterestFormResponse, InterestItem, InterestsApiResponse, UpdateInterestStatusRequest, UpdateInterestStatusResponse } from "@/types/interest.types";
 import apiClient from "./api/client";
 import { ENDPOINTS } from "./api/endpoints";
 
@@ -56,6 +56,13 @@ export const interestService = {
         const response = await apiClient.patch<UpdateInterestStatusResponse>(
             ENDPOINTS.INTERESTS.UPDATE_STATUS(interestId),
             { status } as UpdateInterestStatusRequest
+        );
+        return response.data;
+    },
+
+    deleteById: async (interestId: string): Promise<DeleteInterestResponse> => {
+        const response = await apiClient.delete<DeleteInterestResponse>(
+            ENDPOINTS.INTERESTS.DELETE_BY_ID(interestId),
         );
         return response.data;
     },

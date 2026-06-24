@@ -8,6 +8,7 @@ import {
     homeLayout,
     roadmapTheme,
 } from '@/components/ui/design-system';
+import { Colors } from '@/constants/Colors';
 import { useInterests, useUpdateInterestStatus } from '@/hooks/useInterest';
 import { InterestItem } from '@/types/interest.types';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,7 +28,7 @@ import {
     View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { chatNotAvailableYet, dialPhone, openWhatsApp, sendEmail } from '@/utils/contactActions';
+import { dialPhone, getInterestContact, openSMS, openWhatsApp, sendEmail } from '@/utils/contactActions';
 
 /* -------------------------------------------------------
    Extract & Normalize Form Data from InterestItem
@@ -65,8 +66,9 @@ const extractFormData = (interest: InterestItem) => {
 export default function InterestFormScreen() {
     const router = useRouter();
     const { top, bottom } = useSafeAreaInsets();
-    const { interestId } = useLocalSearchParams<{ interestId: string }>();
-    const { data: interestsData, isLoading } = useInterests();
+    const { interestId: interestIdParam } = useLocalSearchParams<{ interestId: string }>();
+    const interestId = Array.isArray(interestIdParam) ? interestIdParam[0] : interestIdParam;
+    const { data: interestsData, isPending } = useInterests();
     const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateInterestStatus();
 
     /* -------------------------------------------------------
@@ -83,6 +85,11 @@ export default function InterestFormScreen() {
         : 'Unknown';
 
     const userRole = interest?.title || 'N/A';
+
+    const { phone: contactPhone, email: contactEmail } = useMemo(
+        () => (interest ? getInterestContact(interest) : { phone: undefined, email: undefined }),
+        [interest]
+    );
 
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showRejectedConfirmation, setShowRejectedConfirmation] = useState(false);
@@ -165,12 +172,20 @@ export default function InterestFormScreen() {
 
     if (!formData) {
         return (
+            <View style={styles.screenRoot}>
             <GradientBackground style={styles.centeredState}>
-                <Text style={styles.stateText}>Unable to load form data.</Text>
-                <Pressable onPress={() => router.back()} style={styles.stateButton}>
-                    <Text style={styles.stateButtonText}>Go Back</Text>
-                </Pressable>
+                {isPending ? (
+                    <ActivityIndicator color={roadmapTheme.textPrimary} size="large" />
+                ) : (
+                    <>
+                        <Text style={styles.stateText}>Unable to load form data.</Text>
+                        <Pressable onPress={() => router.back()} style={styles.stateButton}>
+                            <Text style={styles.stateButtonText}>Go Back</Text>
+                        </Pressable>
+                    </>
+                )}
             </GradientBackground>
+            </View>
         );
     }
 
@@ -178,6 +193,7 @@ export default function InterestFormScreen() {
        RENDER
     -------------------------------------------------------- */
     return (
+        <View style={styles.screenRoot}>
         <GradientBackground style={styles.container}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -197,12 +213,7 @@ export default function InterestFormScreen() {
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
-                    {isLoading ? (
-                        <View style={styles.loadingBlock}>
-                            <ActivityIndicator color={roadmapTheme.textPrimary} size="large" />
-                            <Text style={styles.loadingText}>Loading interest details...</Text>
-                        </View>
-                    ) : !interest ? (
+                    {!interest ? (
                         <View style={styles.loadingBlock}>
                             <Text style={styles.stateText}>Interest not found</Text>
                             <Pressable onPress={() => router.back()} style={styles.stateButton}>
@@ -227,25 +238,25 @@ export default function InterestFormScreen() {
                                 <View style={styles.contactIcons}>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => dialPhone(interest.phoneNumber)}
+                                        onPress={() => dialPhone(contactPhone)}
                                     >
                                         <Ionicons name="call-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => chatNotAvailableYet()}
+                                        onPress={() => openSMS(contactPhone)}
                                     >
                                         <Ionicons name="chatbubble-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => sendEmail(interest.email)}
+                                        onPress={() => sendEmail(contactEmail)}
                                     >
                                         <Ionicons name="mail-outline" size={20} color="#fff" />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={styles.iconButton}
-                                        onPress={() => openWhatsApp(interest.phoneNumber)}
+                                        onPress={() => openWhatsApp(contactPhone)}
                                     >
                                         <Ionicons name="logo-whatsapp" size={20} color="#fff" />
                                     </TouchableOpacity>
@@ -440,11 +451,16 @@ export default function InterestFormScreen() {
                 }
             />
         </GradientBackground>
+        </View>
     );
 }
 
 
 const styles = StyleSheet.create({
+    screenRoot: {
+        flex: 1,
+        backgroundColor: Colors.appBgGradient[0],
+    },
     container: {
         flex: 1,
     },

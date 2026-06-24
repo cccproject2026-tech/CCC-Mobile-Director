@@ -27,11 +27,9 @@ export const useMentees = (limit: number = 10) => {
                     }
                 })
             );
-            console.log("progressResponses:----->>>>>>>>>>>>>>", progressResponses);
             // merge
             const mentees = backendMentees.map((m, idx) => {
                 const progress = progressResponses[idx];
-                console.log("progress:----->>>>>>>>>>>>>>", progress);
                 
                 // Handle different roadmap structures (array or paginated object)
                 const roadmaps = Array.isArray(progress?.roadmaps) 

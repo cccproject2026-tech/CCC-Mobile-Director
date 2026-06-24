@@ -8,7 +8,8 @@ interface UploadButtonRendererProps {
     field: {
         id: string;
         type: 'upload';
-        buttonName?: string; // ✅ Made optional
+        buttonName?: string;
+        buttonLabel?: string;
     };
     onEdit: (fieldId: string) => void;
     onDelete: (fieldId: string) => void;
@@ -19,10 +20,15 @@ export const UploadButtonRenderer: React.FC<UploadButtonRendererProps> = ({
     onEdit,
     onDelete,
 }) => {
+    const displayName = (field.buttonName || field.buttonLabel || 'upload').toLowerCase();
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.label}>Upload Button</Text>
+                <View style={styles.titleRow}>
+                    <Ionicons name="cloud-upload-outline" size={18} color="#5BC0EB" />
+                    <Text style={styles.typeLabel}>{displayName}</Text>
+                </View>
                 <View style={styles.actions}>
                     <TouchableOpacity
                         onPress={() => onEdit(field.id)}
@@ -41,13 +47,17 @@ export const UploadButtonRenderer: React.FC<UploadButtonRendererProps> = ({
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.uploadButton} activeOpacity={0.7}>
-                <Ionicons name="attach-outline" size={20} color="#1A4882" />
-                {/* ✅ Show button label or default text */}
-                <Text style={styles.uploadButtonText}>
-                    {field.buttonName || 'Upload'}
+            <View style={styles.dropZone}>
+                <View style={styles.plusCircle}>
+                    <Ionicons name="add" size={28} color="#fff" />
+                </View>
+                <Text style={styles.dropZoneTitle}>
+                    Drag & Drop or Click here to choose file
                 </Text>
-            </TouchableOpacity>
+                <Text style={styles.dropZoneSubtitle}>
+                    Supports images, documents, and videos · Max file size : 10 MB
+                </Text>
+            </View>
         </View>
     );
 };
@@ -65,13 +75,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 14,
     },
-    label: {
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flex: 1,
+    },
+    typeLabel: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: 15,
         fontWeight: '600',
-        opacity: 0.8,
     },
     actions: {
         flexDirection: 'row',
@@ -80,20 +95,42 @@ const styles = StyleSheet.create({
     actionButton: {
         padding: 4,
     },
-    uploadButton: {
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        flexDirection: 'row',
+    dropZone: {
+        borderWidth: 2,
+        borderStyle: 'dashed',
+        borderColor: 'rgba(255,255,255,0.35)',
+        borderRadius: 14,
+        paddingVertical: 28,
+        paddingHorizontal: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        gap: 10,
     },
-    uploadButtonText: {
-        color: '#1A4882',
+    plusCircle: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.45)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 4,
+    },
+    dropZoneTitle: {
+        color: '#fff',
         fontSize: 15,
-        fontWeight: '600',
+        fontWeight: '700',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    dropZoneSubtitle: {
+        color: 'rgba(255,255,255,0.55)',
+        fontSize: 12,
+        fontWeight: '500',
+        textAlign: 'center',
+        lineHeight: 18,
+        paddingHorizontal: 8,
     },
 });
 

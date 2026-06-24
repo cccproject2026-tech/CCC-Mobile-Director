@@ -15,6 +15,15 @@ export const SUPPORTED_PLATFORMS: PlatformOption[] = [
   { id: "in_person", label: "In-Person Meeting", iconName: "people-outline" },
 ];
 
+/** Web-aligned labels for the schedule meeting flow dropdown. */
+export const SCHEDULE_MEETING_PLATFORMS: PlatformOption[] = [
+  { id: "zoom", label: "Zoom", iconName: "videocam-outline" },
+  { id: "google_meet", label: "Google Meet", iconName: "videocam-outline" },
+  { id: "teams", label: "Microsoft Teams", iconName: "videocam-outline" },
+  { id: "phone", label: "Phone", iconName: "call-outline" },
+  { id: "in_person", label: "In person", iconName: "people-outline" },
+];
+
 const LABEL_TO_PLATFORM: Record<string, AppointmentPlatform> = {
   zoom: "zoom",
   "google meet": "google_meet",

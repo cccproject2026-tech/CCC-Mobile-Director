@@ -2,14 +2,16 @@ import { icons } from "@/constants";
 import { homeLayout, roadmapTheme } from "@/components/ui/design-system";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export type Notification = {
+    id?: string;
     title: string;
     description: string;
     time: string;
     type: "course" | "note" | "assignment" | "profile";
     read: boolean;
+    module?: string;
 };
 
 const typeIcon: Record<Notification["type"], keyof typeof Ionicons.glyphMap> = {
@@ -26,9 +28,12 @@ const typeColor: Record<Notification["type"], string> = {
     profile: "#A78BFA",
 };
 
-type Props = { data: Notification };
+type Props = {
+    data: Notification;
+    onPress?: () => void;
+};
 
-const NotificationCard: React.FC<Props> = ({ data }) => {
+const NotificationCard = React.memo(function NotificationCard({ data, onPress }: Props) {
     const [line1, line2] = useMemo(() => {
         const idx = data.description.indexOf(" Interested");
         if (idx > 0) {
@@ -40,7 +45,7 @@ const NotificationCard: React.FC<Props> = ({ data }) => {
 
     const accent = typeColor[data.type];
 
-    return (
+    const content = (
         <View style={[styles.card, !data.read && styles.cardUnread]}>
             {/* unread dot */}
             {!data.read && <View style={styles.unreadDot} />}
@@ -72,7 +77,17 @@ const NotificationCard: React.FC<Props> = ({ data }) => {
             </View>
         </View>
     );
-};
+
+    if (onPress) {
+        return (
+            <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
+                {content}
+            </Pressable>
+        );
+    }
+
+    return content;
+});
 
 export default NotificationCard;
 
@@ -91,6 +106,9 @@ const styles = StyleSheet.create({
     cardUnread: {
         backgroundColor: "rgba(255,255,255,0.10)",
         borderColor: roadmapTheme.frostedBorderStrong,
+    },
+    pressed: {
+        opacity: 0.88,
     },
     unreadDot: {
         position: "absolute",

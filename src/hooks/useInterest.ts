@@ -37,6 +37,17 @@ export function useUpdateInterestStatus() {
     });
 }
 
+export function useDeleteInterest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (interestId: string) => interestService.deleteById(interestId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['interests'] });
+        },
+    });
+}
+
 export const useInterestFormConfig = () => {
     return useQuery({
         queryKey: interestFormKeys.config,

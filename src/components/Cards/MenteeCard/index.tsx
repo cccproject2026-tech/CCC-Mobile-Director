@@ -1,6 +1,5 @@
-import { View, Text, TouchableOpacity, Pressable, Image } from "react-native";
+import { View, Text, TouchableOpacity, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 
 import ProfileImage from "./ProfileImage";
 import ContactActions from "./ContactActions";
@@ -30,51 +29,92 @@ export interface MenteeCardProps {
     onInviteAsFieldMentor?: () => void;
     disabled?: boolean;
     disabledMessage?: string;
-    showMenu?: boolean,
-    paramsData?: any
+    showMenu?: boolean;
+    paramsData?: any;
 }
 
 export default function MenteeCard(props: MenteeCardProps) {
-    const { data, layout = "full", isSelected, onToggleSelect, onPress, disabled, disabledMessage, showMenu } = props;
+    const {
+        data,
+        layout = "full",
+        isSelected,
+        onToggleSelect,
+        onPress,
+        disabled,
+        showMenu,
+        onMenuPress,
+        paramsData,
+    } = props;
     const isSelectionMode = onToggleSelect !== undefined;
-    console.log("props", props);
-       console.log("paramsData", props?.paramsData);
-    // ▫ LIST MODE
-    if (layout === "list")
-        return (
-            <Pressable
-                style={[styles.listContainer, isSelected && styles.selectedCard, disabled && { opacity: 0.5 }]}
-                onPress={disabled ? undefined : (isSelectionMode ? onToggleSelect : onPress)}
+
+    const handleCardPress = () => {
+        if (paramsData === "mentees") {
+            router.push({
+                pathname: "/(director)/(tabs)/roadmaps",
+                params: { id: data?.id ?? "" },
+            });
+            return;
+        }
+        onPress?.();
+    };
+
+    const cardMenuButton =
+        onMenuPress && showMenu ? (
+            <TouchableOpacity
+                style={styles.menuButton}
+                activeOpacity={1}
+                hitSlop={16}
+                onPress={onMenuPress}
+                accessibilityRole="button"
+                accessibilityLabel="Open menu"
             >
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
+            </TouchableOpacity>
+        ) : null;
+
+    // ▫ LIST MODE
+    if (layout === "list") {
+        return (
+            <View
+                style={[
+                    styles.listContainer,
+                    isSelected && styles.selectedCard,
+                    disabled && { opacity: 0.5 },
+                ]}
+            >
+                <Pressable
+                    style={{ flex: 1, flexDirection: "row", alignItems: "center", minWidth: 0 }}
+                    onPress={disabled ? undefined : isSelectionMode ? onToggleSelect : handleCardPress}
+                >
                     <ProfileImage size={42} uri={data.profilePicture} />
                     <Text numberOfLines={1} style={styles.listName}>
                         {data.username || `${data.firstName} ${data.lastName ?? ""}`}
                     </Text>
-                </View>
+                </Pressable>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <ContactActions small {...props} />
-                    {props.onMenuPress && (
-                        <TouchableOpacity onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
+                    {onMenuPress && showMenu ? (
+                        <TouchableOpacity
+                            activeOpacity={1}
+                            hitSlop={16}
+                            onPress={onMenuPress}
+                            accessibilityLabel="Open menu"
+                        >
                             <Ionicons size={18} color="#fff" name="ellipsis-vertical" style={{ marginLeft: 4 }} />
                         </TouchableOpacity>
-                    )}
+                    ) : null}
                 </View>
-
-
-            </Pressable>
+            </View>
         );
+    }
 
     // ▫ CARD MODE (SELECTION)
-    if (layout === "card" && isSelectionMode)
+    if (layout === "card" && isSelectionMode) {
         return (
             <TouchableOpacity
                 activeOpacity={disabled ? 1 : 0.8}
-                style={[
-                    styles.selectionCard,
-                    isSelected && styles.selectedCard,
-                ]}
+                style={[styles.selectionCard, isSelected && styles.selectedCard]}
                 onPress={disabled ? undefined : onToggleSelect}
             >
                 {!disabled && (
@@ -99,65 +139,76 @@ export default function MenteeCard(props: MenteeCardProps) {
                     </View>
                 </View>
 
-                <ContactActions {...props} small rowStyles={{ gap: 2 }} btnStyles={{ marginTop: 7, marginBottom: 10 }} />
+                <ContactActions
+                    {...props}
+                    small
+                    rowStyles={{ gap: 2 }}
+                    btnStyles={{ marginTop: 7, marginBottom: 10 }}
+                />
             </TouchableOpacity>
         );
+    }
 
     // ▫ FULL CARD (DEFAULT)
+    const showChevronOnly =
+        paramsData === "mentees" || paramsData === "Field-Mentor-Home";
+
     return (
-        // <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
-
- <TouchableOpacity style={styles.container} onPress={() => {
-            props?.paramsData === "mentees" ? router.push({
-                pathname: '/(director)/(tabs)/roadmaps',
-                params: { id: data?.id ?? '' },
-            }) : onPress?.()
-        }} activeOpacity={0.9}>
-
-            {/* Menu or Chevron */}
-
-            {props?.paramsData !== "mentees" && props?.paramsData !== "Field-Mentor-Home"  ?
-
-                (props.onMenuPress && showMenu ? (
-                    <TouchableOpacity style={styles.menuButton} onPress={(e) => (e.stopPropagation(), props.onMenuPress?.())}>
-                        <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
-                    </TouchableOpacity>
-                ) : (
-                    <View style={{ position: "absolute", top: 14, right: 14 }}>
-                        <Ionicons name="chevron-forward" size={22} color="#fff" />
+        <View style={styles.container} pointerEvents="box-none">
+            <TouchableOpacity activeOpacity={0.9} onPress={handleCardPress}>
+                <View style={styles.topSection}>
+                    <View>
+                        <ProfileImage uri={data.profilePicture} size={95} />
+                        <ContactActions
+                            {...props}
+                            small
+                            rowStyles={{ gap: 2 }}
+                            btnStyles={{ marginTop: 7, marginBottom: 10 }}
+                        />
                     </View>
-                ))
-                :
-                <TouchableOpacity onPress={() => {props?.paramsData === "Field-Mentor-Home" ? onPress?.() :  router.push({
-                    pathname: '/(director)/(tabs)/roadmaps',
-                    params: { id: data?.id ?? '' },
-                })}  } style={{ position: "absolute", top: "50%", right: 14 }}>
+
+                    <View style={[styles.contentSection, cardMenuButton && styles.contentSectionWithMenu]}>
+                        <Text style={styles.name} numberOfLines={1}>
+                            {data.firstName} {data.lastName} {data.role && `(${data.role})`}
+                        </Text>
+                        <Text style={styles.description} numberOfLines={3}>
+                            {data.profileInfo ?? "No description"}
+                        </Text>
+                    </View>
+                </View>
+
+                <MenteeProgress data={data} />
+                <MenteeActions {...props} />
+            </TouchableOpacity>
+
+            {showChevronOnly ? (
+                <Pressable
+                    onPress={() => {
+                        if (paramsData === "Field-Mentor-Home") {
+                            onPress?.();
+                            return;
+                        }
+                        router.push({
+                            pathname: "/(director)/(tabs)/roadmaps",
+                            params: { id: data?.id ?? "" },
+                        });
+                    }}
+                    style={
+                        paramsData === "Field-Mentor-Home"
+                            ? styles.chevronButtonMid
+                            : styles.chevronButton
+                    }
+                    hitSlop={12}
+                >
                     <Ionicons name="chevron-forward" size={22} color="#fff" />
-                </TouchableOpacity>
-            }
-            <View style={styles.topSection}>
-                <View>
-                    <ProfileImage uri={data.profilePicture} size={95} />
-                    <ContactActions {...props} small rowStyles={{ gap: 2 }} btnStyles={{ marginTop: 7, marginBottom: 10 }} />
+                </Pressable>
+            ) : cardMenuButton ? (
+                cardMenuButton
+            ) : (
+                <View style={styles.chevronButton}>
+                    <Ionicons name="chevron-forward" size={22} color="#fff" />
                 </View>
-   
-                <View style={styles.contentSection}>
-                    <Text style={styles.name} numberOfLines={1}>
-                        {data.firstName} {data.lastName} {data.role && `(${data.role})`}
-                    </Text> 
-                    <Text style={styles.description} numberOfLines={3}>
-                        {data.profileInfo ?? "No description"}
-                    </Text>
-                </View>
-            </View>
-
-            {/* Contact Row */}
-
-            {/* Progress / Phase / Status */}
-            <MenteeProgress data={data} />
-
-            {/* Action Buttons (Mark Complete / Issue / Invite) */}
-            <MenteeActions {...props} />
-        </TouchableOpacity>
+            )}
+        </View>
     );
 }

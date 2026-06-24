@@ -51,9 +51,9 @@ export const ProfileInfoSection = ({
                 </View>
                 <View style={styles.profileInputContainer}>
                     <Text style={styles.fieldLabel}>Profile :</Text>
-                    <TouchableOpacity style={styles.absoluteEditIcon} onPress={onPickImage}>
+                    {/* <TouchableOpacity style={styles.absoluteEditIcon} onPress={onPickImage}>
                         <Image source={icons.editIcon} style={styles.editIcon} />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     <TextInput
                         style={styles.profileTextArea}
                         value={formData.bio || ''}

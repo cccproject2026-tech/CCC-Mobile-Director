@@ -1,9 +1,8 @@
 // components/FieldRenderers/DatePickerRenderer.tsx
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface DatePickerRendererProps {
     field: {
@@ -17,61 +16,36 @@ interface DatePickerRendererProps {
     };
     onEdit: (fieldId: string) => void;
     onDelete: (fieldId: string) => void;
-    onDateChange?: (fieldId: string, date: Date) => void; // ✅ New prop
 }
 
 export const DatePickerRenderer: React.FC<DatePickerRendererProps> = ({
     field,
     onEdit,
     onDelete,
-    onDateChange,
 }) => {
-    const [showPicker, setShowPicker] = useState(false);
-
-    const parseDate = (dateValue?: Date | string): Date => {
-        if (!dateValue) {
-            return new Date();
+    const parseDate = (dateValue?: Date | string): Date | null => {
+        if (!dateValue) return null;
+        if (dateValue instanceof Date) {
+            return Number.isNaN(dateValue.getTime()) ? null : dateValue;
         }
-        if (typeof dateValue === 'string') {
-            return new Date(dateValue);
-        }
-        return dateValue;
+        const parsed = new Date(dateValue);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
     };
 
     const currentDate = parseDate(field.date);
 
-    const formatDate = (date: Date) => {
-        if (isNaN(date.getTime())) {
-            date = new Date();
-        }
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${month} / ${day} / ${year}`;
-        // return `${day} - ${month} - ${year}`;
-    };
-
-    const handleDateChange = (event: any, selectedDate?: Date) => {
-        if (Platform.OS === 'android') {
-            setShowPicker(false);
-        }
-
-        if (selectedDate && onDateChange) {
-            onDateChange(field.id, selectedDate);
-        }
-    };
-
-    const handleDatePress = () => {
-        // ✅ Only allow date selection if pastor cannot select OR if we're in edit mode
-        if (!field.allowPastorSelect) {
-            setShowPicker(true);
-        }
+    const formatDisplayDate = (date: Date) => {
+        return date.toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        });
     };
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.label}>Date Picker</Text>
+                <Text style={styles.typeLabel}>Date Picker</Text>
                 <View style={styles.actions}>
                     <TouchableOpacity
                         onPress={() => onEdit(field.id)}
@@ -90,42 +64,20 @@ export const DatePickerRenderer: React.FC<DatePickerRendererProps> = ({
                 </View>
             </View>
 
-            <Text style={styles.fieldLabel}>{field.label}</Text>
+            <Text style={styles.fieldLabel}>{field.label || 'date'}</Text>
 
-            {/* ✅ Clickable date input */}
-            <TouchableOpacity
-                style={styles.dateInput}
-                onPress={handleDatePress}
-                disabled={field.allowPastorSelect} // ✅ Disable if pastor can select
-            >
-                <Text style={styles.dateText}>{formatDate(currentDate)}</Text>
-                {!field.allowPastorSelect && (
-                    <Ionicons name="calendar-outline" size={20} color="#fff" />
-                )}
-            </TouchableOpacity>
-
-            {/* ✅ Date Picker */}
-            {showPicker && (
-                <DateTimePicker
-                    value={currentDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={handleDateChange}
-                    textColor="#fff"
-                />
-            )}
-
-            {/* iOS: Show Done button */}
-            {showPicker && Platform.OS === 'ios' && (
-                <TouchableOpacity
-                    style={styles.doneButton}
-                    onPress={() => setShowPicker(false)}
+            <View style={styles.dateInput}>
+                <Ionicons name="calendar-outline" size={18} color="#5BC0EB" />
+                <Text
+                    style={[
+                        styles.dateText,
+                        !currentDate && styles.datePlaceholder,
+                    ]}
                 >
-                    <Text style={styles.doneButtonText}>Done</Text>
-                </TouchableOpacity>
-            )}
+                    {currentDate ? formatDisplayDate(currentDate) : 'dd/mm/yyyy'}
+                </Text>
+            </View>
 
-            {/* Checkboxes */}
             {field.allowPastorSelect && (
                 <View style={styles.checkboxRow}>
                     <Ionicons name="checkbox" size={20} color="#fff" />
@@ -158,7 +110,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 12,
     },
-    label: {
+    typeLabel: {
         color: '#fff',
         fontSize: 14,
         fontWeight: '600',
@@ -178,33 +130,26 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     dateInput: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderRadius: 8,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderRadius: 10,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.2)',
         paddingVertical: 14,
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
         marginBottom: 12,
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        gap: 10,
+        opacity: 0.85,
     },
     dateText: {
         color: '#fff',
         fontSize: 15,
+        fontWeight: '500',
     },
-    doneButton: {
-        backgroundColor: '#7C3AED',
-        borderRadius: 8,
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    doneButtonText: {
-        color: '#fff',
-        fontSize: 15,
-        fontWeight: '600',
+    datePlaceholder: {
+        color: 'rgba(255,255,255,0.55)',
+        fontWeight: '400',
     },
     checkboxRow: {
         flexDirection: 'row',

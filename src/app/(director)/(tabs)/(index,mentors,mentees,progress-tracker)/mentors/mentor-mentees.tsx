@@ -3,41 +3,41 @@ import { UserCardSkeleton } from '@/components/Cards/MentorCard/UserCardSkeleton
 import SearchBar from '@/components/Header/SearchBar';
 import TopBar from '@/components/Header/TopBar';
 import FilterModal, { FilterOption } from '@/components/Modals/FilterModal';
-import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
+import ActionBottomSheet, { ActionItem } from '@/components/Sheets/ActionBottomSheet';
 import { GradientBackground } from '@/components/ui/design-system';
 import { useMentorMentees, useAssignedMentees } from '@/hooks/useMentors';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    Dimensions,
     FlatList,
+    InteractionManager,
     Pressable,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { featureNotAvailableYet } from '@/utils/contactActions';
+import { buildReturnTo } from '@/utils/navigation';
 
-const PHASES = ['All Phases', 'Phase 1', 'Phase 2', 'Phase 3'];
+// const PHASES = ['All Phases', 'Phase 1', 'Phase 2', 'Phase 3'];
+
+type NameSortFilter = 'All' | 'Name A-Z' | 'Name Z-A';
 
 export default function MentorMentees() {
     const router = useRouter();
-    const { id } = useLocalSearchParams<{ id: string }>();
+    const pathname = usePathname();
+    const routeParams = useLocalSearchParams<{ id: string }>();
+    const { id } = routeParams;
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] =
         useState<'all' | 'in-progress' | 'completed'>('in-progress');
     const [filterModalVisible, setFilterModalVisible] = useState(false);
-    const [selectedFilter, setSelectedFilter] =
-        useState('Course Completion : Latest');
+    const [selectedFilter, setSelectedFilter] = useState<NameSortFilter>('All');
     const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
-    const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
-    const { bottom } = useSafeAreaInsets();
-    const { height } = Dimensions.get('window');
+    const [menuMentee, setMenuMentee] = useState<Mentee | null>(null);
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     // const { mentor, mentees, isLoading, isError } = useMentorMentees(id);
@@ -50,113 +50,130 @@ export default function MentorMentees() {
         isError,
     } = useAssignedMentees(id);
     
-const mentees = useMemo(
-    () =>
-        (data ?? []).map(item => ({
-            ...item,
-            id: item._id,
-        })),
-    [data]
-);
-
+    const mentees = useMemo(
+        () =>
+            (data ?? []).map((item) => ({
+                ...item,
+                id: item._id ?? item.id,
+            })),
+        [data],
+    );
 
     const mentorName = mentor
         ? `${mentor.firstName} ${mentor.lastName ?? ''}`
         : 'Mentor';
 
-    const handleMenuPress = useCallback((mentee: Mentee) => {
-        setSelectedMentee(mentee);
-        setTimeout(() => {
-            bottomSheetModalRef.current?.present();
-        }, 0);
+    const handleCloseModal = useCallback(() => {
+        bottomSheetModalRef.current?.dismiss();
+        setMenuMentee(null);
     }, []);
+
+    const buildMenuItems = useCallback(
+        (mentee: Mentee): ActionItem[] => {
+            const menteeId = mentee.id;
+            const afterClose = (action: () => void) => {
+                handleCloseModal();
+                setTimeout(action, 200);
+            };
+
+            return [
+                {
+                    icon: 'people-outline',
+                    label: 'Revitalization Roadmaps',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push(`/(director)/(tabs)/mentees/${menteeId}/progress` as any),
+                        ),
+                },
+                {
+                    icon: 'person-add-outline',
+                    label: 'Assign Mentor',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: '/mentees/assign-mentors',
+                                params: { id: menteeId },
+                            }),
+                        ),
+                },
+                {
+                    icon: 'checkmark-done-outline',
+                    label: 'Mentor Notes',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push({
+                                pathname: '/mentees/notes',
+                                params: { id: menteeId },
+                            } as any),
+                        ),
+                },
+                {
+                    icon: 'book-outline',
+                    label: 'View Progress Report',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push('/(director)/(tabs)/progress-tracker/report' as any),
+                        ),
+                },
+                {
+                    icon: 'stats-chart-outline',
+                    label: 'Micro Grant',
+                    onPress: () =>
+                        afterClose(() => router.push('/(director)/(tabs)/micro-grant' as any)),
+                },
+                {
+                    icon: 'calendar-outline',
+                    label: 'Product and Services',
+                    onPress: () =>
+                        afterClose(() =>
+                            router.push('/(director)/(tabs)/product-and-services' as any),
+                        ),
+                },
+            ];
+        },
+        [handleCloseModal, router],
+    );
+
+    const sheetActions = useMemo(
+        () => (menuMentee ? buildMenuItems(menuMentee) : []),
+        [buildMenuItems, menuMentee],
+    );
+
+    const handleMenuPress = useCallback((mentee: Mentee) => {
+        setMenuMentee(mentee);
+    }, []);
+
+    useEffect(() => {
+        if (!menuMentee) return;
+        const task = InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                bottomSheetModalRef.current?.present();
+            });
+        });
+        return () => task.cancel();
+    }, [menuMentee]);
 
     const getFilterOptions = (): FilterOption[] => {
         return [
-            { label: 'Last Contact : Oldest' },
-            { label: 'Last Contact : Newest' },
-            { label: 'Course Completion : Latest' },
-            {
-                label: 'Phase',
-                options: PHASES,
-                isExpandable: true,
-            },
+            { label: 'Name A-Z' },
+            { label: 'Name Z-A' },
+            // { label: 'Last Contact : Oldest' },
+            // { label: 'Last Contact : Newest' },
+            // { label: 'Course Completion : Latest' },
+            // {
+            //     label: 'Phase',
+            //     options: PHASES,
+            //     isExpandable: true,
+            // },
         ];
     };
-
-    const handleCloseModal = useCallback(() => {
-        bottomSheetModalRef.current?.dismiss();
-    }, []);
 
     const handleTabChange = (tab: 'all' | 'in-progress' | 'completed') => {
         setActiveTab(tab);
     };
 
-    const menuItems = [
-        {
-            icon: 'people-outline',
-            label: 'Revitalization Roadmaps',
-            onPress: () => {
-                handleCloseModal();
-                if (selectedMentee?.id) {
-                    router.push(`/(director)/(tabs)/mentees/${selectedMentee.id}/progress` as any);
-                }
-            },
-        },
-        {
-            icon: 'person-add-outline',
-            label: 'Assign Mentor',
-            onPress: () => {
-                handleCloseModal();
-                router.push({
-                    pathname: '/mentees/assign-mentors',
-                    params: { id: selectedMentee?.id || '' },
-                });
-            },
-        },
-        {
-            icon: 'checkmark-done-outline',
-            label: 'Mentor Notes',
-            onPress: () => {
-                handleCloseModal();
-                router.push({
-                    pathname: '/mentees/notes',
-                    params: { id: selectedMentee?.id || '' },
-                } as any);
-            },
-        },
-        {
-            icon: 'book-outline',
-            label: 'View Progress Report',
-            onPress: () => {
-                handleCloseModal();
-                router.push('/(director)/(tabs)/progress-tracker/report' as any);
-            },
-        },
-        {
-            icon: 'stats-chart-outline',
-            label: 'Micro Grant',
-            onPress: () => {
-                handleCloseModal();
-                router.push('/(director)/(tabs)/micro-grant' as any);
-            },
-        },
-        {
-            icon: 'calendar-outline',
-            label: 'Product and Services',
-            onPress: () => {
-                handleCloseModal();
-                router.push('/(director)/(tabs)/product-and-services' as any);
-            },
-        },
-    ];
-
-    const getFilterDisplayText = () => {
-        if (PHASES.includes(selectedFilter)) {
-            return selectedFilter;
-        }
-        return selectedFilter || 'Course Completion : Latest';
-    };
+    const getFilterDisplayText = () =>
+        selectedFilter === 'All' ? 'Default' : selectedFilter;
 
     const filterOptions = useMemo(() => getFilterOptions(), []);
 
@@ -166,20 +183,31 @@ const mentees = useMemo(
         if (search) {
             const q = search.toLowerCase();
             list = list.filter(
-                m =>
-                    m.firstName.toLowerCase().includes(q) ||
+                (m) =>
+                    (m.firstName ?? '').toLowerCase().includes(q) ||
                     (m.lastName?.toLowerCase().includes(q) ?? false),
             );
         }
 
         if (activeTab === 'completed') {
-            list = list.filter(m => m.hasCompleted || m.progress === 100);
+            list = list.filter((m) => m.hasCompleted || m.progress === 100);
         } else if (activeTab === 'in-progress') {
-            list = list.filter(m => !m.hasCompleted && (m.progress ?? 0) < 100);
+            list = list.filter((m) => !m.hasCompleted && (m.progress ?? 0) < 100);
+        }
+
+        if (selectedFilter === 'Name A-Z' || selectedFilter === 'Name Z-A') {
+            list = [...list].sort((a, b) => {
+                const nameA = (a.firstName ?? '').trim().toLowerCase();
+                const nameB = (b.firstName ?? '').trim().toLowerCase();
+                if (selectedFilter === 'Name Z-A') {
+                    return nameB.localeCompare(nameA);
+                }
+                return nameA.localeCompare(nameB);
+            });
         }
 
         return list;
-    }, [mentees, search, activeTab]);
+    }, [mentees, search, activeTab, selectedFilter]);
 
     const inProgressCount = useMemo(
         () =>
@@ -238,7 +266,7 @@ const mentees = useMemo(
                                         Mentor › {mentorName}
                                     </Text>
                                 </View>
-                            </View>
+                            </View> 
                         </TouchableOpacity>
 
                         <View style={styles.headerActions}>
@@ -323,14 +351,19 @@ const mentees = useMemo(
                     <FlatList
                         style={styles.list}
                         data={filteredMentees}
-                        keyExtractor={item => item.id}
+                        keyExtractor={(item) => String(item.id ?? item._id)}
                         renderItem={({ item: mentee }) => (
                             <MenteeProgressCard
                                 data={mentee}
                                 showMenu={true}
                                 layout={viewMode}
                                 onPress={() =>
-                                    router.push(`/(director)/(tabs)/mentees/${mentee.id}` as any)
+                                    router.push({
+                                        pathname: `/(director)/(tabs)/mentees/${mentee.id}` as any,
+                                        params: {
+                                            returnTo: buildReturnTo(pathname, routeParams),
+                                        },
+                                    })
                                 }
                                 onMenuPress={() => handleMenuPress(mentee)}
                             />
@@ -365,24 +398,28 @@ const mentees = useMemo(
                     />
                 </View>
 
-                <ActionBottomSheet
-                    ref={bottomSheetModalRef}
-                    title={
-                        selectedMentee
-                            ? `${selectedMentee.firstName} ${selectedMentee.lastName ?? ''}`
-                            : ''
-                    }
-                    image={selectedMentee?.profilePicture || undefined}
-                    actions={menuItems as any}
-                    onClose={handleCloseModal}
-                />
+                {menuMentee ? (
+                    <ActionBottomSheet
+                        ref={bottomSheetModalRef}
+                        title={`${menuMentee.firstName} ${menuMentee.lastName ?? ''}`}
+                        image={menuMentee.profilePicture || undefined}
+                        actions={sheetActions}
+                        onClose={handleCloseModal}
+                    />
+                ) : null}
 
                 <FilterModal
                     visible={filterModalVisible}
                     onClose={() => setFilterModalVisible(false)}
                     selectedFilter={selectedFilter}
-                    onFilterSelect={filter => {
-                        setSelectedFilter(filter);
+                    onFilterSelect={(filter) => {
+                        if (
+                            filter === 'All' ||
+                            filter === 'Name A-Z' ||
+                            filter === 'Name Z-A'
+                        ) {
+                            setSelectedFilter(filter);
+                        }
                         setFilterModalVisible(false);
                     }}
                     filterOptions={filterOptions}

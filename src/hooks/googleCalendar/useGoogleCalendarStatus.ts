@@ -21,6 +21,17 @@ export function useGoogleCalendarStatus(options?: { enabled?: boolean }) {
     queryKey,
     enabled,
     staleTime: 60_000,
+    retry: (failureCount, error: unknown) => {
+      const status =
+        error &&
+        typeof error === 'object' &&
+        'statusCode' in error &&
+        typeof (error as { statusCode?: number }).statusCode === 'number'
+          ? (error as { statusCode: number }).statusCode
+          : undefined;
+      if (status === 401 || status === 403) return false;
+      return failureCount < 1;
+    },
     queryFn: getGoogleCalendarStatus,
   });
 

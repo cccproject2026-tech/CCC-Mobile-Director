@@ -12,6 +12,8 @@ import SuccessModal from '@/components/Modals/SuccessModal';
 import { ChurchInfoSection, OtherInfoSection, PersonalInfoSection, ProfileInfoSection } from '@/components/ProfileSection';
 import { icons } from '@/constants';
 import { useDeleteUser, useMentorMenteeProfile, useUpdateProfile, useUploadProfilePicture } from '@/hooks/useProfile';
+import { useSafeBack } from '@/hooks/useSafeBack';
+import { useReturnToAwareBack } from '@/hooks/useReturnToAwareBack';
 import { ChurchInfo, UpdateProfileData, UserRole, UserWithInterest } from '@/types/user.types';
 import { Colors } from '@/constants/Colors';
 import { roadmapTheme, homeLayout } from '@/components/ui/design-system';
@@ -25,12 +27,16 @@ interface ProfileContentProps {
     profileData?: any;
     isLoading: boolean;
     isError: boolean;
+    returnTo?: string;
 }
 
 export default function ProfileContent({ userId, isOwnProfile, bottomInsets, profileData,
     isLoading,
-    isError }: ProfileContentProps) {
+    isError,
+    returnTo }: ProfileContentProps) {
     const router = useRouter();
+    const goBack = useSafeBack({ returnTo });
+    useReturnToAwareBack(returnTo);
 
     const updateProfile = useUpdateProfile(
         profileData?.user?.email || "",
@@ -47,6 +53,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
     const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const [formData, setFormData] = useState<UpdateProfileData>({
         firstName: '', lastName: '', phoneNumber: '', churches: [],
@@ -57,7 +64,11 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
 
     const role = profileData?.user?.role as UserRole;
     const isDirector = role === 'director';
-    const isSaving = uploadProfilePicture.isPending || updateProfile.isPending || deleteProfile.isPending;
+    const isSaving =
+        uploadProfilePicture.isPending ||
+        updateProfile.isPending ||
+        deleteProfile.isPending ||
+        isDeleting;
 
     const shouldShowProgress = useMemo(() => {
         return PROGRESS_ENABLED_ROLES.includes(role);
@@ -149,16 +160,17 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
     }, [formData, selectedImageFile, updateProfile, uploadProfilePicture]);
 
     const handleDeleteProfile = useCallback(async () => {
+        setShowDeleteConfirmModal(false);
+        setIsDeleting(true);
+
         try {
             await deleteProfile.mutateAsync(userId);
-            router.back();
-            // setShowDeleteSuccessModal(true);
+            goBack();
         } catch (error: any) {
+            setIsDeleting(false);
             Alert.alert('Delete Failed', error?.message || 'Failed to delete profile.');
-        } finally {
-            setShowDeleteConfirmModal(false);
         }
-    }, [userId, deleteProfile]);
+    }, [userId, deleteProfile, goBack]);
 
     const renderAvatar = () => (
         <View style={styles.avatarContainer}>
@@ -178,12 +190,12 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
 
     return (
         <LinearGradient colors={[...Colors.appBgGradient]} style={styles.container}>
-            {isLoading ? <View style={styles.center}><ActivityIndicator size="large" color="#fff" /><Text style={styles.loadingText}>Loading...</Text></View> : (
+            {isLoading && !isDeleting ? <View style={styles.center}><ActivityIndicator size="large" color="#fff" /><Text style={styles.loadingText}>Loading...</Text></View> : (
                 <View style={{ flex: 1 }} pointerEvents={isSaving ? 'none' : 'auto'}>
                     <TopBar showUserName={isOwnProfile} />
 
                     <TouchableOpacity
-                        onPress={() => (isEditing ? handleCancel() : router.back())}
+                        onPress={() => (isEditing ? handleCancel() : goBack())}
                         style={styles.headerContainer}
                         disabled={isSaving}
                     >
@@ -221,7 +233,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
                         {!isEditing && (
                             <View style={styles.actionButtons}>
                                 <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(director)/(tabs)/profile/documents' as any)}>
-                                    <Text style={styles.actionButtonText}>Documents</Text>
+                                    <Text style={styles.actionButtonText}>Document</Text>
                                     <Image source={icons.attachmentIcon} style={styles.smallIcon} />
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.actionButton} onPress={handleEditPress}>
@@ -293,7 +305,9 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
             {isSaving && (
                 <View style={styles.centeredOverlay}>
                     <ActivityIndicator size="large" color="#fff" />
-                    <Text style={styles.loadingOverlayText}>Saving Changes...</Text>
+                    <Text style={styles.loadingOverlayText}>
+                        {isDeleting ? 'Deleting Profile...' : 'Saving Changes...'}
+                    </Text>
                 </View>
             )}
 
@@ -314,7 +328,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
                 message="Profile Deleted"
                 onClose={() => {
                     setShowDeleteSuccessModal(false);
-                    router.back();
+                    goBack();
                 }}
             />
         </LinearGradient>

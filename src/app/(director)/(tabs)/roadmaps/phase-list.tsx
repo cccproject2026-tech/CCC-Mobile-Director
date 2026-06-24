@@ -1,9 +1,10 @@
 // app/(director)/(tabs)/roadmaps/phase-list.tsx
 
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    InteractionManager,
     ScrollView,
     StyleSheet,
     Text,
@@ -11,21 +12,23 @@ import {
     View,
 } from 'react-native';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoadmap } from '@/hooks/roadmap/useRoadmaps';
+import { useRoadmap, useUpdateRoadmap } from '@/hooks/roadmap/useRoadmaps';
+import { NestedRoadmap, UpdateRoadmapRequest } from '@/types/roadmap.types';
 import TopBar from '@/components/Header/TopBar';
 import RoadmapCard from '@/components/Cards/RoadmapCard';
 import { RoadmapCardData } from '@/types/roadmap.types';
 import SearchBar from '@/components/Header/SearchBar';
 import { Routes } from '@/navigation/routes';
-import ActionBottomSheet from '@/components/Sheets/ActionBottomSheet';
+import ActionBottomSheet, { ActionItem } from '@/components/Sheets/ActionBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import {  useDeleteRoadmap } from '@/hooks/roadmap/useRoadmaps';
 
 export default function PhaseListScreen() {
     const router = useRouter();
+    const pathname = usePathname();
     const { bottom } = useSafeAreaInsets();
     const params = useLocalSearchParams();
 
@@ -34,45 +37,125 @@ export default function PhaseListScreen() {
     const pastorView = params.pastorView === 'true';
     const { data: roadmap, isLoading } = useRoadmap(roadmapId);
 
+    const phaseListParams = useMemo(
+        () => ({
+            roadmapId,
+            ...(userId ? { userId } : {}),
+            ...(pastorView ? { pastorView: 'true' } : {}),
+        }),
+        [pastorView, roadmapId, userId],
+    );
+
+    const phaseListReturnTo = useMemo(
+        () => buildReturnTo(pathname, phaseListParams),
+        [pathname, phaseListParams],
+    );
+
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedPhase, setSelectedPhase] = useState<(RoadmapCardData & { id: string }) | null>(null);
+    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+    const updateRoadmapMutation = useUpdateRoadmap();
 
-const [selectedPhase, setSelectedPhase] = useState<(RoadmapCardData & { id: string }) | null>(null);
-const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-    const deleteRoadmapMutation = useDeleteRoadmap();
+    const mapNestedRoadmapForPatch = useCallback((nested: NestedRoadmap) => ({
+        _id: nested._id,
+        name: nested.name,
+        roadMapDetails: nested.roadMapDetails || nested.description || '',
+        description: nested.description || nested.roadMapDetails || '',
+        duration: nested.duration,
+        phase: nested.phase || '',
+        status: nested.status || 'not started',
+        meetings: nested.meetings || [],
+        ...(nested.extras?.length ? { extras: nested.extras } : {}),
+        ...(nested.imageUrl ? { imageUrl: nested.imageUrl } : {}),
+    }), []);
 
-    const handlePhasePress = (nestedRoadmapId: string) => {
-        const phase = roadmap?.roadmaps?.find((r) => r._id === nestedRoadmapId);
-        if (!phase) return;
+    const handleDeletePhase = useCallback(
+        (phaseId: string) => {
+            if (!roadmap) {
+                Alert.alert('Error', 'Roadmap data is not loaded yet.');
+                return;
+            }
 
-        if (pastorView && userId) {
-            router.push(Routes.roadmaps.taskFor(roadmapId, nestedRoadmapId, userId));
-            return;
-        }
+            const remainingRoadmaps = (roadmap.roadmaps ?? [])
+                .filter((nested) => nested._id !== phaseId)
+                .map(mapNestedRoadmapForPatch);
 
-        router.push({
-            pathname: '/roadmaps/(creation)/roadmap-form',
-            params: {
-                roadmapId,
-                nestedRoadmapId,
-                type: 'phase',
-                isEditMode: 'true',
-                name: phase.name || '',
-                subheading: phase.roadMapDetails || '',
-                completionTime: phase.duration || '',
-                selectedDivision: phase.phase || '',
-                bannerImage: phase.imageUrl || '',
-            },
-        } as never);
-    };
+            const payload: UpdateRoadmapRequest = {
+                name: roadmap.name,
+                roadMapDetails: roadmap.roadMapDetails || roadmap.description || '',
+                description: roadmap.description || roadmap.roadMapDetails || '',
+                duration: roadmap.duration,
+                ...(roadmap.imageUrl ? { imageUrl: roadmap.imageUrl } : {}),
+                ...(roadmap.divisions?.length ? { divisions: roadmap.divisions } : {}),
+                roadmaps: remainingRoadmaps,
+            };
+
+            console.log('[Delete Phase] PATCH payload:', { roadmapId, payload });
+
+            updateRoadmapMutation.mutate(
+                { roadmapId, payload },
+                {
+                    onSuccess: (response) => {
+                        console.log('[Delete Phase] PATCH response:', response);
+                        Alert.alert('Success', 'Phase deleted successfully.');
+                    },
+                    onError: (error) => {
+                        console.error('[Delete Phase] PATCH error:', error);
+                        Alert.alert('Error', 'Failed to delete the phase. Please try again.');
+                    },
+                },
+            );
+        },
+        [mapNestedRoadmapForPatch, roadmap, roadmapId, updateRoadmapMutation],
+    );
+
+    const handleCloseModal = useCallback(() => {
+        bottomSheetModalRef.current?.dismiss();
+        setSelectedPhase(null);
+    }, []);
+
+    const handlePhasePress = useCallback(
+        (nestedRoadmapId: string) => {
+            const phase = roadmap?.roadmaps?.find((r) => r._id === nestedRoadmapId);
+            if (!phase) return;
+
+            if (pastorView && userId) {
+                router.push(Routes.roadmaps.taskFor(roadmapId, nestedRoadmapId, userId));
+                return;
+            }
+
+            router.push({
+                pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+                params: appendReturnTo(
+                    {
+                        roadmapId,
+                        nestedRoadmapId,
+                        type: 'phase',
+                        isEditMode: 'true',
+                        name: phase.name || '',
+                        subheading: phase.roadMapDetails || '',
+                        completionTime: phase.duration || '',
+                        selectedDivision: phase.phase || '',
+                        bannerImage: phase.imageUrl || '',
+                    },
+                    phaseListReturnTo,
+                ),
+            } as never);
+        },
+        [pastorView, phaseListReturnTo, roadmap?.roadmaps, roadmapId, router, userId],
+    );
 
     const handleAddTask = () => {
         router.push({
-            pathname: '/roadmaps/(creation)/roadmap-creation',
-            params: {
-                roadmapId,
-                type: 'phase',
-                isEditMode: 'false',
-            },
+            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
+            params: appendReturnTo(
+                {
+                    roadmapId,
+                    type: 'phase',
+                    isEditMode: 'false',
+                },
+                phaseListReturnTo,
+            ),
         } as never);
     };
 
@@ -111,93 +194,79 @@ const bottomSheetModalRef = useRef<BottomSheetModal>(null);
         );
     }, [phaseCards, searchQuery]);
 
- 
-const phaseMenuItems = [
-    {
-        icon: 'create-outline',
-        label: 'Edit Phase',
-        onPress: () => {
-             console.log("selectedPhase",selectedPhase);
-            if (!selectedPhase) return;
-
-            handleCloseModal();
-
-            setTimeout(() => {
-                handlePhasePress(selectedPhase.id);
-            }, 300);
-        },
-    },
-           {
-            icon: 'person-add-outline',
-            label: 'Assign to',
-            onPress: () => {
-                if (!selectedPhase) return;
+    const buildPhaseMenuItems = useCallback(
+        (phase: RoadmapCardData & { id: string }): ActionItem[] => {
+            const phaseId = phase.id;
+            const afterClose = (action: () => void) => {
                 handleCloseModal();
-                setTimeout(() => {
-                    router.push({
-                        pathname: '/(director)/(tabs)/roadmaps/assign-roadmaps',
-                        params: { roadmapIds: selectedPhase._id },
-                    });
-                }, 300);
-            },
+                setTimeout(action, 200);
+            };
+
+            return [
+                // {
+                //     icon: 'create-outline',
+                //     label: 'Edit Phase',
+                //     onPress: () => {
+                //         afterClose(() => handlePhasePress(phaseId));
+                //     },
+                // },
+                // {
+                //     icon: 'person-add-outline',
+                //     label: 'Assign to',
+                //     onPress: () => {
+                //         afterClose(() =>
+                //             router.push({
+                //                 pathname: '/(director)/(tabs)/roadmaps/assign-roadmaps',
+                //                 params: { roadmapIds: phaseId },
+                //             }),
+                //         );
+                //     },
+                // },
+                {
+                    icon: 'trash-outline',
+                    label: 'Delete Phase',
+                    onPress: () => {
+                        const phaseName = phase.title || 'this phase';
+                        handleCloseModal();
+                        Alert.alert(
+                            'Delete Phase',
+                            `Are you sure you want to delete "${phaseName}"?`,
+                            [
+                                { text: 'Cancel', style: 'cancel' },
+                                {
+                                    text: 'Delete',
+                                    style: 'destructive',
+                                    onPress: () => {
+                                        handleDeletePhase(phaseId);
+                                    },
+                                },
+                            ],
+                        );
+                    },
+                },
+            ];
         },
-    {
-        icon: 'trash-outline',
-        label: 'Delete Phase',
-        onPress: () => {
-            console.log("selectedPhase",selectedPhase);
-            if (!selectedPhase) return;
-                console.log("selectedPhase1",selectedPhase);
-                   deleteRoadmapMutation.mutate(selectedPhase._id, {});
-            // deleteRoadmapMutation.mutate(selectedPhase.id, {
-            //     onSuccess: () => {
-            //         Alert.alert('Phase deleted', 'The phase has been successfully deleted.', [
-            //             { 
-            //                 text: 'OK',
-            //                 onPress: () => {
-            //                     handleCloseModal();
-            //                 },
-            //             },
-            //         ]);
-            //     },
-            //     onError: () => {
-            //         Alert.alert('Error', 'Failed to delete the phase. Please try again.', [
-            //             {
-            //                 text: 'OK',
-            //                 onPress: () => {
-            //                     handleCloseModal();
-            //                  }  } ],
-            //             );
-            //     },
-            // });
-            handleCloseModal();
+        [handleCloseModal, handleDeletePhase, handlePhasePress, router],
+    );
 
-          
-        },
-    },
-];
+    const sheetActions = useMemo(
+        () => (selectedPhase ? buildPhaseMenuItems(selectedPhase) : []),
+        [buildPhaseMenuItems, selectedPhase],
+    );
 
-     const handleMenuPress = useCallback((phaseId: string) => {
-        console.log("filtered phase:", filteredPhases);
-    const phase = filteredPhases.find((p) => p.id === phaseId);
+    const handleMenuPress = useCallback((phase: RoadmapCardData & { id: string }) => {
+        setSelectedPhase(phase);
+    }, []);
 
-    if (!phase) return;
-
-    setSelectedPhase(phase);
-
-    setTimeout(() => {
-        bottomSheetModalRef.current?.present();
-    }, 0);
-}, [filteredPhases]);
-
-const handleCloseModal = useCallback(() => {
-    bottomSheetModalRef.current?.dismiss();
-
-    setTimeout(() => {
-        setSelectedPhase(null);
-    }, 300);
-}, []);
-
+    useEffect(() => {
+        if (!selectedPhase) return;
+        const task = InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                bottomSheetModalRef.current?.present();
+            });
+        });
+        return () => task.cancel();
+    }, [selectedPhase]);
 
     if (isLoading) {
         return (
@@ -231,9 +300,9 @@ const handleCloseModal = useCallback(() => {
                         <Ionicons name="add" size={18} color="#fff" />
                         <Text style={styles.addButtonText}>Task</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.moreButton}>
+                    {/* <TouchableOpacity style={styles.moreButton}>
                         <Ionicons name="ellipsis-vertical" size={18} color="#fff" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </View>
             </View>
 
@@ -277,18 +346,20 @@ const handleCloseModal = useCallback(() => {
                             data={card}
                             onPress={() => handlePhasePress(card.id)}
                             showMenu={true}
-                            onMenuPress={() => handleMenuPress(card.id)}
+                            onMenuPress={() => handleMenuPress(card)}
                         />
                     ))
                 )}
             </ScrollView>
-            <ActionBottomSheet
-    ref={bottomSheetModalRef}
-    title={selectedPhase?.title || ''}
-    subtitle={selectedPhase?.completionTime}
-    actions={phaseMenuItems}
-    onClose={handleCloseModal}
-/>
+            {selectedPhase ? (
+                <ActionBottomSheet
+                    ref={bottomSheetModalRef}
+                    title={selectedPhase.title || ''}
+                    subtitle={selectedPhase.completionTime}
+                    actions={sheetActions}
+                    onClose={handleCloseModal}
+                />
+            ) : null}
         </GradientBackground>
     );
 }

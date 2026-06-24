@@ -16,7 +16,7 @@ const trackItems = [
     {
         id: '2',
         iconName: 'school-outline',
-        title: 'Cource Completed',
+        title: 'Course Completed',
         route: '/(director)/(tabs)/course-completed',
         accentKey: 'teal',
     },

@@ -113,7 +113,10 @@ export default function AssignMentorsToMenteeScreen() {
                 type="success"
                 title="Assigned Mentor Successfully"
                 autoClose={3000}
-                onClose={() => { setShowSuccessModal(false); router.back(); }}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    router.back();
+                }}
             />
             <GradientBackground>
                 <View style={[styles.inner, { paddingTop: Platform.OS === 'ios' ? top : top + 10 }]}>

@@ -315,6 +315,7 @@ export function appointmentCalendarDayVariant(
   meetingCount = 0,
 ): DayCellVariant {
   if (ctx.isSelected) return "selected";
+  if (ctx.isPast) return "past";
   const selected = normalizeYmd(selectedYmd);
   const showTodayRing = ctx.isToday && (!selected || selected === ymd);
   if (showTodayRing) return "today";
