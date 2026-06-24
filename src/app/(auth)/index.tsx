@@ -8,13 +8,15 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LoginFormScreen() {
@@ -79,8 +81,12 @@ export default function LoginFormScreen() {
             </Text>
           </View>
 
-          <View style={styles.formArea}>
-            <KeyboardAwareScrollView
+          <KeyboardAvoidingView
+            style={styles.formArea}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={top + 12}
+          >
+            <ScrollView
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -168,8 +174,8 @@ export default function LoginFormScreen() {
                   <PrimaryButton label="Sign in" onPress={handleLogin} disabled={isLoading} />
                 )}
               </CommonCard>
-            </KeyboardAwareScrollView>
-          </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
 
           <View style={styles.logoFooter}>
             <Image source={icons.universityIcon} style={styles.universityLogo} resizeMode="contain" />

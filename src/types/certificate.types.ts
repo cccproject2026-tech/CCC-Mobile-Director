@@ -6,6 +6,8 @@ export interface CertificateRecord {
   issuedByName?: string;
   directorName?: string;
   mentorName?: string;
+  pastorName?: string;
+  duration?: string;
   programName?: string;
   completionDate?: string;
   [key: string]: unknown;

@@ -12,10 +12,11 @@ import {
   hasRealCertificate,
 } from "@/services/certificates.service";
 import {
-  openCertificateUrl,
   useCompletionWorkflow,
   useUserCertificate,
 } from "@/hooks/useCompletionWorkflow";
+import { useCertificatePreview } from "@/hooks/useCertificatePreview";
+import CertificatePreviewModal from "@/components/certificate/CertificatePreviewModal";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { useAssignedRoadmaps } from "@/hooks/roadmap/useRoadmaps";
 import {
@@ -87,6 +88,7 @@ export default function TrackProgressDetailScreen() {
   const { data: certificate } = useUserCertificate(userId);
   const workflow = useCompletionWorkflow(userId, profile ?? undefined);
   const hasCertificate = hasRealCertificate(certificate ?? null);
+  const certificatePreview = useCertificatePreview();
 
   const runIssueCertificateRef = useRef(workflow.runIssueCertificate);
   runIssueCertificateRef.current = workflow.runIssueCertificate;
@@ -270,7 +272,13 @@ export default function TrackProgressDetailScreen() {
           {hasCertificate && (
             <TouchableOpacity
               style={styles.actionBtn}
-              onPress={() => openCertificateUrl(certificate ?? null)}
+              onPress={() =>
+                certificatePreview.openCertificatePreview({
+                  userId,
+                  pastorName: fullName,
+                  certificate,
+                })
+              }
             >
               <Ionicons name="document-outline" size={18} color="#fff" />
               <Text style={styles.actionBtnText}>View Certificate</Text>
@@ -365,6 +373,17 @@ export default function TrackProgressDetailScreen() {
 
         <FinalCommentsSection userId={userId} />
       </ScrollView>
+
+      {certificatePreview.certificatePreviewData ? (
+        <CertificatePreviewModal
+          visible={certificatePreview.showCertificatePreview}
+          data={certificatePreview.certificatePreviewData}
+          fileName={certificatePreview.certificateFileName}
+          isDownloading={certificatePreview.isDownloadingCertificate}
+          onClose={certificatePreview.closeCertificatePreview}
+          onDownloadingChange={certificatePreview.setIsDownloadingCertificate}
+        />
+      ) : null}
     </GradientBackground>
   );
 }

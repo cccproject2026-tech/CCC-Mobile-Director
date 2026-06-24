@@ -76,11 +76,14 @@ export const certificatesService = {
   },
 
   getUserCertificate: async (userId: string): Promise<CertificateRecord | null> => {
-    const response = await apiClient.get(
-      ENDPOINTS.CERTIFICATES.USER(userId),
-      { params: { t: Date.now() } },
-    );
-    return unwrapCertificate(response.data);
+    try {
+      const response = await apiClient.get(ENDPOINTS.CERTIFICATES.USER(userId));
+      return unwrapCertificate(response.data);
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 404) return null;
+      throw error;
+    }
   },
 
   resolveCertificateForUser: async (

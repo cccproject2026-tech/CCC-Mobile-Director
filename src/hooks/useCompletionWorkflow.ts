@@ -12,7 +12,7 @@ import {
 } from "@/types/progress.types";
 import { Mentee } from "@/types/user.types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Linking } from "react-native";
+import { Alert } from "react-native";
 import { profileKeys } from "./useProfile";
 import { progressKeys } from "./useProgress";
 
@@ -64,15 +64,11 @@ export function useUserCertificate(userId: string | undefined) {
   });
 }
 
-export function openCertificateUrl(certificate: CertificateRecord | null | undefined) {
-  const url = certificate?.pdfUrl || certificate?.certificateUrl;
-  if (!url || typeof url !== "string") {
-    Alert.alert("Certificate", "No certificate file is available yet.");
-    return;
-  }
-  void Linking.openURL(url).catch(() => {
-    Alert.alert("Certificate", "Could not open the certificate link.");
-  });
+export function openCertificateUrl(_certificate: CertificateRecord | null | undefined) {
+  Alert.alert(
+    'Certificate',
+    'Use View Certificate to open the programme completion certificate preview.',
+  );
 }
 
 export function useInviteFieldMentor() {
