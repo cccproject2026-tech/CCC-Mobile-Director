@@ -107,19 +107,19 @@ export const useMicroGrantApplicationWithProfiles = (status?: MicroGrantStatus) 
     };
 };
 
-export const useMicroGrantApplicationDetails = (applicationId: string) => {
-    // Fetch application directly from API
+export const useMicroGrantApplicationDetails = (slug: string) => {
     const { data: application, isLoading: isLoadingApplication, error } = useQuery({
-        queryKey: ['microgrant-application', applicationId],
-        queryFn: () => grantService.getApplication(applicationId),
-        enabled: !!applicationId,
+        queryKey: ['microgrant-application', slug],
+        queryFn: () => grantService.getApplication(slug),
+        enabled: !!slug,
     });
 
-    console.log('Fetched application:', application);
-    // Get userId from application
-    const userId = application?.userId?._id;
+    const userId =
+        application?.userId?._id ??
+        (typeof application?.application?.userId === 'string'
+            ? application.application.userId
+            : undefined);
 
-    // Fetch user profile
     const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
         queryKey: ['user', userId],
         queryFn: () => profileService.getUserById(userId!),

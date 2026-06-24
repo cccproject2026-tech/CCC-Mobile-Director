@@ -51,7 +51,7 @@ const ApplicationCard: React.FC<Props> = memo(({
     const handleCardPress = () => {
         if (onPress) {
             onPress();
-        } else {
+        } else if (userId) {
             router.push({
                 pathname: `/(director)/(tabs)/micro-grant/${userId}`,
             });

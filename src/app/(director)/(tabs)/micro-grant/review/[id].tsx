@@ -1,39 +1,42 @@
-
-
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
-import React, { useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
-import { LinearGradient } from 'expo-linear-gradient';
+import { GradientBackground } from '@/components/ui/design-system';
 import { useMicroGrantApplicationDetails, useUpdateApplicationStatus } from '@/hooks/useMicroGrant';
-import { MICROGRANT_PAGE_TITLE } from '@/utils/microgrant';
+import {
+    MICROGRANT_CONFIRMATION_LABELS,
+    MICROGRANT_PAGE_TITLE,
+    displayNameFromMicrograntDetail,
+    getMicrograntOtherNote,
+    getMicrograntReportingProcedureItems,
+} from '@/utils/microgrant';
 
 const ApplicationReview = () => {
     const router = useRouter();
-    const { id: routeId } = useLocalSearchParams();
+    const { id: routeSlug } = useLocalSearchParams();
     const { bottom } = useSafeAreaInsets();
 
-    const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-
-    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(routeId as string);
+    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(
+        routeSlug as string,
+    );
     const updateStatusMutation = useUpdateApplicationStatus();
-    /** PATCH /microgrant/application/:applicationId/status requires the application document _id, not userId. */
     const statusApplicationId = application?.application._id;
 
-    const handleCheckboxToggle = (option: string) => {
-        setSelectedOptions(prev =>
-            prev.includes(option) ? prev.filter(o => o !== option) : [...prev, option]
-        );
-    };
+    const otherNote = useMemo(
+        () => getMicrograntOtherNote(application?.application?.answers),
+        [application?.application?.answers],
+    );
 
+    const reportingItems = getMicrograntReportingProcedureItems();
 
     const handleReject = () => {
         if (!statusApplicationId) return;
         updateStatusMutation.mutate(
             { applicationId: statusApplicationId, status: 'rejected' },
-            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
+            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') },
         );
     };
 
@@ -41,7 +44,7 @@ const ApplicationReview = () => {
         if (!statusApplicationId) return;
         updateStatusMutation.mutate(
             { applicationId: statusApplicationId, status: 'accepted' },
-            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
+            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') },
         );
     };
 
@@ -49,39 +52,37 @@ const ApplicationReview = () => {
         if (!statusApplicationId) return;
         updateStatusMutation.mutate(
             { applicationId: statusApplicationId, status: 'pending' },
-            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') }
+            { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') },
         );
     };
 
     if (isLoading) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
+            <GradientBackground>
                 <TopBar notifications={3} showUserName={true} showNotifications={true} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading application...</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
     if (!application || error) {
         return (
-            <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
+            <GradientBackground>
                 <TopBar notifications={3} showUserName={true} showNotifications={true} />
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyText}>Application not found</Text>
                 </View>
-            </LinearGradient>
+            </GradientBackground>
         );
     }
 
-    const userName = `${userProfile?.firstName || 'Unknown'} ${userProfile?.lastName || 'User'}`.trim();
-    const role = userProfile?.role || 'Pastor';
-    const profilePicture = userProfile?.profilePicture;
+    const userName = displayNameFromMicrograntDetail(application, userProfile);
 
     return (
-        <LinearGradient colors={['#176192', '#1D548D', '#264387']} style={{ flex: 1 }}>
+        <GradientBackground>
             <TopBar notifications={3} showUserName={true} showNotifications={true} />
 
             <View style={styles.header}>
@@ -96,48 +97,41 @@ const ApplicationReview = () => {
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 20 }]}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Title */}
                 <View style={styles.titleContainer}>
-                    <Text style={styles.title}>
-                        {MICROGRANT_PAGE_TITLE}
-                    </Text>
+                    <Text style={styles.title}>{MICROGRANT_PAGE_TITLE}</Text>
                 </View>
 
-                {/* Reporting Procedures Section */}
+                <View style={styles.applicantBanner}>
+                    <Text style={styles.applicantLabel}>Applicant</Text>
+                    <Text style={styles.applicantName}>{userName}</Text>
+                </View>
+
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>2. Reporting Procedures</Text>
                 </View>
 
                 <View style={styles.proceduresBox}>
-                    <ProcedureItem text="Upon approval, a grant agreement will be signed based on the submitted Action Steps—the CCC may modify, suspend, or stop payment of grant funds if the terms of the agreement are changed or not followed." />
-                    <ProcedureItem text="Upon completion of the project, the grantee must submit a grant report regarding the use of funds consisting of a narrative report and financial accounting—the report ought to include copies of relevant receipts and records of expenditures." />
-                    <ProcedureItem text="Any grant funds that have not been used for, or committed to, the project upon expiration or termination of the grant agreement must be returned to the CCC." />
+                    {reportingItems.map((text) => (
+                        <ProcedureItem key={text} text={text} />
+                    ))}
                 </View>
 
-                {/* Review Section */}
                 <View style={styles.reviewBox}>
                     <Text style={styles.reviewTitle}>
-                        Please review the grant application thoroughly before submission and ensure that all required sections are completed accurately
+                        Pastor confirmations submitted with this application
                     </Text>
 
-                    <CheckboxItem
-                        label="I have reviewed the application and filled out each the section to the best of my knowledge"
-                        checked={selectedOptions.includes('reviewed')}
-                        onToggle={() => handleCheckboxToggle('reviewed')}
-                    />
-                    <CheckboxItem
-                        label="I have filled out the application, and I would like to discuss it with a center's director"
-                        checked={selectedOptions.includes('discuss')}
-                        onToggle={() => handleCheckboxToggle('discuss')}
-                    />
-                    <CheckboxItem
-                        label="Other: Lorem ipsum dolor sit amet"
-                        checked={selectedOptions.includes('other')}
-                        onToggle={() => handleCheckboxToggle('other')}
-                    />
+                    <ReadOnlyConfirmation label={MICROGRANT_CONFIRMATION_LABELS.reviewed} />
+                    <ReadOnlyConfirmation label={MICROGRANT_CONFIRMATION_LABELS.uploadsIncluded} />
+
+                    {otherNote ? (
+                        <View style={styles.otherNoteBox}>
+                            <Text style={styles.otherNoteLabel}>Other notes from pastor</Text>
+                            <Text style={styles.otherNoteText}>{otherNote}</Text>
+                        </View>
+                    ) : null}
                 </View>
 
-                {/* Action Buttons */}
                 <View style={styles.actionButtons}>
                     <TouchableOpacity
                         style={[styles.actionBtn, styles.rejectBtn]}
@@ -163,13 +157,16 @@ const ApplicationReview = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Add to Pending Button */}
-                <TouchableOpacity style={styles.pendingBtn} onPress={handleAddToPending} disabled={updateStatusMutation.isPending}>
+                <TouchableOpacity
+                    style={styles.pendingBtn}
+                    onPress={handleAddToPending}
+                    disabled={updateStatusMutation.isPending}
+                >
                     <Ionicons name="arrow-back" size={20} color="#fff" />
                     <Text style={styles.pendingBtnText}>Add to Pending</Text>
                 </TouchableOpacity>
             </ScrollView>
-        </LinearGradient>
+        </GradientBackground>
     );
 };
 
@@ -180,17 +177,16 @@ const ProcedureItem = ({ text }: { text: string }) => (
     </View>
 );
 
-const CheckboxItem = ({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) => (
-    <TouchableOpacity style={styles.checkboxContainer} onPress={onToggle}>
-        <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-            {checked && <Ionicons name="checkmark" size={16} color="#fff" />}
+const ReadOnlyConfirmation = ({ label }: { label: string }) => (
+    <View style={styles.confirmationRow}>
+        <View style={styles.checkboxChecked}>
+            <Ionicons name="checkmark" size={16} color="#fff" />
         </View>
-        <Text style={styles.checkboxLabel}>{label}</Text>
-    </TouchableOpacity>
+        <Text style={styles.confirmationLabel}>{label}</Text>
+    </View>
 );
 
 export default ApplicationReview;
-
 
 const styles = StyleSheet.create({
     header: {
@@ -234,165 +230,60 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
     },
-    errorText: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
-        marginTop: 8,
-        textAlign: 'center',
-    },
     titleContainer: {
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.18)',
+        borderRadius: 14,
         padding: 16,
         marginBottom: 16,
+        backgroundColor: 'rgba(255,255,255,0.06)',
     },
     title: {
         color: '#fff',
         fontSize: 16,
-        fontWeight: '600',
+        fontWeight: '700',
         textAlign: 'center',
         lineHeight: 24,
     },
-    userCard: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
-        padding: 16,
+    applicantBanner: {
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 14,
+        padding: 14,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.12)',
         marginBottom: 16,
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: 12,
     },
-    avatarCircle: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.3)',
-        overflow: 'hidden',
-    },
-    avatarImage: {
-        width: '100%',
-        height: '100%',
-    },
-    userInfo: {
-        flex: 1,
-    },
-    userName: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    userRole: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 14,
-        marginBottom: 8,
-    },
-    actionIconsInCard: {
-        flexDirection: 'row',
-        gap: 16,
-        marginBottom: 8,
-    },
-    applicationDate: {
-        color: 'rgba(255,255,255,0.7)',
+    applicantLabel: {
+        color: 'rgba(255,255,255,0.65)',
         fontSize: 12,
+        marginBottom: 4,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
-    viewProfileBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 8,
-        gap: 6,
-    },
-    viewProfileText: {
+    applicantName: {
         color: '#fff',
-        fontSize: 13,
-        fontWeight: '600',
+        fontSize: 17,
+        fontWeight: '700',
     },
     section: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 14,
         padding: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.12)',
         marginBottom: 16,
     },
     sectionTitle: {
         color: '#fff',
         fontSize: 16,
         fontWeight: '700',
-        marginBottom: 4,
-    },
-    sectionSubtitle: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 13,
-        lineHeight: 20,
-    },
-    questionBox: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-        marginBottom: 16,
-    },
-    questionLabel: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-    questionHint: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 12,
-        marginBottom: 12,
-    },
-    answerBox: {
-        backgroundColor: 'rgba(255,255,255,0.08)',
-        borderRadius: 8,
-        padding: 12,
-    },
-    answerText: {
-        color: '#fff',
-        fontSize: 14,
-        lineHeight: 20,
-    },
-    downloadBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        gap: 8,
-        marginTop: 12,
-        marginBottom: 8,
-    },
-    downloadText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    fileHint: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 11,
-        textAlign: 'center',
     },
     proceduresBox: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 14,
         padding: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.12)',
         marginBottom: 16,
         gap: 16,
     },
@@ -411,11 +302,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     reviewBox: {
-        backgroundColor: 'rgba(23, 97, 146, 0.5)',
-        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderRadius: 14,
         padding: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
+        borderColor: 'rgba(255,255,255,0.12)',
         marginBottom: 16,
     },
     reviewTitle: {
@@ -423,31 +314,46 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 16,
         lineHeight: 20,
+        fontWeight: '600',
     },
-    checkboxContainer: {
+    confirmationRow: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         gap: 12,
-        marginBottom: 16,
+        marginBottom: 14,
     },
-    checkbox: {
+    checkboxChecked: {
         width: 24,
         height: 24,
         borderRadius: 4,
+        backgroundColor: '#41B36E',
+        borderColor: '#41B36E',
         borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.5)',
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 2,
     },
-    checkboxChecked: {
-        backgroundColor: '#4CAF50',
-        borderColor: '#4CAF50',
-    },
-    checkboxLabel: {
-        color: '#fff',
+    confirmationLabel: {
+        color: 'rgba(255,255,255,0.9)',
         fontSize: 13,
         flex: 1,
+        lineHeight: 20,
+    },
+    otherNoteBox: {
+        marginTop: 4,
+        backgroundColor: 'rgba(255,255,255,0.06)',
+        borderRadius: 10,
+        padding: 12,
+    },
+    otherNoteLabel: {
+        color: 'rgba(255,255,255,0.65)',
+        fontSize: 12,
+        marginBottom: 6,
+        fontWeight: '600',
+    },
+    otherNoteText: {
+        color: '#fff',
+        fontSize: 14,
         lineHeight: 20,
     },
     actionButtons: {

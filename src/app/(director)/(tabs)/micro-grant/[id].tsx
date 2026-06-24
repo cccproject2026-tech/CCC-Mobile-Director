@@ -1,6 +1,15 @@
 // app/(director)/(tabs)/micro-grant/[id].tsx
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
-import React from 'react';
+import {
+    ActivityIndicator,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    Image,
+} from 'react-native';
+import React, { useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
@@ -10,24 +19,61 @@ import { useMicroGrantApplicationDetails } from '@/hooks/useMicroGrant';
 import {
     MICROGRANT_PAGE_TITLE,
     displayNameFromMicrograntDetail,
+    getMicrograntAnswerEntries,
+    getMicrograntOtherNote,
+    normalizeMicrograntSupportingDocs,
 } from '@/utils/microgrant';
 
 const ApplicationDetails = () => {
     const router = useRouter();
-    const { id: userId } = useLocalSearchParams();
+    const { id: routeSlug } = useLocalSearchParams();
     const { bottom } = useSafeAreaInsets();
 
-    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(userId as string);
+    const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(
+        routeSlug as string,
+    );
+
+    const answerEntries = useMemo(
+        () => getMicrograntAnswerEntries(application?.application?.answers),
+        [application?.application?.answers],
+    );
+
+    const otherNote = useMemo(
+        () => getMicrograntOtherNote(application?.application?.answers),
+        [application?.application?.answers],
+    );
+
+    const supportingDocs = useMemo(
+        () =>
+            normalizeMicrograntSupportingDocs(
+                application?.application?.supportingDocs ??
+                    application?.application?.supportingDoc,
+            ),
+        [application?.application?.supportingDoc, application?.application?.supportingDocs],
+    );
+
+    const applicantUserId =
+        application?.application?.userId || application?.userId?._id;
 
     const handleViewProfile = () => {
-        if (application?.application.userId) {
-            router.push(`/(director)/(tabs)/mentees/${application.application.userId}` as any);
+        if (applicantUserId) {
+            router.push(`/(director)/(tabs)/mentees/${applicantUserId}` as any);
         }
     };
 
     const handleNext = () => {
-        if (!userId) return;
-        router.push(`/(director)/(tabs)/micro-grant/review/${userId}` as any);
+        if (!routeSlug) return;
+        router.push(`/(director)/(tabs)/micro-grant/review/${routeSlug}` as any);
+    };
+
+    const handleOpenDoc = async (url: string) => {
+        if (!url) return;
+        try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) await Linking.openURL(url);
+        } catch (e) {
+            console.error('Error opening supporting document:', e);
+        }
     };
 
     if (isLoading) {
@@ -56,7 +102,7 @@ const ApplicationDetails = () => {
     }
 
     const userName = displayNameFromMicrograntDetail(application, userProfile);
-    const role = userProfile?.role || application.user?.role || 'Pastor';
+    const role = userProfile?.role || application.userId?.role || 'Pastor';
     const profilePicture = userProfile?.profilePicture;
 
     return (
@@ -68,12 +114,10 @@ const ApplicationDetails = () => {
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: bottom + 100 }]}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Title */}
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>{MICROGRANT_PAGE_TITLE}</Text>
                 </View>
 
-                {/* User Card */}
                 <View style={styles.userCard}>
                     <View style={styles.avatarCircle}>
                         {profilePicture ? (
@@ -93,7 +137,8 @@ const ApplicationDetails = () => {
                             <Ionicons name="logo-whatsapp" size={16} color="#EAF7FF" />
                         </View>
                         <Text style={styles.applicationDate}>
-                            Application received on {new Date(application.application.createdAt).toLocaleDateString('en-US')}
+                            Application received on{' '}
+                            {new Date(application.application.createdAt).toLocaleDateString('en-US')}
                         </Text>
                     </View>
 
@@ -103,42 +148,58 @@ const ApplicationDetails = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Cover Sheet Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>1. Cover Sheet</Text>
                     <Text style={styles.sectionSubtitle}>
-                        Please answer the questions succinctly following Prompts
+                        Submitted answers from the pastor
                     </Text>
                 </View>
 
-                {/* Questions and Answers */}
-                {Object.entries(application.application.answers || {}).map(([question, answer], index) => (
-                    <View key={index} style={styles.questionBox}>
-                        <Text style={styles.questionLabel}>{question} *</Text>
-                        <Text style={styles.questionHint}>
-                            [{typeof answer === 'string' ? answer.substring(0, 50) : ''}...]
-                        </Text>
+                {answerEntries.length === 0 ? (
+                    <View style={styles.questionBox}>
+                        <Text style={styles.emptyAnswers}>No answers submitted yet.</Text>
+                    </View>
+                ) : (
+                    answerEntries.map(({ label, value }) => (
+                        <View key={label} style={styles.questionBox}>
+                            <Text style={styles.questionLabel}>{label}</Text>
+                            <View style={styles.answerBox}>
+                                <Text style={styles.answerText}>{value}</Text>
+                            </View>
+                        </View>
+                    ))
+                )}
+
+                {otherNote ? (
+                    <View style={styles.questionBox}>
+                        <Text style={styles.questionLabel}>Other notes from pastor</Text>
                         <View style={styles.answerBox}>
-                            <Text style={styles.answerText}>{answer as string}</Text>
+                            <Text style={styles.answerText}>{otherNote}</Text>
                         </View>
                     </View>
-                ))}
+                ) : null}
 
-                {/* Download File Section */}
                 <View style={styles.questionBox}>
                     <Text style={styles.questionLabel}>
-                        Please upload here any supporting documents or media (photos, videos, publications, etc.)
+                        Supporting documents or media (photos, videos, publications, etc.)
                     </Text>
-                    <TouchableOpacity style={styles.downloadBtn}>
-                        <Ionicons name="download-outline" size={20} color="#fff" />
-                        <Text style={styles.downloadText}>Download File</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.fileHint}>
-                        [Upload up to 10 supported files. Max 100 MB per file.]
-                    </Text>
+                    {supportingDocs.length === 0 ? (
+                        <Text style={styles.fileHint}>No supporting documents uploaded.</Text>
+                    ) : (
+                        supportingDocs.map((doc, index) => (
+                            <TouchableOpacity
+                                key={`${doc.name}-${index}`}
+                                style={styles.downloadBtn}
+                                onPress={() => handleOpenDoc(doc.url)}
+                                disabled={!doc.url}
+                            >
+                                <Ionicons name="download-outline" size={20} color="#fff" />
+                                <Text style={styles.downloadText}>{doc.name}</Text>
+                            </TouchableOpacity>
+                        ))
+                    )}
                 </View>
 
-                {/* Next Button */}
                 <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
                     <Text style={styles.nextBtnText}>Next</Text>
                 </TouchableOpacity>
@@ -213,19 +274,19 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     questionLabel: { color: '#fff', fontSize: 14, fontWeight: '700', marginBottom: 8 },
-    questionHint: { color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: 12 },
     answerBox: { backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 12 },
     answerText: { color: 'rgba(255,255,255,0.9)', fontSize: 14, lineHeight: 20 },
+    emptyAnswers: { color: 'rgba(255,255,255,0.65)', fontSize: 14 },
     downloadBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         backgroundColor: 'rgba(255,255,255,0.10)',
         paddingVertical: 11, paddingHorizontal: 16,
         borderRadius: 10, gap: 8,
-        marginTop: 12, marginBottom: 8,
+        marginTop: 12,
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
     },
     downloadText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-    fileHint: { color: 'rgba(255,255,255,0.5)', fontSize: 11, textAlign: 'center' },
+    fileHint: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 8 },
     nextBtn: {
         backgroundColor: 'rgba(255,255,255,0.92)',
         paddingVertical: 14, borderRadius: 12,

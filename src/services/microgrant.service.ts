@@ -5,13 +5,22 @@ import {
     GrantSubmissionResponse,
     MicrograntApplication,
     MicrograntApplicationDetail,
-    MicrograntApplicationDetailApiResponse,
     MicrograntApplicationsApiResponse,
     MicroGrantStatus,
 } from '@/types/microgrant.types';
+import {
+    buildMicrograntDetailFromListApplication,
+    getMicrograntApplicantUserId,
+    unwrapMicrograntApplicationsList,
+    unwrapMicrograntWithUser,
+} from '@/utils/microgrant';
 import { apiClient } from './api/client';
 import { ENDPOINTS } from './api/endpoints';
 
+function isNotFoundError(error: unknown): boolean {
+    const e = error as { statusCode?: number; response?: { status?: number } };
+    return e?.statusCode === 404 || e?.response?.status === 404;
+}
 
 export const grantService = {
     /**
@@ -86,11 +95,11 @@ export const grantService = {
                 ENDPOINTS.GRANT.GET_APPLICATIONS(status),
                 {
                     params: {
-                        t: Date.now(), // Prevent caching
+                        t: Date.now(),
                     }
                 }
             );
-            return response.data.data;
+            return unwrapMicrograntApplicationsList(response);
         } catch (error) {
             console.error('Error fetching microgrant applications:', error);
             throw error;
@@ -98,24 +107,52 @@ export const grantService = {
     },
 
     /**
-     * Fetch a single microgrant application by ID
+     * GET `/microgrant/application/:userId` — accepts applicant user id, not application `_id`.
      */
-    getApplication: async (applicationId: string): Promise<MicrograntApplicationDetail> => {
+    getApplicationByUserId: async (userId: string): Promise<MicrograntApplicationDetail | null> => {
         try {
-            const response = await apiClient.get<MicrograntApplicationDetailApiResponse>(
-                ENDPOINTS.GRANT.GET_APPLICATION(applicationId), {
-                params: {
-                    t: Date.now(), // Prevent caching
-                }
-            }
-            );
-
-            console.log('Microgrant application response:', response.data);
-            return response.data.data;
+            const response = await apiClient.get(ENDPOINTS.GRANT.GET_APPLICATION(userId), {
+                params: { t: Date.now() },
+            });
+            return unwrapMicrograntWithUser(response);
         } catch (error) {
-            console.error('Error fetching microgrant application:', error);
+            if (isNotFoundError(error)) return null;
+            console.error('Error fetching microgrant application by user:', error);
             throw error;
         }
+    },
+
+    /**
+     * Load application detail by route slug (user id preferred; falls back via applications list).
+     */
+    getApplication: async (slug: string): Promise<MicrograntApplicationDetail> => {
+        const trimmed = slug.trim();
+        if (!trimmed) {
+            throw new Error('Application id is required');
+        }
+
+        const direct = await grantService.getApplicationByUserId(trimmed);
+        if (direct) return direct;
+
+        const list = await grantService.getApplications();
+        const byAppId = list.find((a) => String(a._id) === trimmed);
+        if (byAppId) {
+            const uid = getMicrograntApplicantUserId(byAppId);
+            if (uid && uid !== trimmed) {
+                const byUser = await grantService.getApplicationByUserId(uid);
+                if (byUser) return byUser;
+            }
+            const built = buildMicrograntDetailFromListApplication(byAppId);
+            if (built) return built;
+        }
+
+        const byUserInList = list.find((a) => getMicrograntApplicantUserId(a) === trimmed);
+        if (byUserInList) {
+            const built = buildMicrograntDetailFromListApplication(byUserInList);
+            if (built) return built;
+        }
+
+        throw new Error('Application not found for this user');
     },
 
     /**
