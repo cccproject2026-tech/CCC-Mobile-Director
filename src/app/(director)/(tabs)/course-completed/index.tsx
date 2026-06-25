@@ -1,6 +1,7 @@
 import TopBar from "@/components/Header/TopBar";
 import SearchBar from "@/components/Header/SearchBar";
 import { TabSwitcher } from "@/components/Header/TabSwitcher";
+import CompletionWorkflowModal from "@/components/Modals/CompletionWorkflowModal";
 import { GradientBackground, homeLayout, roadmapTheme } from "@/components/ui/design-system";
 import {
   filterCourseCompletedByTab,
@@ -230,7 +231,8 @@ function CourseCompletedRow({
   const alreadyInvited = Boolean(item.fieldMentorInvitation);
 
   return (
-    <Pressable style={styles.card} onPress={openDetail}>
+    <>
+      <Pressable style={styles.card} onPress={openDetail}>
       {item.profilePicture ? (
         <Image source={{ uri: item.profilePicture }} style={styles.avatar} />
       ) : (
@@ -293,6 +295,8 @@ function CourseCompletedRow({
         </View>
       )}
     </Pressable>
+    <CompletionWorkflowModal dialog={workflow.dialog} onClose={workflow.closeDialog} />
+    </>
   );
 }
 

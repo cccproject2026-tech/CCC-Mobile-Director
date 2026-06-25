@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useCompletionWorkflow";
 import { useCertificatePreview } from "@/hooks/useCertificatePreview";
 import CertificatePreviewModal from "@/components/certificate/CertificatePreviewModal";
+import CompletionWorkflowModal from "@/components/Modals/CompletionWorkflowModal";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { useAssignedRoadmaps } from "@/hooks/roadmap/useRoadmaps";
 import {
@@ -384,6 +385,8 @@ export default function TrackProgressDetailScreen() {
           onDownloadingChange={certificatePreview.setIsDownloadingCertificate}
         />
       ) : null}
+
+      <CompletionWorkflowModal dialog={workflow.dialog} onClose={workflow.closeDialog} />
     </GradientBackground>
   );
 }

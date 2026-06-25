@@ -11,8 +11,9 @@ import {
   InviteFieldMentorPayload,
 } from "@/types/progress.types";
 import { Mentee } from "@/types/user.types";
+import { type WorkflowDialogState } from "@/components/Modals/CompletionWorkflowModal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert } from "react-native";
+import { useCallback, useState } from "react";
 import { profileKeys } from "./useProfile";
 import { progressKeys } from "./useProgress";
 
@@ -65,10 +66,8 @@ export function useUserCertificate(userId: string | undefined) {
 }
 
 export function openCertificateUrl(_certificate: CertificateRecord | null | undefined) {
-  Alert.alert(
-    'Certificate',
-    'Use View Certificate to open the programme completion certificate preview.',
-  );
+  // Prefer View Certificate in the UI; kept for API compatibility.
+  void _certificate;
 }
 
 export function useInviteFieldMentor() {
@@ -182,72 +181,103 @@ export function useCompletionWorkflow(userId: string, user?: Partial<Mentee> | n
 
   const issueCertificate = useIssueCertificate();
   const inviteFieldMentor = useInviteFieldMentor();
+  const [dialog, setDialog] = useState<WorkflowDialogState | null>(null);
+
+  const closeDialog = useCallback(() => {
+    setDialog(null);
+  }, []);
+
+  const showAlert = useCallback((title: string, message?: string) => {
+    setDialog({
+      visible: true,
+      title,
+      message,
+      confirmText: "OK",
+      alertOnly: true,
+      onConfirm: () => setDialog(null),
+    });
+  }, []);
+
+  const showConfirm = useCallback(
+    (
+      title: string,
+      message: string | undefined,
+      onConfirm: () => void,
+      options?: { confirmText?: string; cancelText?: string },
+    ) => {
+      setDialog({
+        visible: true,
+        title,
+        message,
+        confirmText: options?.confirmText ?? "Confirm",
+        cancelText: options?.cancelText ?? "Cancel",
+        onConfirm: () => {
+          setDialog(null);
+          onConfirm();
+        },
+        onCancel: () => setDialog(null),
+      });
+    },
+    [],
+  );
 
   const runIssueCertificate = () => {
     if (!userId || !directorId) {
-      Alert.alert("Error", "You must be logged in to issue a certificate.");
+      showAlert("Error", "You must be logged in to issue a certificate.");
       return;
     }
     if (!user?.hasCompleted) {
-      Alert.alert(
+      showAlert(
         "Not completed",
         "This pastor must be marked complete by their mentor before a certificate can be issued.",
       );
       return;
     }
-    Alert.alert("Issue certificate", "Issue certificate for this user?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Issue",
-        onPress: () => {
-          issueCertificate.mutate(
-            { userId, issuedBy: directorId },
-            {
-              onSuccess: () =>
-                Alert.alert("Success", "Certificate issued successfully."),
-              onError: (e: Error) =>
-                Alert.alert("Error", e.message || "Could not issue certificate."),
-            },
-          );
-        },
+    showConfirm(
+      "Issue certificate",
+      "Issue certificate for this user?",
+      () => {
+        issueCertificate.mutate(
+          { userId, issuedBy: directorId },
+          {
+            onSuccess: () => showAlert("Success", "Certificate issued successfully."),
+            onError: (e: Error) =>
+              showAlert("Error", e.message || "Could not issue certificate."),
+          },
+        );
       },
-    ]);
+      { confirmText: "Issue", cancelText: "Cancel" },
+    );
   };
 
   const runInviteFieldMentor = (email?: string) => {
     const targetEmail = email ?? user?.email;
     if (!targetEmail?.trim()) {
-      Alert.alert("No email", "User email is required to send an invitation.");
+      showAlert("No email", "User email is required to send an invitation.");
       return;
     }
     if (!directorId) {
-      Alert.alert("Error", "You must be logged in to send an invitation.");
+      showAlert("Error", "You must be logged in to send an invitation.");
       return;
     }
     if (user?.fieldMentorInvitation) {
-      Alert.alert("Already invited", "This user has already been invited as a field mentor.");
+      showAlert("Already invited", "This user has already been invited as a field mentor.");
       return;
     }
-    Alert.alert(
+    showConfirm(
       "Invite as Field Mentor",
       `Send field mentor invitation to ${targetEmail}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Send invite",
-          onPress: () => {
-            inviteFieldMentor.mutate(
-              { email: targetEmail.trim(), invitedBy: directorId, userId },
-              {
-                onSuccess: () =>
-                  Alert.alert("Success", "Field mentor invitation sent."),
-                onError: (e: Error) =>
-                  Alert.alert("Error", e.message || "Could not send invitation."),
-              },
-            );
+      () => {
+        inviteFieldMentor.mutate(
+          { email: targetEmail.trim(), invitedBy: directorId, userId },
+          {
+            onSuccess: () => showAlert("Success", "Field mentor invitation sent."),
+            onError: (e: Error) =>
+              showAlert("Error", e.message || "Could not send invitation."),
           },
-        },
-      ],
+        );
+      },
+      { confirmText: "Send invite", cancelText: "Cancel" },
     );
   };
 
@@ -257,6 +287,8 @@ export function useCompletionWorkflow(userId: string, user?: Partial<Mentee> | n
     isIssuingCertificate: issueCertificate.isPending,
     isInvitingFieldMentor: inviteFieldMentor.isPending,
     isBusy: issueCertificate.isPending || inviteFieldMentor.isPending,
+    dialog,
+    closeDialog,
   };
 }
 
@@ -267,6 +299,8 @@ export function useMenteeCardCompletionHandlers(mentee?: Mentee | null) {
       onIssueCertificate: undefined,
       onInviteAsFieldMentor: undefined,
       isBusy: false,
+      dialog: null,
+      closeDialog: () => {},
     };
   }
   return {
@@ -279,6 +313,8 @@ export function useMenteeCardCompletionHandlers(mentee?: Mentee | null) {
         ? () => workflow.runInviteFieldMentor(mentee.email)
         : undefined,
     isBusy: workflow.isBusy,
+    dialog: workflow.dialog,
+    closeDialog: workflow.closeDialog,
   };
 }
 
