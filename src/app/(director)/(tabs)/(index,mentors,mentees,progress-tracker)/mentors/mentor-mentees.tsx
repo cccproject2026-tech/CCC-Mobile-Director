@@ -219,7 +219,7 @@ export default function MentorMentees() {
         return (
             <GradientBackground>
                 <View style={styles.pageRoot}>
-                    <TopBar notifications={3} showUserName showNotifications />
+                    <TopBar showUserName showNotifications />
                     <View style={styles.loadingListContainer}>
                         <UserCardSkeleton layout="list" />
                         <UserCardSkeleton layout="list" />
@@ -235,7 +235,7 @@ export default function MentorMentees() {
         return (
             <GradientBackground>
                 <View style={styles.pageRoot}>
-                    <TopBar notifications={3} showUserName showNotifications />
+                    <TopBar showUserName showNotifications />
                     <View style={styles.errorContainer}>
                         <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
                         <Text style={styles.errorText}>
@@ -250,7 +250,7 @@ export default function MentorMentees() {
     return (
         <GradientBackground>
             <View style={styles.pageRoot}>
-                <TopBar notifications={3} showUserName showNotifications />
+                <TopBar showUserName showNotifications />
 
                 <View style={styles.content}>
                     {/* Header */}

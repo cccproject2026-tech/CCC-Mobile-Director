@@ -151,4 +151,8 @@ export const assessmentService = {
         );
         return response.data;
     },
+
+    removeBannerImage: async (assessmentId: string): Promise<void> => {
+        await apiClient.delete(ENDPOINTS.ASSESSMENTS.UPLOAD_BANNER_IMAGE(assessmentId));
+    },
 };

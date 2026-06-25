@@ -8,7 +8,10 @@ import { useAssignedMentors } from "@/hooks/mentors/useGetAssignedMentors";
 import {
   buildScheduleFlowParams,
   getScheduleMeetingBase,
+  isRescheduleMeetingFlow,
   leaveScheduleMeetingPersonStep,
+  leaveScheduleMeetingFlow,
+  scheduleParamString,
 } from "@/lib/scheduling/scheduleMeetingNavigation";
 import { getReturnToParam } from "@/utils/navigation";
 import { useMentees } from "@/hooks/useMentees";
@@ -28,10 +31,11 @@ type DirectorPersonTab = "pastor" | "mentor";
 export default function ScheduleMeetingPersonScreen() {
   const { user } = useAuthStore();
   const insets = useSafeAreaInsets();
-  const { mode, appointmentId, personData } = useLocalSearchParams<{
-    mode?: "schedule" | "reschedule";
-    appointmentId?: string;
+  const { mode, appointmentId, personData, skipPersonPicker } = useLocalSearchParams<{
+    mode?: string | string[];
+    appointmentId?: string | string[];
     personData?: string;
+    skipPersonPicker?: string | string[];
   }>();
   const params = useLocalSearchParams<{
     drawerContext?: string;
@@ -46,8 +50,18 @@ export default function ScheduleMeetingPersonScreen() {
         drawerContext: params.drawerContext,
         assessmentId: params.assessmentId,
         returnTo: getReturnToParam(params),
+        mode: scheduleParamString(mode) === "reschedule" ? "reschedule" : "schedule",
+        appointmentId: scheduleParamString(appointmentId),
+        ...(scheduleParamString(skipPersonPicker) === "1" ? { skipPersonPicker: "1" } : {}),
       }),
-    [params.assessmentId, params.drawerContext, params.returnTo],
+    [
+      appointmentId,
+      mode,
+      params.assessmentId,
+      params.drawerContext,
+      params.returnTo,
+      skipPersonPicker,
+    ],
   );
 
   const {
@@ -64,11 +78,23 @@ export default function ScheduleMeetingPersonScreen() {
   useFocusEffect(
     useCallback(() => {
       const keepDraft = String(params.preserveDraft ?? "") === "1";
+      const flowMode = scheduleParamString(mode) || "schedule";
+      const skipPerson = scheduleParamString(skipPersonPicker) === "1";
+
+      // Reschedule skips person selection — if we land here, exit to appointments.
+      if (
+        (skipPerson || flowMode === "reschedule" || scheduleParamString(appointmentId)) &&
+        !personData
+      ) {
+        leaveScheduleMeetingFlow(router, user?.role, getReturnToParam(params));
+        return;
+      }
+
       if (!keepDraft) {
         reset();
       }
-      setMode((mode as any) || "schedule");
-      setAppointmentId(appointmentId);
+      setMode(flowMode === "reschedule" ? "reschedule" : "schedule");
+      setAppointmentId(scheduleParamString(appointmentId));
       if (personData) {
         try {
           const parsed = JSON.parse(String(personData));
@@ -101,6 +127,8 @@ export default function ScheduleMeetingPersonScreen() {
       setAppointmentId,
       setMode,
       setPerson,
+      skipPersonPicker,
+      user?.role,
     ]),
   );
 
@@ -223,7 +251,11 @@ export default function ScheduleMeetingPersonScreen() {
                   setPerson(p);
                   router.replace({
                     pathname: `${scheduleBase}/time` as any,
-                    params: flowParams,
+                    params: {
+                      ...flowParams,
+                      mode: "schedule",
+                      preserveDraft: "1",
+                    },
                   });
                 }}
               >

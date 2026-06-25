@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
     Platform,
     Image,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
@@ -20,68 +21,39 @@ import TopBar from '@/components/Header/TopBar';
 import RoadMapFormHeader from '@/components/Header/RoadMapFormHeader';
 import { GradientBackground } from '@/components/ui/design-system';
 
-import {
-    useAllRoadmaps,
-    useUpdateNestedRoadmap,
-    useUpdateRoadmap,
-} from '@/hooks/roadmap/useRoadmaps';
-
+import { useRoadmap, useUpdateRoadmap } from '@/hooks/roadmap/useRoadmaps';
 
 export default function RoadmapEditScreen() {
-
-    const {
-        data: roadmaps = [],
-        isLoading: isLoadingRoadmaps,
-        error: roadmapsError,
-        refetch: refetchRoadmaps,
-    } = useAllRoadmaps();
-
     const router = useRouter();
     const pathname = usePathname();
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
 
-    const initialType =
-        ((params.type as string) || 'single').toLowerCase() === 'phase'
-            ? 'Phase'
-            : 'Single';
+    const roadmapId = (params.roadmapId as string) || '';
+    const { data: roadmap, isLoading, error } = useRoadmap(roadmapId);
 
-    const [roadmapType] = useState(initialType);
-    const [name, setName] = useState((params.name as string) || '');
-    const [roadmapId, setRoadMapId] = useState((params.roadmapId as string) || '');
-    const [description, setDescription] = useState(
-        (params.subheading as string) || ''
-    );
-    const [completionTime, setCompletionTime] = useState(
-        (params.completionTime as string) || ''
-    );
-    const headerBannerImage = (params.bannerImage as string) || null;
-    console.log("headerBannerImage", headerBannerImage);
-    const headerBannerName = (params.name as string) || '';
-    const [uploadedBannerImage, setUploadedBannerImage] = useState<string | null>(
-        null
-    );
-
-    const [showValidation, setShowValidation] = useState(false);
+    const [roadmapType, setRoadmapType] = useState('Single');
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [completionTime, setCompletionTime] = useState('');
+    const [uploadedBannerImage, setUploadedBannerImage] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const updateRoadmapMutation = useUpdateRoadmap();
-    useEffect(() => {
-        console.log("params data", params);
-        console.log("roadmaps", roadmaps);
-        setName((params.name as string) || '');
-        setDescription((params.subheading as string) || '');
-        setCompletionTime((params.completionTime as string) || '');
-        setRoadMapId((params.roadmapId as string) || '');
-        const image = (params.bannerImage as string) || null;
 
-        setUploadedBannerImage(image);
-    }, [
-        params.name,
-        params.subheading,
-        params.completionTime,
-        params.bannerImage,
-        params.roadmapId,
-    ]);
+    const updateRoadmapMutation = useUpdateRoadmap();
+
+    useEffect(() => {
+        if (!roadmap) return;
+
+        setName(roadmap.name || '');
+        setDescription(roadmap.roadMapDetails || roadmap.description || '');
+        setCompletionTime(roadmap.duration || '');
+        setUploadedBannerImage(
+            roadmap.imageUrl || roadmap.roadmaps?.[0]?.imageUrl || null,
+        );
+        setRoadmapType(
+            roadmap.type === 'phase' ? 'Phase' : 'Single',
+        );
+    }, [roadmap]);
 
     const handleSave = async () => {
         const missingFields = [];
@@ -91,19 +63,19 @@ export default function RoadmapEditScreen() {
         if (!completionTime.trim()) missingFields.push('Completion Time');
 
         if (missingFields.length > 0) {
-            setShowValidation(true);
-
             Alert.alert(
                 'Validation Error',
-                `Please fill the required field${missingFields.length > 1 ? 's' : ''
-                }: ${missingFields.join(', ')}.`
+                `Please fill the required field${missingFields.length > 1 ? 's' : ''}: ${missingFields.join(', ')}.`,
             );
+            return;
+        }
 
+        if (!roadmapId) {
+            Alert.alert('Error', 'Roadmap ID is missing.');
             return;
         }
 
         try {
-
             const payload = {
                 name,
                 roadMapDetails: description,
@@ -118,28 +90,20 @@ export default function RoadmapEditScreen() {
             });
 
             Alert.alert('Saved', 'Roadmap details updated.', [
-                {
-                    text: 'OK',
-                    onPress: () => router.back(),
-                },
+                { text: 'OK', onPress: () => router.back() },
             ]);
-        } catch (error) {
-            console.log('update error', error);
-
+        } catch (err) {
+            console.error('update error', err);
             Alert.alert('Error', 'Failed to update roadmap');
         }
     };
 
     const handleUploadBanner = async () => {
         try {
-            const { status } =
-                await ImagePicker.requestMediaLibraryPermissionsAsync();
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
             if (status !== 'granted') {
-                Alert.alert(
-                    'Permission Denied',
-                    'We need permission to access your photos.'
-                );
+                Alert.alert('Permission Denied', 'We need permission to access your photos.');
                 return;
             }
 
@@ -153,28 +117,16 @@ export default function RoadmapEditScreen() {
             });
 
             if (!result.canceled) {
-                const newImage = result.assets[0].uri;
-
-                setUploadedBannerImage(newImage);
-
-                Alert.alert(
-                    'Success',
-                    'Banner uploaded successfully.'
-                );
+                setUploadedBannerImage(result.assets[0].uri);
+                Alert.alert('Success', 'Banner uploaded successfully.');
             }
-        } catch (error) {
-            console.error('Image picker error:', error);
-
-            Alert.alert(
-                'Error',
-                'Failed to upload banner. Please try again.'
-            );
+        } catch (err) {
+            console.error('Image picker error:', err);
+            Alert.alert('Error', 'Failed to upload banner. Please try again.');
         } finally {
             setIsUploading(false);
         }
     };
-
-
 
     const handleCancel = () => {
         router.back();
@@ -182,23 +134,14 @@ export default function RoadmapEditScreen() {
 
     const renderLabel = (text: string) => (
         <Text style={styles.label}>
-            {text} {""}
+            {text}{' '}
             <Text style={styles.required}>*</Text>
         </Text>
     );
 
-
     const handleEditTasks = () => {
-        console.log("roadmapId", roadmapId);
-        if (!roadmapId) return;
-        console.log("roadmaps", roadmaps);
-        const roadmap = roadmaps.find(r => r._id === roadmapId);
-        console.log("roadmap", roadmap);
-
         if (!roadmap) return;
 
-
-        // ✅ For phase roadmaps: Navigate to phase details page
         if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
             setTimeout(() => {
                 router.push({
@@ -207,7 +150,6 @@ export default function RoadmapEditScreen() {
                 });
             }, 300);
         } else {
-            // ✅ For single roadmaps: Open roadmap form in edit mode
             setTimeout(() => {
                 router.push({
                     pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
@@ -220,44 +162,57 @@ export default function RoadmapEditScreen() {
                             subheading: roadmap.roadMapDetails || roadmap.description || '',
                             completionTime: roadmap.duration || '',
                             bannerImage:
-                                headerBannerImage || roadmap.roadmaps[0]?.imageUrl || '',
+                                uploadedBannerImage || roadmap.roadmaps?.[0]?.imageUrl || '',
                         },
                         buildReturnTo(pathname, params),
                     ),
                 });
             }, 300);
         }
+    };
 
+    if (isLoading) {
+        return (
+            <GradientBackground>
+                <TopBar showUserName />
+                <View style={styles.centerContent}>
+                    <ActivityIndicator size="large" color="#fff" />
+                    <Text style={styles.loadingText}>Loading roadmap...</Text>
+                </View>
+            </GradientBackground>
+        );
     }
 
-
+    if (error || !roadmap) {
+        return (
+            <GradientBackground>
+                <TopBar showUserName />
+                <View style={styles.centerContent}>
+                    <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
+                    <Text style={styles.errorText}>Failed to load roadmap</Text>
+                    <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+                        <Text style={styles.cancelButtonText}>Go Back</Text>
+                    </TouchableOpacity>
+                </View>
+            </GradientBackground>
+        );
+    }
 
     return (
         <KeyboardAvoidingView
             style={{ flex: 1 }}
-            // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={0}
         >
             <GradientBackground>
                 <TopBar showUserName />
 
                 <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={handleCancel}
-                        style={styles.backButton}
-                    >
+                    <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
                         <View style={styles.backIconWrap}>
-                            <Ionicons
-                                name="chevron-back"
-                                size={20}
-                                color="#fff"
-                            />
+                            <Ionicons name="chevron-back" size={20} color="#fff" />
                         </View>
-
-                        <Text style={styles.headerTitle}>
-                            Edit Roadmap
-                        </Text>
+                        <Text style={styles.headerTitle}>Edit Roadmap</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -275,31 +230,22 @@ export default function RoadmapEditScreen() {
                     keyboardShouldPersistTaps="handled"
                 >
                     <RoadMapFormHeader
-                        name={headerBannerName}
+                        name={name}
                         subheading={description}
-                        bannerImage={headerBannerImage}
+                        bannerImage={uploadedBannerImage}
                         division=""
                     />
 
                     <View style={styles.section}>
                         {renderLabel('Type')}
-
                         <View style={styles.selectBox}>
-                            <Text style={styles.selectText}>
-                                {roadmapType}
-                            </Text>
-
-                            <Ionicons
-                                name="chevron-down"
-                                size={18}
-                                color="rgba(255,255,255,0.5)"
-                            />
+                            <Text style={styles.selectText}>{roadmapType}</Text>
+                            <Ionicons name="chevron-down" size={18} color="rgba(255,255,255,0.5)" />
                         </View>
                     </View>
 
                     <View style={styles.section}>
                         {renderLabel('Name')}
-
                         <TextInput
                             style={styles.textInput}
                             placeholder="Enter roadmap name"
@@ -311,12 +257,8 @@ export default function RoadmapEditScreen() {
 
                     <View style={styles.section}>
                         {renderLabel('Description')}
-
                         <TextInput
-                            style={[
-                                styles.textInput,
-                                styles.descriptionInput,
-                            ]}
+                            style={[styles.textInput, styles.descriptionInput]}
                             placeholder="Enter description"
                             placeholderTextColor="rgba(255,255,255,0.5)"
                             value={description}
@@ -327,7 +269,6 @@ export default function RoadmapEditScreen() {
 
                     <View style={styles.section}>
                         {renderLabel('Completion Time')}
-
                         <TextInput
                             style={styles.textInput}
                             placeholder="e.g. 3 months"
@@ -338,49 +279,11 @@ export default function RoadmapEditScreen() {
                     </View>
 
                     <View style={styles.section}>
-                        <View style={styles.uploadBannerContainer} >
-                            <Ionicons
-                                name="cloud-upload-outline"
-                                size={16}
-                                color="white"
-                            />
-                            <Text style={styles.label}>
-                                Upload Banner
-                            </Text></View>
+                        <View style={styles.uploadBannerContainer}>
+                            <Ionicons name="cloud-upload-outline" size={16} color="white" />
+                            <Text style={styles.label}>Upload Banner</Text>
+                        </View>
 
-                        {/* <View style={styles.imageContainer}>
-                            {uploadedBannerImage ? (
-                                <Image
-                                    source={{ uri: uploadedBannerImage }}
-                                    style={styles.bannerPreview}
-                                />
-                            ) : (
-                                <View style={styles.bannerPlaceholder}>
-                                    <Text style={styles.bannerPlaceholderText}>
-                                        Upload Banner Image For the Roadmap.
-                                    </Text>
-                                </View>
-                            )}
-
-                            <View style={styles.imageBottomContent}>
-
-
-                                <TouchableOpacity
-                                    style={[
-                                        styles.changeImageButton,
-                                        isUploading && styles.uploadButtonDisabled,
-                                    ]}
-                                    onPress={handleUploadBanner}
-                                    disabled={isUploading}
-                                >
-
-
-                                    <Text style={styles.changeImageButtonText}>
-                                        {isUploading ? 'Changing...' : 'Change Image'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View> */}
                         <View style={styles.imageContainer}>
                             {uploadedBannerImage ? (
                                 <>
@@ -388,7 +291,6 @@ export default function RoadmapEditScreen() {
                                         source={{ uri: uploadedBannerImage }}
                                         style={styles.bannerPreview}
                                     />
-
                                     <View style={styles.imageBottomContent}>
                                         <TouchableOpacity
                                             style={[
@@ -415,56 +317,36 @@ export default function RoadmapEditScreen() {
                                         size={34}
                                         color="rgba(255,255,255,0.7)"
                                     />
-
                                     <Text style={styles.uploadPlaceholderText}>
                                         Upload Banner Image For the Roadmap
                                     </Text>
-
-
                                 </TouchableOpacity>
                             )}
                         </View>
 
-
-
-                        <Text style={styles.imageInfoText}>
-                            PNG, JPG — optional
-                        </Text>
+                        <Text style={styles.imageInfoText}>PNG, JPG — optional</Text>
                     </View>
 
-                    <View
-                        style={[
-                            styles.actionRow,
-                            { paddingBottom: insets.bottom + 10 },
-                        ]}
-                    >
-                        <TouchableOpacity
-                            style={styles.cancelButton}
-                            onPress={handleCancel}
-                        >
-                            <Text style={styles.cancelButtonText}>
-                                Cancel
-                            </Text>
+                    <View style={[styles.actionRow, { paddingBottom: insets.bottom + 10 }]}>
+                        <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+                            <Text style={styles.cancelButtonText}>Cancel</Text>
                         </TouchableOpacity>
-
                         <TouchableOpacity
                             style={styles.saveButton}
                             onPress={handleSave}
+                            disabled={updateRoadmapMutation.isPending}
                         >
                             <Text style={styles.saveButtonText}>
-                                Update
+                                {updateRoadmapMutation.isPending ? 'Saving...' : 'Update'}
                             </Text>
                         </TouchableOpacity>
                     </View>
+
                     <View style={styles.editTasksButtonContainer}>
-
                         <TouchableOpacity style={styles.editTasksButtonCont} onPress={handleEditTasks}>
-
-                            <Text style={styles.editTasksButton}>  <Ionicons
-                                name="create-outline"
-                                size={18}
-                                color="white"
-                            /> Edit Tasks</Text>
+                            <Text style={styles.editTasksButton}>
+                                <Ionicons name="create-outline" size={18} color="white" /> Edit Tasks
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -474,14 +356,17 @@ export default function RoadmapEditScreen() {
 }
 
 const styles = StyleSheet.create({
-    scrollView: {
+    scrollView: { flex: 1 },
+    content: { flexGrow: 1 },
+    centerContent: {
         flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+        gap: 16,
     },
-
-    content: {
-        flexGrow: 1,
-    },
-
+    loadingText: { color: '#fff', fontSize: 16 },
+    errorText: { color: '#ff6b6b', fontSize: 16, fontWeight: '600' },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -490,33 +375,11 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(255,255,255,0.12)',
     },
-
-    headerTitle: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '800',
-    },
-
-    section: {
-        marginBottom: 20,
-    },
-
-    label: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        marginBottom: 8,
-    },
-
-    required: {
-        color: '#FF4D4D',
-    },
-
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-    },
+    headerTitle: { color: '#fff', fontSize: 18, fontWeight: '800' },
+    section: { marginBottom: 20 },
+    label: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 8 },
+    required: { color: '#FF4D4D' },
+    backButton: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     uploadPlaceholder: {
         height: 150,
         borderWidth: 2,
@@ -528,19 +391,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         gap: 10,
     },
-
-    uploadPlaceholderText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-
-    uploadSubText: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 13,
-    },
-
+    uploadPlaceholderText: { color: '#fff', fontSize: 16, fontWeight: '600', textAlign: 'center' },
     backIconWrap: {
         width: 34,
         height: 34,
@@ -551,7 +402,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-
     textInput: {
         backgroundColor: 'rgba(255,255,255,0.1)',
         borderRadius: 8,
@@ -559,12 +409,7 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 14,
     },
-
-    descriptionInput: {
-        minHeight: 120,
-        textAlignVertical: 'top',
-    },
-
+    descriptionInput: { minHeight: 120, textAlignVertical: 'top' },
     selectBox: {
         backgroundColor: 'rgba(255,255,255,0.05)',
         borderRadius: 10,
@@ -577,12 +422,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
     },
-
-    selectText: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 15,
-    },
-
+    selectText: { color: 'rgba(255,255,255,0.7)', fontSize: 15 },
     bannerPreview: {
         width: '100%',
         height: 180,
@@ -590,93 +430,30 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
     },
-
-    bannerPlaceholder: {
-        width: '100%',
-        height: 180,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.25)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderBottomLeftRadius: 0,
-        borderBottomRightRadius: 0,
-    },
-
-    bannerPlaceholderText: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 14,
-    },
-
-
-    uploadButtonDisabled: {
-        opacity: 0.6,
-    },
-    uploadBannerContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-    },
+    uploadButtonDisabled: { opacity: 0.6 },
+    uploadBannerContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     imageContainer: {
         backgroundColor: 'rgba(255,255,255,0.06)',
         borderRadius: 18,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
     },
-
-    imageBottomContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-
-    imageInfoText: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 15,
-        marginTop: 6,
-    },
-
+    imageBottomContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    imageInfoText: { color: 'rgba(255,255,255,0.55)', fontSize: 15, marginTop: 6 },
     changeImageButton: {
         flex: 1,
         backgroundColor: 'rgba(255,255,255,0.1)',
-
         borderBottomLeftRadius: 12,
         borderBottomRightRadius: 12,
-        borderTopLeftRadius: 0,
-        borderTopRightRadius: 0,
-
         paddingHorizontal: 14,
         paddingVertical: 10,
-
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
     },
-    changeImageButtonText: {
-        color: 'white',
-        fontSize: 14,
-        fontWeight: '700',
-    },
-
-    removeButton: {
-        marginTop: 10,
-        alignItems: 'center',
-    },
-
-    removeButtonText: {
-        color: '#FF4D4D',
-        fontSize: 14,
-        fontWeight: '600',
-    },
-
-    actionRow: {
-        flexDirection: 'row',
-        gap: 12,
-        justifyContent: 'center',
-        marginTop: 10,
-    },
-
+    changeImageButtonText: { color: 'white', fontSize: 14, fontWeight: '700' },
+    actionRow: { flexDirection: 'row', gap: 12, justifyContent: 'center', marginTop: 10 },
     cancelButton: {
         flex: 1,
         backgroundColor: '#fff',
@@ -684,13 +461,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: 'center',
     },
-
-    cancelButtonText: {
-        color: '#1A4882',
-        fontSize: 16,
-        fontWeight: '700',
-    },
-
+    cancelButtonText: { color: '#1A4882', fontSize: 16, fontWeight: '700' },
     saveButton: {
         flex: 1,
         backgroundColor: 'rgba(255,255,255,0.1)',
@@ -698,28 +469,16 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: 'center',
     },
-
-    saveButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    editTasksButtonContainer: {
-        flex: 1,
-        alignItems: 'center',
-    },
+    saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    editTasksButtonContainer: { flex: 1, alignItems: 'center' },
     editTasksButtonCont: {
         gap: 10,
         backgroundColor: '#143156',
         borderWidth: 2,
-        borderColor: "#25679D",
-
+        borderColor: '#25679D',
         borderRadius: 12,
         paddingVertical: 12,
         paddingHorizontal: 24,
     },
-    editTasksButton: {
-        color: "white",
-        fontWeight: "600",
-    }
+    editTasksButton: { color: 'white', fontWeight: '600' },
 });

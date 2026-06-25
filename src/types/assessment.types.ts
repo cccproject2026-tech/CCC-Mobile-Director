@@ -56,12 +56,17 @@ export interface ApiAssessmentLayer {
     _id: string;
 }
 
+export interface ApiAssessmentSectionRecommendation {
+    level: 1 | 2 | 3 | 4;
+    items: string[];
+}
+
 export interface ApiAssessmentSection {
     title: string;
     description: string;
     layers: ApiAssessmentLayer[];
     _id: string;
-
+    recommendations?: ApiAssessmentSectionRecommendation[];
 }
 
 export interface ApiAssessmentAssignment {

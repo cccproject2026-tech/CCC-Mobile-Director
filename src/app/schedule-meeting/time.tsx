@@ -14,8 +14,12 @@ import {
 } from "@/hooks/mentors/useMentorsAvailability";
 import { useAppointments } from "@/hooks/appointments/useAppointments";
 import {
+  backFromScheduleMeetingTime,
   buildScheduleFlowParams,
   getScheduleMeetingBase,
+  isRescheduleMeetingFlow,
+  leaveScheduleMeetingFlow,
+  scheduleParamString,
 } from "@/lib/scheduling/scheduleMeetingNavigation";
 import { getReturnToParam } from "@/utils/navigation";
 import { appointmentService } from "@/services/appointments.service";
@@ -49,6 +53,15 @@ function ymdToday() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function slotsMatch(
+  a: APITimeSlot | null | undefined,
+  b: APITimeSlot | null | undefined,
+): boolean {
+  if (!a || !b) return false;
+  if (a._id && b._id && a._id === b._id) return true;
+  return a.startTime === b.startTime && a.startPeriod === b.startPeriod;
+}
+
 /** First upcoming date that still has at least one bookable slot (min-notice applied). */
 function pickNearestBookableDay(
   availableDates: string[],
@@ -71,33 +84,64 @@ export default function ScheduleMeetingTimeScreen() {
     drawerContext?: string;
     assessmentId?: string;
     returnTo?: string;
+    mode?: string | string[];
+    appointmentId?: string | string[];
+    skipPersonPicker?: string | string[];
+    preserveDraft?: string | string[];
   }>();
   const { drawerContext, assessmentId } = routeParams;
-  const { draft, setDay, setSlot, setMeetingTitle, setMeetingDescription, setPlatformLabel } =
+  const { draft, setDay, setSlot, setMeetingTitle, setMeetingDescription, setPlatformLabel, setMode, setAppointmentId } =
     useScheduleMeetingStore();
   const insets = useSafeAreaInsets();
   const scheduleBase = getScheduleMeetingBase(drawerContext, user?.role);
+  const isReschedule = isRescheduleMeetingFlow(routeParams, draft);
+  const scheduleMode: "schedule" | "reschedule" = isReschedule ? "reschedule" : "schedule";
+  const appointmentIdParam =
+    scheduleParamString(routeParams.appointmentId) ?? draft.appointmentId;
   const flowParams = useMemo(
     () =>
       buildScheduleFlowParams({
         drawerContext,
         assessmentId,
         returnTo: getReturnToParam(routeParams),
+        mode: scheduleMode,
+        appointmentId: appointmentIdParam,
+        ...(isReschedule ? { skipPersonPicker: "1" } : {}),
+        preserveDraft: "1",
       }),
-    [assessmentId, drawerContext, routeParams.returnTo],
+    [
+      appointmentIdParam,
+      assessmentId,
+      drawerContext,
+      isReschedule,
+      routeParams.returnTo,
+      scheduleMode,
+    ],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isReschedule) {
+        setMode("reschedule");
+        if (appointmentIdParam) setAppointmentId(appointmentIdParam);
+      }
+    }, [appointmentIdParam, isReschedule, setAppointmentId, setMode]),
   );
 
   const handleBack = useCallback(() => {
-    router.replace({
-      pathname: `${scheduleBase}/person` as any,
-      params: {
-        ...flowParams,
-        mode: draft.mode,
-        appointmentId: draft.appointmentId,
-        preserveDraft: "1",
-      },
+    backFromScheduleMeetingTime(router, user?.role, {
+      mode: scheduleMode,
+      scheduleBase,
+      flowParams,
+      returnTo: getReturnToParam(routeParams),
     });
-  }, [draft.appointmentId, draft.mode, flowParams, scheduleBase]);
+  }, [
+    flowParams,
+    routeParams,
+    scheduleBase,
+    scheduleMode,
+    user?.role,
+  ]);
 
   const topBar = (
     <>
@@ -114,11 +158,28 @@ export default function ScheduleMeetingTimeScreen() {
 
   useEffect(() => {
     if (hasPerson) return;
+    if (isReschedule) {
+      leaveScheduleMeetingFlow(router, user?.role, getReturnToParam(routeParams));
+      return;
+    }
     router.replace({
       pathname: `${scheduleBase}/person` as any,
-      params: flowParams,
+      params: buildScheduleFlowParams({
+        drawerContext,
+        assessmentId,
+        returnTo: getReturnToParam(routeParams),
+        mode: "schedule",
+      }),
     });
-  }, [flowParams, hasPerson, scheduleBase]);
+  }, [
+    assessmentId,
+    drawerContext,
+    hasPerson,
+    isReschedule,
+    routeParams,
+    scheduleBase,
+    user?.role,
+  ]);
 
   const isMentor = String(user?.role || "").toLowerCase() === "mentor";
 
@@ -137,7 +198,7 @@ export default function ScheduleMeetingTimeScreen() {
   );
 
   const excludeAppointmentId =
-    draft.mode === "reschedule" ? draft.appointmentId : undefined;
+    isReschedule ? appointmentIdParam : undefined;
 
   const [googleCalendarConnected, setGoogleCalendarConnected] = useState(false);
   const [calendarSlotSyncLoading, setCalendarSlotSyncLoading] = useState(false);
@@ -154,6 +215,8 @@ export default function ScheduleMeetingTimeScreen() {
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
 
   const prevAvailabilityOwnerRef = useRef<string | null>(null);
+  const prevSelectedDayRef = useRef<string | null>(null);
+  const preserveDraft = scheduleParamString(routeParams.preserveDraft) === "1";
 
   // Drawer keeps this screen mounted (freezeOnBlur). Re-sync calendar + refetch on each visit.
   useFocusEffect(
@@ -165,7 +228,7 @@ export default function ScheduleMeetingTimeScreen() {
       setCalendarSlotSyncError(null);
       setCalendarConnectBanners([]);
       setCalendarBusyStripped(0);
-      setSlot(null);
+      // Keep selected day/slot when returning from review (preserveDraft).
 
       const draftState = useScheduleMeetingStore.getState().draft;
       const ymd = draftState.selectedDayYmd;
@@ -198,7 +261,7 @@ export default function ScheduleMeetingTimeScreen() {
       void queryClient.refetchQueries({
         queryKey: ["appointments", "mentor", availabilityOwnerId],
       });
-    }, [availabilityOwnerId, overlapUserId, queryClient, setSlot]),
+    }, [availabilityOwnerId, overlapUserId, queryClient]),
   );
 
   // New person / second booking in a row — drop stale month + slot sync from the prior session.
@@ -208,6 +271,7 @@ export default function ScheduleMeetingTimeScreen() {
     prevAvailabilityOwnerRef.current = availabilityOwnerId;
     if (!ownerChanged) return;
 
+    prevSelectedDayRef.current = null;
     setGoogleFilteredSlots(null);
     setCalendarSlotSyncLoading(false);
     setCalendarSlotSyncError(null);
@@ -370,14 +434,21 @@ export default function ScheduleMeetingTimeScreen() {
     const todayYmd = ymdToday();
     const current = draft.selectedDayYmd;
     const invalid = !current || current < todayYmd || !availableDates.includes(current);
-    if (invalid) {
+    if (invalid && !(preserveDraft && current)) {
       selectNearestBookableDay();
     }
-  }, [availableDates, draft.selectedDayYmd, selectNearestBookableDay]);
+  }, [availableDates, draft.selectedDayYmd, preserveDraft, selectNearestBookableDay]);
 
   useEffect(() => {
-    // reset time when day changes
-    setSlot(null);
+    const current = draft.selectedDayYmd || null;
+    if (prevSelectedDayRef.current === null) {
+      prevSelectedDayRef.current = current;
+      return;
+    }
+    if (prevSelectedDayRef.current !== current) {
+      setSlot(null);
+      prevSelectedDayRef.current = current;
+    }
   }, [draft.selectedDayYmd, setSlot]);
 
   const timeSlots = useMemo(
@@ -433,7 +504,7 @@ export default function ScheduleMeetingTimeScreen() {
       setCalendarSlotSyncError(result.error ?? null);
       setCalendarSlotSyncLoading(false);
 
-      if (draft.selectedSlot && !filtered.some((s) => s.apiSlot._id === draft.selectedSlot?._id)) {
+      if (draft.selectedSlot && !filtered.some((s) => slotsMatch(s.apiSlot, draft.selectedSlot))) {
         setSlot(null);
       }
     })();
@@ -515,6 +586,11 @@ export default function ScheduleMeetingTimeScreen() {
     if (calendarSlotSyncLoading || availableDates.length === 0) return;
     if (displayTimeSlots.length > 0) return;
 
+    const draftState = useScheduleMeetingStore.getState().draft;
+    if (preserveDraft && draftState.selectedDayYmd && draftState.selectedSlot) {
+      return;
+    }
+
     const current = draft.selectedDayYmd;
     if (!current) {
       selectNearestBookableDay();
@@ -534,6 +610,7 @@ export default function ScheduleMeetingTimeScreen() {
     calendarSlotSyncLoading,
     displayTimeSlots.length,
     draft.selectedDayYmd,
+    preserveDraft,
     selectNearestBookableDay,
     timeSlots.length,
   ]);
@@ -576,7 +653,7 @@ export default function ScheduleMeetingTimeScreen() {
         <View style={styles.center}>
           <Text style={styles.title}>Unable to load availability</Text>
           <Text style={styles.subtle}>Please try again.</Text>
-          <Pressable style={styles.primary} onPress={() => router.back()}>
+          <Pressable style={styles.primary} onPress={handleBack}>
             <Text style={styles.primaryText}>Go back</Text>
           </Pressable>
         </View>
@@ -626,6 +703,7 @@ export default function ScheduleMeetingTimeScreen() {
           ) : null}
 
           <Text style={styles.sectionTitle}>Available time slots</Text>
+          <Text style={styles.sectionSubtitle}>All times shown in IST (Kolkata)</Text>
           {calendarSlotSyncLoading ? (
             <View style={styles.syncRow}>
               <ActivityIndicator color="#8ec5eb" size="small" />
@@ -660,7 +738,7 @@ export default function ScheduleMeetingTimeScreen() {
           ) : (
             <View style={styles.slotGrid}>
               {displayTimeSlots.map((s) => {
-                const selected = draft.selectedSlot?._id === s.apiSlot._id;
+                const selected = slotsMatch(draft.selectedSlot, s.apiSlot);
                 return (
                   <Pressable
                     key={s.id}
@@ -839,6 +917,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   sectionTitle: { marginTop: 14, color: "#FFFFFF", fontWeight: "900" },
+  sectionSubtitle: {
+    marginTop: 4,
+    marginBottom: 4,
+    color: "rgba(255,255,255,0.65)",
+    fontSize: 12,
+    fontWeight: "600",
+  },
   fieldLabel: {
     marginTop: 14,
     color: "#FFFFFF",

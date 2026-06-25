@@ -13,6 +13,12 @@ import {
   truncateMiddle,
   zoomUrlHasPasscodeQuery,
 } from "@/utils/meetingLinkDetails";
+import {
+  APP_TIMEZONE,
+  APP_TIMEZONE_BADGE,
+  formatAppointmentDate,
+  formatAppointmentTime,
+} from "@/utils/appointments/timezone";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
@@ -68,23 +74,18 @@ async function shareContent(label: string, value: string) {
 }
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return formatAppointmentTime(iso);
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  return formatAppointmentDate(iso);
 }
 
 function formatDayOfWeek(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { weekday: "long" });
+  return new Date(iso).toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: APP_TIMEZONE,
+  });
 }
 
 // ─── Platform Badge ───────────────────────────────────────────────────────────
@@ -491,7 +492,7 @@ export default function MeetingDetailsScreen() {
                   <Ionicons name="time-outline" size={13} color={COLORS.accent} />
                   <Text style={s.timeChipText}>
                     {formatTime(appointment.meetingDate)} –{" "}
-                    {formatTime(appointment.endTime)}
+                    {formatTime(appointment.endTime)} {APP_TIMEZONE_BADGE}
                   </Text>
                 </View>
               </View>

@@ -16,10 +16,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAssessment, useUpdateAssessmentMutation } from '@/hooks/useAssessments';
+import {
+    useAssessment,
+    useRemoveBannerImageMutation,
+    useUpdateAssessmentMutation,
+    useUploadBannerImageMutation,
+} from '@/hooks/useAssessments';
 import { Routes } from '@/navigation/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 const AssessmentDetail = () => {
     const router = useRouter();
     const { bottom } = useSafeAreaInsets();
@@ -28,19 +34,22 @@ const AssessmentDetail = () => {
     // Fetch assessment
     const { data: assessment, isLoading, error } = useAssessment(id);
 
-    // Using the generic update mutation instead of just instructions
     const updateMutation = useUpdateAssessmentMutation(id!);
+    const uploadBannerMutation = useUploadBannerImageMutation();
+    const removeBannerMutation = useRemoveBannerImageMutation();
 
-    // Local state for all editable fields
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [instructions, setInstructions] = useState<string[]>([]);
+    const [pendingBannerUri, setPendingBannerUri] = useState<string | null>(null);
+    const [bannerRemoved, setBannerRemoved] = useState(false);
+    const [isPickingBanner, setIsPickingBanner] = useState(false);
 
-    // Original data state for change tracking and cancellation
     const [originalData, setOriginalData] = useState({
         name: '',
         description: '',
-        instructions: [] as string[]
+        instructions: [] as string[],
+        bannerImage: '',
     });
 
     const [selectedInstructions, setSelectedInstructions] = useState<Set<number>>(new Set());
@@ -52,22 +61,46 @@ const AssessmentDetail = () => {
             setName(assessment.name);
             setDescription(assessment.description);
             setInstructions(assessment.instructions);
+            setPendingBannerUri(null);
+            setBannerRemoved(false);
             setOriginalData({
                 name: assessment.name,
                 description: assessment.description,
-                instructions: assessment.instructions
+                instructions: assessment.instructions,
+                bannerImage: assessment.bannerImage || '',
             });
         }
     }, [assessment]);
 
-    // Enhanced hasChanges logic covering Name, Description, and Instructions
+    const savedBannerUri = useMemo(
+        () => originalData.bannerImage || assessment?.bannerImage || null,
+        [originalData.bannerImage, assessment?.bannerImage],
+    );
+
+    const bannerPreviewUri = useMemo(() => {
+        if (pendingBannerUri) return pendingBannerUri;
+        if (bannerRemoved) return null;
+        return savedBannerUri;
+    }, [pendingBannerUri, bannerRemoved, savedBannerUri]);
+
+    const bannerDirty = useMemo(() => {
+        if (pendingBannerUri) return true;
+        if (bannerRemoved && !!originalData.bannerImage) return true;
+        return false;
+    }, [pendingBannerUri, bannerRemoved, originalData.bannerImage]);
+
     const hasChanges = useMemo(() => {
         const nameChanged = name !== originalData.name;
         const descChanged = description !== originalData.description;
         const instChanged = JSON.stringify(instructions) !== JSON.stringify(originalData.instructions);
 
-        return nameChanged || descChanged || instChanged;
-    }, [name, description, instructions, originalData]);
+        return nameChanged || descChanged || instChanged || bannerDirty;
+    }, [name, description, instructions, originalData, bannerDirty]);
+
+    const isSaving =
+        updateMutation.isPending ||
+        uploadBannerMutation.isPending ||
+        removeBannerMutation.isPending;
 
     const handleToggleSelectionMode = () => {
         setIsSelectionMode(!isSelectionMode);
@@ -139,6 +172,52 @@ const AssessmentDetail = () => {
         setInstructions(updated);
     };
 
+    const handleUploadBanner = async () => {
+        try {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Denied', 'We need permission to access your photos.');
+                return;
+            }
+
+            setIsPickingBanner(true);
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [16, 9],
+                quality: 0.8,
+            });
+
+            if (!result.canceled) {
+                setPendingBannerUri(result.assets[0].uri);
+                setBannerRemoved(false);
+            }
+        } catch (err) {
+            console.error('Failed to pick banner image:', err);
+            Alert.alert('Error', 'Failed to pick image. Please try again.');
+        } finally {
+            setIsPickingBanner(false);
+        }
+    };
+
+    const handleRemoveBanner = () => {
+        Alert.alert(
+            'Remove Banner',
+            'Are you sure you want to remove this banner image?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: () => {
+                        setPendingBannerUri(null);
+                        setBannerRemoved(true);
+                    },
+                },
+            ],
+        );
+    };
+
     const handleSaveChanges = async () => {
         if (!name.trim()) {
             Alert.alert('Error', 'Assessment name cannot be empty.');
@@ -146,19 +225,41 @@ const AssessmentDetail = () => {
         }
 
         const validInstructions = instructions.filter((inst) => inst.trim().length > 0);
+        const nameChanged = name.trim() !== originalData.name;
+        const descChanged = description.trim() !== originalData.description;
+        const instChanged =
+            JSON.stringify(validInstructions) !== JSON.stringify(originalData.instructions);
 
         try {
-            await updateMutation.mutateAsync({
-                name: name.trim(),
-                description: description.trim(),
-                instructions: validInstructions,
-            });
+            let savedBannerImage = originalData.bannerImage;
 
-            // Update original data to match current saved state
+            if (pendingBannerUri && id) {
+                const result = await uploadBannerMutation.mutateAsync({
+                    id,
+                    imageUri: pendingBannerUri,
+                });
+                savedBannerImage = result.imageUrl;
+                setPendingBannerUri(null);
+                setBannerRemoved(false);
+            } else if (bannerRemoved && originalData.bannerImage && id) {
+                await removeBannerMutation.mutateAsync(id);
+                savedBannerImage = '';
+                setBannerRemoved(false);
+            }
+
+            if (nameChanged || descChanged || instChanged) {
+                await updateMutation.mutateAsync({
+                    name: name.trim(),
+                    description: description.trim(),
+                    instructions: validInstructions,
+                });
+            }
+
             setOriginalData({
                 name: name.trim(),
                 description: description.trim(),
-                instructions: validInstructions
+                instructions: validInstructions,
+                bannerImage: savedBannerImage,
             });
 
             Alert.alert('Success', 'Assessment updated successfully!');
@@ -172,6 +273,8 @@ const AssessmentDetail = () => {
         setName(originalData.name);
         setDescription(originalData.description);
         setInstructions(originalData.instructions);
+        setPendingBannerUri(null);
+        setBannerRemoved(false);
         setIsSelectionMode(false);
         setSelectedInstructions(new Set());
     };
@@ -264,7 +367,11 @@ const AssessmentDetail = () => {
                 {/* Hero Image with Editable Title Overlay */}
                 <View style={styles.heroContainer}>
                     <Image
-                        source={assessment.bannerImage ? { uri: assessment.bannerImage } : require('@/assets/images/app/jumpstart.png')}
+                        source={
+                            savedBannerUri
+                                ? { uri: savedBannerUri }
+                                : require('@/assets/images/app/jumpstart.png')
+                        }
                         style={styles.heroImage}
                     />
                     <View style={styles.heroOverlay}>
@@ -280,6 +387,63 @@ const AssessmentDetail = () => {
                         />
                     </View>
                 </View>
+
+                {/* Banner Image Upload / Replace / Remove */}
+                {!isSelectionMode && (
+                    <View style={styles.bannerSection}>
+                        <View style={styles.bannerSectionHeader}>
+                            <Text style={styles.bannerSectionLabel}>Banner image (optional)</Text>
+                            {bannerPreviewUri ? (
+                                <TouchableOpacity onPress={handleRemoveBanner}>
+                                    <Text style={styles.removeBannerText}>Remove image</Text>
+                                </TouchableOpacity>
+                            ) : null}
+                        </View>
+
+                        <View style={styles.bannerImageContainer}>
+                            {bannerPreviewUri ? (
+                                <>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.replaceBannerButton,
+                                            isPickingBanner && styles.uploadButtonDisabled,
+                                        ]}
+                                        onPress={handleUploadBanner}
+                                        disabled={isPickingBanner}
+                                    >
+                                        <Text style={styles.replaceBannerButtonText}>
+                                            {isPickingBanner ? 'Loading...' : 'Replace banner'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <Image
+                                        source={{ uri: bannerPreviewUri }}
+                                        style={styles.bannerPreview}
+                                    />
+                                </>
+                            ) : (
+                                <TouchableOpacity
+                                    style={[
+                                        styles.uploadPlaceholder,
+                                        isPickingBanner && styles.uploadButtonDisabled,
+                                    ]}
+                                    onPress={handleUploadBanner}
+                                    disabled={isPickingBanner}
+                                >
+                                    <Ionicons
+                                        name="cloud-upload-outline"
+                                        size={34}
+                                        color="rgba(255,255,255,0.7)"
+                                    />
+                                    <Text style={styles.uploadBannerButtonText}>
+                                        {isPickingBanner ? 'Loading...' : 'Upload banner'}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
+                        <Text style={styles.bannerInfoText}>PNG, JPG — optional</Text>
+                    </View>
+                )}
 
                 {/* Editable Description */}
                 <View style={styles.descriptionContainer}>
@@ -384,9 +548,9 @@ const AssessmentDetail = () => {
                                     !hasChanges && styles.saveButtonDisabled
                                 ]}
                                 onPress={handleSaveChanges}
-                                disabled={!hasChanges || updateMutation.isPending}
+                                disabled={!hasChanges || isSaving}
                             >
-                                {updateMutation.isPending ? (
+                                {isSaving ? (
                                     <ActivityIndicator size="small" color="#fff" />
                                 ) : (
                                     <Text style={[
@@ -484,6 +648,75 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 16,
+    },
+    bannerSection: {
+        marginHorizontal: 16,
+        marginBottom: 16,
+    },
+    bannerSectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    bannerSectionLabel: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    removeBannerText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#FF6B6B',
+    },
+    bannerImageContainer: {
+        backgroundColor: 'rgba(255,255,255,0.06)',
+        borderRadius: 18,
+        borderWidth: 2,
+        borderStyle: 'dashed',
+        borderColor: 'rgba(255,255,255,0.35)',
+        overflow: 'hidden',
+    },
+    uploadPlaceholder: {
+        height: 150,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        gap: 10,
+    },
+    uploadBannerButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    replaceBannerButton: {
+        alignSelf: 'flex-start',
+        margin: 12,
+        backgroundColor: 'rgba(255,255,255,0.12)',
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.22)',
+    },
+    replaceBannerButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    bannerPreview: {
+        width: '100%',
+        height: 160,
+        resizeMode: 'cover',
+    },
+    bannerInfoText: {
+        color: 'rgba(255,255,255,0.55)',
+        fontSize: 14,
+        marginTop: 6,
+    },
+    uploadButtonDisabled: {
+        opacity: 0.6,
     },
     heroTitle: {
         fontSize: 24,

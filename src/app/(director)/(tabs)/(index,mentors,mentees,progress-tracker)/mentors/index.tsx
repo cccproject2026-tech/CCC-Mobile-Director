@@ -433,7 +433,7 @@ export default function Mentors() {
     return (
         <GradientBackground>
             <View style={{ flex: 1 }}>
-                <TopBar notifications={3} showUserName showNotifications />
+                <TopBar showUserName showNotifications />
 
                 <View style={{ flex: 1, paddingTop: 24 }}>
                     {/* HEADER */}

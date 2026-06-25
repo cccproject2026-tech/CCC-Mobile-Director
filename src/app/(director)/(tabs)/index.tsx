@@ -33,6 +33,7 @@ export default function Index() {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollOffset(scrollRef);
   const createRoadmapModalRef = useRef<BottomSheetModal>(null);
+  const [createSheetKey, setCreateSheetKey] = useState(0);
   const handleGreetingPeriodChange = useCallback((period: 'morning' | 'afternoon' | 'evening') => {
     setGreetingPeriod(period);
   }, []);
@@ -48,11 +49,17 @@ export default function Index() {
     Math.max(186, Math.round(windowHeight * 0.26)),
   );
   const handleOpenCreateRoadmapModal = useCallback(() => {
-    createRoadmapModalRef.current?.present();
+    requestAnimationFrame(() => {
+      createRoadmapModalRef.current?.present();
+    });
   }, []);
 
   const handleCloseCreateRoadmapModal = useCallback(() => {
     createRoadmapModalRef.current?.dismiss();
+  }, []);
+
+  const handleCreateSheetDismissed = useCallback(() => {
+    setCreateSheetKey((key) => key + 1);
   }, []);
 
 
@@ -118,9 +125,11 @@ export default function Index() {
       </Animated.ScrollView>
 
       <CreateRoadmapSheet
+        key={createSheetKey}
         ref={createRoadmapModalRef}
         onClose={handleCloseCreateRoadmapModal}
         onCancel={handleCreateRoadmapCancel}
+        onDismissed={handleCreateSheetDismissed}
         mode="create"
       />
     </GradientBackground>

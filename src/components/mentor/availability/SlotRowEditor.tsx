@@ -1,4 +1,5 @@
 import type { AppointmentAvailabilityTimeSlot } from "@/types/appointment.types";
+import { formatAvailabilityTimeLabel } from "@/utils/appointments/timezone";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -13,7 +14,7 @@ type Props = {
 export function SlotRowEditor({ slot, onPatch, onRemove }: Props) {
   const [picker, setPicker] = useState<"start" | "end" | null>(null);
 
-  const label = (t: string, p: string) => `${t} ${p}`;
+  const label = (t: string, p: string) => formatAvailabilityTimeLabel(t, p);
 
   return (
     <View style={styles.row}>

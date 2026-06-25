@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 import { GradientBackground } from '@/components/ui/design-system';
 import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
-import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
+import { appendReturnTo, buildReturnTo, getReturnToParam } from '@/utils/navigation';
+import { useSafeBack } from '@/hooks/useSafeBack';
+import { useReturnToAwareBack } from '@/hooks/useReturnToAwareBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoadmap, useUpdateRoadmap } from '@/hooks/roadmap/useRoadmaps';
@@ -35,6 +37,13 @@ export default function PhaseListScreen() {
     const roadmapId = params.roadmapId as string;
     const userId = (params.userId as string) || undefined;
     const pastorView = params.pastorView === 'true';
+    const returnTo = getReturnToParam(params);
+    const pastorBackFallback = useMemo(
+        () => (userId ? Routes.roadmaps.indexWithPastor(userId) : Routes.roadmaps.index),
+        [userId],
+    );
+    const safeBack = useSafeBack({ returnTo, fallback: pastorBackFallback });
+    useReturnToAwareBack(pastorView ? returnTo : undefined);
     const { data: roadmap, isLoading } = useRoadmap(roadmapId);
 
     const phaseListParams = useMemo(
@@ -120,7 +129,17 @@ export default function PhaseListScreen() {
             if (!phase) return;
 
             if (pastorView && userId) {
-                router.push(Routes.roadmaps.taskFor(roadmapId, nestedRoadmapId, userId));
+                router.push({
+                    pathname: '/(director)/(tabs)/roadmaps/task',
+                    params: appendReturnTo(
+                        {
+                            roadmapId,
+                            taskId: nestedRoadmapId,
+                            userId,
+                        },
+                        phaseListReturnTo,
+                    ),
+                } as never);
                 return;
             }
 
@@ -160,6 +179,10 @@ export default function PhaseListScreen() {
     };
 
     const handleBack = () => {
+        if (pastorView) {
+            safeBack();
+            return;
+        }
         router.back();
     };
 

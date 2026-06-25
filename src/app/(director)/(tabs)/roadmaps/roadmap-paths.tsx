@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -8,7 +9,7 @@ import {
     FlatList,
 } from 'react-native';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
@@ -20,13 +21,24 @@ import { useMentees } from '@/hooks/useMentees';
 import { Mentee } from '@/types/user.types';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import { Routes } from '@/navigation/routes';
+import { appendReturnTo, buildReturnToWithParent, getReturnToParam } from '@/utils/navigation';
+import { useSafeBack } from '@/hooks/useSafeBack';
+import { useReturnToAwareBack } from '@/hooks/useReturnToAwareBack';
 
 type TabKey = 'All' | 'Due' | 'Not Started' | 'Completed';
 
 export default function MenteeRoadmapPathsScreen() {
     const router = useRouter();
+    const pathname = usePathname();
     const { bottom } = useSafeAreaInsets();
-    const { id: menteeIdParam, email: menteeEmailParam } = useLocalSearchParams();
+    const params = useLocalSearchParams();
+    const returnTo = getReturnToParam(params);
+    const safeBack = useSafeBack({
+        returnTo,
+        fallback: Routes.roadmaps.indexWithTab('mentees'),
+    });
+    useReturnToAwareBack(returnTo);
+    const { id: menteeIdParam, email: menteeEmailParam } = params;
     const menteeIdRaw = Array.isArray(menteeIdParam) ? menteeIdParam[0] : menteeIdParam;
     const menteeEmailRaw = Array.isArray(menteeEmailParam)
         ? menteeEmailParam[0]
@@ -47,7 +59,14 @@ export default function MenteeRoadmapPathsScreen() {
             )
           : undefined;
     const menteeId = mentee?.id ?? menteeIdRaw;
-    const menteeName = mentee ? `${mentee.firstName} ${mentee.lastName ?? ''}` : 'Mentee';
+    const menteeName = mentee
+        ? `${mentee.firstName ?? ''} ${mentee.lastName ?? ''}`.trim() || mentee.email || 'Mentee'
+        : 'Mentee';
+
+    const pathsReturnTo = useMemo(
+        () => buildReturnToWithParent(pathname, { id: menteeId }, returnTo),
+        [menteeId, pathname, returnTo],
+    );
 
     // Fetch assigned roadmaps
     const {
@@ -56,11 +75,31 @@ export default function MenteeRoadmapPathsScreen() {
         refetch,
     } = useAssignedRoadmaps(menteeId);
 
+    const handleRemoveAssignedRoadmap = useCallback(
+        (roadmapId: string, roadmapName: string) => {
+            Alert.alert(
+                'Remove Roadmap',
+                `Do you want to remove "${roadmapName}" from ${menteeName}?`,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Remove',
+                        style: 'destructive',
+                        onPress: () => {
+                            // TODO: integrate unassign roadmap API when backend is ready
+                        },
+                    },
+                ],
+            );
+        },
+        [menteeName],
+    );
+
     // Filter roadmaps based on search and tabs
     const filteredRoadmaps = useMemo(() => {
         if (!roadmaps) return [];
 
-        let filtered = roadmaps;
+        let filtered = roadmaps; 
 
         // 1. Text Search
         if (searchQuery.trim()) {
@@ -95,11 +134,25 @@ export default function MenteeRoadmapPathsScreen() {
     }, [roadmaps, searchQuery, activeTab]);
 
     const handleBack = () => {
-        router.back();
+        if (returnTo) {
+            safeBack();
+            return;
+        }
+        router.replace(Routes.roadmaps.indexWithTab('mentees'));
     };
 
     const handleRoadmapPress = (roadmapId: string) => {
-        router.push(Routes.roadmaps.phaseListFor(roadmapId, menteeId, true));
+        router.push({
+            pathname: '/(director)/(tabs)/roadmaps/phase-list',
+            params: appendReturnTo(
+                {
+                    roadmapId,
+                    userId: menteeId,
+                    pastorView: 'true',
+                },
+                pathsReturnTo,
+            ),
+        } as never);
     };
 
     const tabItems = [
@@ -172,6 +225,10 @@ export default function MenteeRoadmapPathsScreen() {
                                 data={cardData}
                                 onPress={() => handleRoadmapPress(item._id)}
                                 showMenu={false}
+                                showRemove
+                                onRemovePress={() =>
+                                    handleRemoveAssignedRoadmap(item._id, cardData.title)
+                                }
                             />
                         </View>
                     );

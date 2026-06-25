@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export interface CreateRoadmapSheetProps {
     onClose: () => void;
     onCancel: () => void;
+    onDismissed?: () => void;
     mode?: 'create' | 'edit';
     initialData?: Partial<RoadmapFormData>;
 }
@@ -25,7 +26,7 @@ export interface RoadmapFormData {
 }
 
 const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>(
-    ({ onClose, onCancel, mode = 'create', initialData }, ref) => {
+    ({ onCancel, onDismissed, mode = 'create', initialData }, ref) => {
         const { bottom } = useSafeAreaInsets();
         const router = useRouter();
         const snapPoints = useMemo(() => ['90%'], []);
@@ -195,32 +196,37 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
 
                 const response = await createRoadmapMutation.mutateAsync(payload);
                 const createdRoadmapId = response.data._id;
+                const roadmapType = formData.type;
+                const roadmapName = formData.name;
 
                 console.log('✅ Roadmap created with ID:', createdRoadmapId);
 
                 resetForm();
                 onCancel();
 
-                if (formData.type === 'phase') {
-                    router.push({
-                        pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
-                        params: {
-                            roadmapId: createdRoadmapId,
-                            type: 'phase',
-                            isEditMode
-                        }
-                    } as any);
-                } else {
-                    router.push({
-                        pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                        params: {
-                            roadmapId: createdRoadmapId,
-                            name: formData.name
-                        }
-                    } as any);
-                }
+                // Wait for sheet dismiss to finish before navigating (avoids broken reopen)
+                setTimeout(() => {
+                    if (roadmapType === 'phase') {
+                        router.push({
+                            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
+                            params: {
+                                roadmapId: createdRoadmapId,
+                                type: 'phase',
+                                isEditMode: 'false',
+                            },
+                        } as any);
+                    } else {
+                        router.push({
+                            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+                            params: {
+                                roadmapId: createdRoadmapId,
+                                name: roadmapName,
+                            },
+                        } as any);
+                    }
 
-                Alert.alert('Success', 'Roadmap created successfully!');
+                    Alert.alert('Success', 'Roadmap created successfully!');
+                }, 350);
 
             } catch (error: any) {
                 console.error('❌ Creation error:', error);
@@ -256,7 +262,7 @@ const CreateRoadmapSheet = forwardRef<BottomSheetModal, CreateRoadmapSheetProps>
                 onDismiss={() => {
                     if (!isLoading) {
                         resetForm();
-                        onClose();
+                        onDismissed?.();
                     }
                 }}
             >

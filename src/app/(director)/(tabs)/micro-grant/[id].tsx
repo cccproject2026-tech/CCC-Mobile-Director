@@ -79,7 +79,7 @@ const ApplicationDetails = () => {
     if (isLoading) {
         return (
             <GradientBackground>
-                <TopBar notifications={3} showUserName={true} showNotifications={true} />
+                <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading application...</Text>
@@ -91,7 +91,7 @@ const ApplicationDetails = () => {
     if (!application || error) {
         return (
             <GradientBackground>
-                <TopBar notifications={3} showUserName={true} showNotifications={true} />
+                <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.emptyContainer}>
                     <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
                     <Text style={styles.emptyText}>Application not found</Text>
@@ -107,7 +107,7 @@ const ApplicationDetails = () => {
 
     return (
         <GradientBackground>
-            <TopBar notifications={3} showUserName={true} showNotifications={true} />
+            <TopBar showUserName={true} showNotifications={true} />
 
             <ScrollView
                 style={styles.scrollView}

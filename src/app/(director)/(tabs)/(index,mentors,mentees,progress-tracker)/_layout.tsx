@@ -26,6 +26,7 @@ export default function SharedStackLayout({ segment }: { segment: string }) {
             {/* Roadmap routes - ALL inside shared group */}
             <Stack.Screen name="mentees/index" />
             <Stack.Screen name="mentees/[id]/index" />
+            <Stack.Screen name="mentees/[id]/documents" />
             <Stack.Screen name="mentees/[id]/progress" />
             <Stack.Screen name="mentees/assign-mentors" />
             <Stack.Screen name="mentees/remove-mentors" />
@@ -34,6 +35,7 @@ export default function SharedStackLayout({ segment }: { segment: string }) {
 
             <Stack.Screen name="mentors/index" />
             <Stack.Screen name="mentors/[id]/index" />
+            <Stack.Screen name="mentors/[id]/documents" />
             <Stack.Screen name="mentors/assign-mentees" />
             <Stack.Screen name="mentors/remove-mentee" />
             <Stack.Screen name="mentors/mentor-mentees" />

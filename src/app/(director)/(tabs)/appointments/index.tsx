@@ -13,9 +13,10 @@ import {
 } from "@/hooks/appointments/useAppointments";
 import { useMentors } from "@/hooks/useMentors";
 import { openScheduleMeeting } from "@/lib/scheduling/scheduleMeetingNavigation";
+import { resolveAppointmentRef } from "@/utils/appointments/appointmentContact";
 import { useAuthStore } from "@/stores/auth.store";
 import { getAppointmentJoinUrl } from "@/utils/meetingLinkDetails";
-import { getDeviceTimezone } from "@/utils/appointments/timezone";
+import { formatAppointmentTime, getAppTimezone } from "@/utils/appointments/timezone";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { LinearGradient } from "expo-linear-gradient";
@@ -60,7 +61,7 @@ const Appointments: React.FC = () => {
     "appointments" | "availability"
   >("appointments");
   const router = useRouter();
-  const deviceTz = useMemo(() => getDeviceTimezone(), []);
+  const appTz = useMemo(() => getAppTimezone(), []);
 
   // When returning from Availability via router.back(), React state is preserved
   // but we were left on activeTab === "availability" — reset highlight on focus.
@@ -113,16 +114,9 @@ const Appointments: React.FC = () => {
     }
   }, [openSheet]);
 
-  // Helper function to format time for display (device timezone)
   const formatTime = React.useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      ...(deviceTz.timeZone ? { timeZone: deviceTz.timeZone } : {}),
-    });
-  }, [deviceTz.timeZone]);
+    return formatAppointmentTime(dateString);
+  }, []);
 
   // Helper function to get platform icon
   const getPlatformIcon = React.useCallback((platform: string) => {
@@ -200,7 +194,7 @@ const Appointments: React.FC = () => {
         id: apt.id,
         date: formatDisplayDate(apt.meetingDate),
         time: `${startTime} - ${endTime}`,
-        tz: deviceTz.badge,
+        tz: appTz.badge,
         person: mentorName,
         role: "Mentor",
         mode: getModeLabel(apt.platform),
@@ -263,7 +257,7 @@ const Appointments: React.FC = () => {
           id: apt.id,
           date: formatDisplayDate(apt.meetingDate),
           time: `${startTime} - ${endTime}`,
-          tz: deviceTz.badge,
+          tz: appTz.badge,
           person: mentorName,
           role: "Mentee",
           mode: getModeLabel(apt.platform),
@@ -285,7 +279,7 @@ const Appointments: React.FC = () => {
   ]);
 
   const allUpcomingAppointments = upcomingAppointments;
-
+console.log("allUpcomingAppointments", allUpcomingAppointments);
   const handleViewDetails = (appointment: any) => {
     console.log("View details", appointment);
     // Navigate to appointment details
@@ -294,12 +288,18 @@ const Appointments: React.FC = () => {
   const handleReschedule = (appointment: any) => {
     openScheduleMeeting(router, user?.role, {
       mode: "reschedule",
-      appointmentId: String(appointment.id),
+      appointment,
+      appointmentId: String(appointment?.id ?? appointment?.appointment?.id ?? ""),
     });
   };
 
   const handleCancel = (appointment: any) => {
-    if (appointment?.status !== "scheduled") {
+    const apt = resolveAppointmentRef(appointment);
+    if (!apt?.id) {
+      Alert.alert("Error", "Missing appointment data.");
+      return;
+    }
+    if (apt.status !== "scheduled") {
       Alert.alert(
         "Cannot Cancel",
         "Only scheduled meetings can be cancelled.",
@@ -316,12 +316,8 @@ const Appointments: React.FC = () => {
           text: "Yes",
           style: "destructive",
           onPress: async () => {
-            if (!appointment?.id) {
-              Alert.alert("Error", "Missing appointment id.");
-              return;
-            }
             try {
-              await cancelAppointmentAsync(appointment.id);
+              await cancelAppointmentAsync(apt.id);
               setResponseModal({
                 visible: true,
                 message: "Meeting has been Canceled",

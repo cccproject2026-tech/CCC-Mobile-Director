@@ -297,6 +297,19 @@ export const useUploadBannerImageMutation = () => {
             assessmentService.uploadBannerImage(id, imageUri),
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: assessmentKeys.detail(variables.id) });
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.list() });
+        },
+    });
+};
+
+export const useRemoveBannerImageMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (assessmentId: string) =>
+            assessmentService.removeBannerImage(assessmentId),
+        onSuccess: (_, assessmentId) => {
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.detail(assessmentId) });
+            queryClient.invalidateQueries({ queryKey: assessmentKeys.list() });
         },
     });
 };

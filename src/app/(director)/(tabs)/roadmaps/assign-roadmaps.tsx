@@ -132,20 +132,9 @@ const AssignRoadmaps = () => {
         });
     };
 
-    const handleAssign = async () => {
-        if (selectedMentees.size === 0) {
-            Alert.alert('No Selection', 'Please select at least one mentee.');
-            return;
-        }
-
-        if (selectedRoadmapIds.length === 0) {
-            Alert.alert('No Roadmaps', 'No roadmaps selected to assign.');
-            return;
-        }
-
+    const confirmAssign = async () => {
         try {
             const menteeIdArray = Array.from(selectedMentees);
-            // console.log("Mentee ID Array:", menteeIdArray);
             await assignMutation.mutateAsync({
                 menteeIds: menteeIdArray,
                 roadmapIds: selectedRoadmapIds,
@@ -165,7 +154,6 @@ const AssignRoadmaps = () => {
             console.error('Failed to assign roadmaps:', err);
             let errorMessage = err?.message || 'Failed to assign roadmaps. Please try again.';
 
-            // Attempt to replace user IDs with names for better readability
             if (mentees.length > 0) {
                 errorMessage = errorMessage.replace(/[a-f0-9]{24}/g, (match: string) => {
                     const found = mentees.find((m) => m.id === match);
@@ -175,6 +163,36 @@ const AssignRoadmaps = () => {
 
             Alert.alert('Assignment Failed', errorMessage);
         }
+    };
+
+    const getSelectedMenteeNames = () =>
+        Array.from(selectedMentees)
+            .map((id) => {
+                const mentee = mentees.find((m) => m.id === id);
+                return `${mentee?.firstName || ''} ${mentee?.lastName || ''}`.trim() || mentee?.username || 'Unknown';
+            })
+            .join(', ');
+
+    const handleAssign = () => {
+        if (selectedMentees.size === 0) {
+            Alert.alert('No Selection', 'Please select at least one mentee.');
+            return;
+        }
+
+        if (selectedRoadmapIds.length === 0) {
+            Alert.alert('No Roadmaps', 'No roadmaps selected to assign.');
+            return;
+        }
+
+        const names = getSelectedMenteeNames();
+        Alert.alert(
+            'Assign Roadmaps',
+            `Are you sure you want to assign to ${names}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'OK', onPress: confirmAssign },
+            ],
+        );
     };
     // Get selected mentee names for footer
     const selectedMenteeNames = useMemo(() => {

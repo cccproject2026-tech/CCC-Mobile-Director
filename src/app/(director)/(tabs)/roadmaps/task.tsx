@@ -29,6 +29,9 @@ import {
 } from '@/hooks/roadmap/useRoadmapTask';
 import { useAuthStore } from '@/stores/auth.store';
 import { Routes } from '@/navigation/routes';
+import { getReturnToParam } from '@/utils/navigation';
+import { useSafeBack } from '@/hooks/useSafeBack';
+import { useReturnToAwareBack } from '@/hooks/useReturnToAwareBack';
 import { RoadmapExtra } from '@/types/roadmap.types';
 import {
     documentsByFieldName,
@@ -47,11 +50,19 @@ export default function RoadmapTaskScreen() {
         roadmapId?: string;
         taskId?: string;
         userId?: string;
+        returnTo?: string;
     }>();
 
+    const returnTo = getReturnToParam(params);
     const roadmapId = Array.isArray(params.roadmapId) ? params.roadmapId[0] : params.roadmapId;
     const taskId = Array.isArray(params.taskId) ? params.taskId[0] : params.taskId;
     const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
+    const taskFallback = useMemo(
+        () => Routes.roadmaps.phaseListFor(roadmapId ?? '', userId, true),
+        [roadmapId, userId],
+    );
+    const safeBack = useSafeBack({ returnTo, fallback: taskFallback });
+    useReturnToAwareBack(returnTo);
 
     const currentUserId = useAuthStore((s) => s.user?.id ?? '');
 
@@ -369,7 +380,7 @@ export default function RoadmapTaskScreen() {
             <TopBar showUserName />
 
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
+                <TouchableOpacity onPress={() => (returnTo ? safeBack() : router.back())} style={styles.backRow}>
                     <Ionicons name="chevron-back" size={22} color="#fff" />
                     <View style={{ flex: 1 }}>
                         <Text style={styles.headerTitle} numberOfLines={1}>

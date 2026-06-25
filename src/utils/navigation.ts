@@ -12,6 +12,9 @@ const MENTOR_TABS_GROUPED_PREFIX = '/(mentor)/(tabs)';
 /** Updated by NavigationBackHandler — used when router.back() is patched. */
 export const currentPathnameRef = { current: '' };
 export const currentReturnToRef = { current: undefined as string | undefined };
+export const currentSearchParamsRef = {
+  current: {} as Record<string, string | string[] | undefined>,
+};
 
 /** Expand tab-relative paths (e.g. `/review-center/pastor`) to full Expo Router hrefs. */
 export function normalizeReturnToHref(href?: string | null): string | undefined {
@@ -85,6 +88,19 @@ export function buildReturnTo(
   const query = qs.toString();
   const href = query ? `${pathname}?${query}` : pathname;
   return normalizeReturnToHref(href) ?? href;
+}
+
+/** Like buildReturnTo, but keeps parent returnTo in the query for nested back chains. */
+export function buildReturnToWithParent(
+  pathname: string,
+  searchParams?: Record<string, string | string[] | undefined | null>,
+  parentReturnTo?: string,
+): string {
+  const href = buildReturnTo(pathname, searchParams);
+  const parent = normalizeReturnToHref(parentReturnTo);
+  if (!parent) return href;
+  const sep = href.includes('?') ? '&' : '?';
+  return `${href}${sep}returnTo=${encodeURIComponent(parent)}`;
 }
 
 /** Attach `returnTo` when pushing into another stack so back can restore the prior screen. */

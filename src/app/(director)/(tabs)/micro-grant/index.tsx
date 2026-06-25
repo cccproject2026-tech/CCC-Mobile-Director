@@ -70,7 +70,7 @@ const MicroGrant = () => {
     return (
         <GradientBackground>
             <View style={{ flex: 1 }}>
-                <TopBar notifications={3} showUserName={true} showNotifications={true} />
+                <TopBar showUserName={true} showNotifications={true} />
 
                 <View style={{ flex: 1, paddingTop: 24 }}>
                     {/* Header */}

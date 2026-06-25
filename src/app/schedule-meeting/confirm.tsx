@@ -8,12 +8,20 @@ import { useAppointments } from "@/hooks/appointments/useAppointments";
 import { useWeeklyAvailability } from "@/hooks/mentors/useMentorsAvailability";
 import { appointmentKeys } from "@/hooks/appointments/useAppointments";
 import {
+  backFromScheduleMeetingConfirm,
+  buildScheduleFlowParams,
   exitScheduleMeetingFlow,
   getScheduleMeetingBase,
+  isRescheduleMeetingFlow,
+  scheduleParamString,
 } from "@/lib/scheduling/scheduleMeetingNavigation";
+import { getReturnToParam } from "@/utils/navigation";
 import { saveAssessmentMeetingLink } from "@/lib/assessments/assessmentMeetings";
 import { appointmentService } from "@/services/appointments.service";
-import { getDeviceTimezone } from "@/utils/appointments/timezone";
+import {
+  formatAvailabilitySlotLabel,
+  getAppTimezone,
+} from "@/utils/appointments/timezone";
 import { getScheduleMeetingCalendarNote } from "@/utils/google-calendar/display-messages";
 import { getAppointmentJoinUrl } from "@/utils/meetingLinkDetails";
 import { useQueryClient } from "@tanstack/react-query";
@@ -36,26 +44,50 @@ function formatMeetingDateLabel(dateString: string): string {
 export default function ScheduleMeetingConfirmScreen() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const { drawerContext, assessmentId } = useLocalSearchParams<{
+  const routeParams = useLocalSearchParams<{
     drawerContext?: string;
     assessmentId?: string;
+    returnTo?: string;
+    mode?: string | string[];
+    appointmentId?: string | string[];
+    skipPersonPicker?: string | string[];
   }>();
-  const deviceTz = useMemo(() => getDeviceTimezone(), []);
+  const { drawerContext, assessmentId } = routeParams;
+  const appTz = useMemo(() => getAppTimezone(), []);
   const { draft } = useScheduleMeetingStore();
   const [isDone, setIsDone] = useState(false);
   const insets = useSafeAreaInsets();
   const scheduleBase = getScheduleMeetingBase(drawerContext, user?.role);
   const isAssessmentFlow = Boolean(assessmentId);
+  const isReschedule = isRescheduleMeetingFlow(routeParams, draft);
+  const appointmentIdParam =
+    scheduleParamString(routeParams.appointmentId) ?? draft.appointmentId;
+  const flowParams = useMemo(
+    () =>
+      buildScheduleFlowParams({
+        drawerContext,
+        assessmentId,
+        returnTo: getReturnToParam(routeParams),
+        mode: isReschedule ? "reschedule" : "schedule",
+        appointmentId: appointmentIdParam,
+        ...(isReschedule ? { skipPersonPicker: "1" } : {}),
+        preserveDraft: "1",
+      }),
+    [
+      appointmentIdParam,
+      assessmentId,
+      drawerContext,
+      isReschedule,
+      routeParams.returnTo,
+    ],
+  );
 
   const handleBack = useCallback(() => {
-    router.replace({
-      pathname: `${scheduleBase}/time` as any,
-      params: {
-        drawerContext,
-        ...(assessmentId ? { assessmentId } : {}),
-      },
+    backFromScheduleMeetingConfirm(router, {
+      scheduleBase,
+      flowParams,
     });
-  }, [assessmentId, drawerContext, scheduleBase]);
+  }, [flowParams, scheduleBase]);
 
   // Drawer freezes screens — clear "done" from the previous booking when re-entering.
   useFocusEffect(
@@ -150,7 +182,7 @@ export default function ScheduleMeetingConfirmScreen() {
               label="Time"
               value={
                 draft.selectedSlot
-                  ? `${draft.selectedSlot.startTime} ${draft.selectedSlot.startPeriod} - ${draft.selectedSlot.endTime} ${draft.selectedSlot.endPeriod}`
+                  ? formatAvailabilitySlotLabel(draft.selectedSlot)
                   : "—"
               }
               icon="time-outline"
@@ -158,7 +190,7 @@ export default function ScheduleMeetingConfirmScreen() {
             <Divider />
             <Row label="Platform" value={draft.meetingOptionLabel} icon="videocam-outline" />
             <Divider />
-            <Row label="Timezone" value={deviceTz.timeZone || "Local"} icon="globe-outline" />
+            <Row label="Timezone" value={`${appTz.timeZone} (${appTz.badge})`} icon="globe-outline" />
           </View>
         </ScrollView>
 
@@ -187,7 +219,7 @@ export default function ScheduleMeetingConfirmScreen() {
                     ? `${calendarNote} · ${returningText}`
                     : returningText;
                   const meetingTimeLabel = draft.selectedSlot
-                    ? `${draft.selectedSlot.startTime} ${draft.selectedSlot.startPeriod}`
+                    ? `${draft.selectedSlot.startTime} ${draft.selectedSlot.startPeriod} IST`
                     : "";
                   const meetingMessage =
                     isAssessmentFlow && draft.selectedDayYmd

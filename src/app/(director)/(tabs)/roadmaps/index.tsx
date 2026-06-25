@@ -36,12 +36,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RoadmapCardData } from '@/types/roadmap.types';
 import {
     dialPhone,
-    featureNotAvailableYet,
     openSMS,
     openWhatsApp,
     sendEmail,
 } from '@/utils/contactActions';
-import { Routes } from '@/navigation/routes';
 import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
 
 // const STATES = ['North American', 'Canada', 'Mexico', 'Brazil'];
@@ -78,10 +76,13 @@ export default function RevitalizationRoadmap() {
     useEffect(() => {
         if (params?.tab && validTabs.includes(params.tab as TabType)) {
             setActiveTab(params.tab as TabType);
-        } else {
-            setActiveTab('roadmap-library');
         }
     }, [params?.tab]);
+
+    const roadmapsMenteesReturnTo = useMemo(
+        () => buildReturnTo(pathname, { tab: 'mentees' }),
+        [pathname],
+    );
     // ✅ Use the new hook for fetching all roadmaps (Director)
     const {
         data: roadmaps = [],
@@ -156,6 +157,7 @@ export default function RevitalizationRoadmap() {
 
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const createRoadmapModalRef = useRef<BottomSheetModal>(null);
+    const [createSheetKey, setCreateSheetKey] = useState(0);
 
     const handleCloseModal = useCallback(() => {
         bottomSheetModalRef.current?.dismiss();
@@ -191,37 +193,15 @@ export default function RevitalizationRoadmap() {
                     icon: 'create-outline',
                     label: 'Edit Roadmap',
                     onPress: () => {
-                        if (!roadmap) return;
+                        if (!roadmapId) return;
                         afterClose(() => {
-                            if (roadmap.type === 'phase' && roadmap.haveNextedRoadMaps) {
-                                router.push({
-                                    pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-edit',
-                                    params: {
-                                        isEditMode: 'true',
-                                        roadmapId: roadmap._id,
-                                        type: 'phase',
-                                        name: roadmap.name || '',
-                                        subheading: roadmap.roadMapDetails || roadmap.description || '',
-                                        completionTime: roadmap.duration || '',
-                                        bannerImage:
-                                            roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl || '',
-                                    },
-                                });
-                            } else {
-                                router.push({
-                                    pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-edit',
-                                    params: {
-                                        isEditMode: 'true',
-                                        roadmapId: roadmap._id,
-                                        type: 'single',
-                                        name: roadmap.name || '',
-                                        subheading: roadmap.roadMapDetails || roadmap.description || '',
-                                        completionTime: roadmap.duration || '',
-                                        bannerImage:
-                                            roadmap.imageUrl || roadmap.roadmaps[0]?.imageUrl || '',
-                                    },
-                                });
-                            }
+                            router.push({
+                                pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-edit',
+                                params: {
+                                    isEditMode: 'true',
+                                    roadmapId,
+                                },
+                            });
                         });
                     },
                 },
@@ -258,151 +238,20 @@ export default function RevitalizationRoadmap() {
         [deleteRoadmapMutation, handleCloseModal, roadmaps, router],
     );
 
+    /** Roadmaps mentors/mentees tab — only Schedule a Meeting (full menus live on sidebar screens). */
     const buildMentorMenuItems = useCallback(
-        (mentor: Mentor): ActionItem[] => {
-            const mentorId = mentor.id;
+        (_mentor: Mentor): ActionItem[] => {
             const afterClose = (action: () => void) => {
                 handleCloseModal();
                 setTimeout(action, 200);
             };
-            const isFieldMentor =
-                mentor.role === 'field_mentor' ||
-                (mentor.role ?? '').toLowerCase() === 'field mentor';
-
-            if (isFieldMentor) {
-                return [
-                    {
-                        icon: 'people-outline',
-                        label: 'List of Mentees',
-                        onPress: () =>
-                            afterClose(() =>
-                                router.push({
-                                    pathname: '/mentors/mentor-mentees' as any,
-                                    params: { id: mentorId },
-                                }),
-                            ),
-                    },
-                    {
-                        icon: 'person-add-outline',
-                        label: 'Assign New Mentee',
-                        onPress: () =>
-                            afterClose(() =>
-                                router.push({
-                                    pathname: '/mentors/assign-mentees' as any,
-                                    params: { id: mentorId },
-                                }),
-                            ),
-                    },
-                    {
-                        icon: 'person-remove-outline',
-                        label: 'Remove a Mentee',
-                        onPress: () =>
-                            afterClose(() =>
-                                router.push({
-                                    pathname: '/mentors/remove-mentee' as any,
-                                    params: { id: mentorId },
-                                }),
-                            ),
-                    },
-                    {
-                        icon: 'calendar-outline',
-                        label: 'Schedule a Meeting',
-                        onPress: () => router.push('/(director)/(tabs)/appointments'),
-                    },
-                    {
-                        icon: 'create-outline',
-                        label: 'Edit Profile',
-                        onPress: () =>
-                            afterClose(() =>
-                                router.push({
-                                    pathname: `/(director)/(tabs)/mentors/${mentorId}` as any,
-                                    params: { id: mentorId },
-                                }),
-                            ),
-                    },
-                    {
-                        icon: 'person-remove-outline',
-                        label: 'Remove as Field Mentor',
-                        onPress: () => featureNotAvailableYet('Removing a field mentor'),
-                    },
-                ];
-            }
 
             return [
                 {
-                    icon: 'people-outline',
-                    label: 'List of Mentees',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: '/mentors/mentor-mentees' as any,
-                                params: { id: mentorId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'person-add-outline',
-                    label: 'Assign New Mentee',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: '/mentors/assign-mentees' as any,
-                                params: { id: mentorId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'person-remove-outline',
-                    label: 'Remove a Mentee',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: '/mentors/remove-mentee' as any,
-                                params: { id: mentorId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'clipboard-outline',
-                    label: 'Roadmaps of Mentees',
-                    onPress: () =>
-                        afterClose(() => router.push(Routes.roadmaps.mentorPastorsFor(mentorId))),
-                },
-                {
-                    icon: 'checkmark-done-outline',
-                    label: 'Assessments of Mentees',
-                    onPress: () => router.push('/(director)/(tabs)/assessments'),
-                },
-                {
-                    icon: 'book-outline',
-                    label: 'Assignments of Mentees',
-                    onPress: () => router.push('/(director)/(tabs)/assignments'),
-                },
-                {
-                    icon: 'stats-chart-outline',
-                    label: 'Progress of Mentees',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push(
-                                `/(director)/(tabs)/progress-tracker/mentors/${mentorId}` as any,
-                            ),
-                        ),
-                },
-                {
                     icon: 'calendar-outline',
                     label: 'Schedule a Meeting',
-                    onPress: () => router.push('/(director)/(tabs)/appointments'),
-                },
-                {
-                    icon: 'create-outline',
-                    label: 'Edit Profile',
                     onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: `/mentors/${mentorId}` as any,
-                                params: { id: mentorId },
-                            }),
-                        ),
+                        afterClose(() => router.push('/(director)/(tabs)/appointments')),
                 },
             ];
         },
@@ -410,8 +259,7 @@ export default function RevitalizationRoadmap() {
     );
 
     const buildMenteeMenuItems = useCallback(
-        (mentee: Mentee): ActionItem[] => {
-            const menteeId = mentee.id;
+        (_mentee: Mentee): ActionItem[] => {
             const afterClose = (action: () => void) => {
                 handleCloseModal();
                 setTimeout(action, 200);
@@ -419,71 +267,10 @@ export default function RevitalizationRoadmap() {
 
             return [
                 {
-                    icon: 'people-outline',
-                    label: 'Revitalization Roadmaps',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: '/(director)/(tabs)/roadmaps',
-                                params: { id: menteeId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'person-add-outline',
-                    label: 'Assign Mentor',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: '/mentees/assign-mentors' as any,
-                                params: { id: menteeId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'person-remove-outline',
-                    label: 'Remove Mentor',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: '/mentees/remove-mentors' as any,
-                                params: { id: menteeId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'person-add-outline',
-                    label: 'Assessments',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: '/(director)/(tabs)/assessments' as any,
-                                params: { id: menteeId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'book-outline',
-                    label: 'View Progress Report',
-                    onPress: () =>
-                        afterClose(() =>
-                            router.push({
-                                pathname: `/mentees/${menteeId}/progress` as any,
-                                params: { id: menteeId },
-                            }),
-                        ),
-                },
-                {
-                    icon: 'stats-chart-outline',
-                    label: 'Micro Grant',
-                    onPress: () =>
-                        afterClose(() => router.push('/(director)/(tabs)/micro-grant')),
-                },
-                {
                     icon: 'calendar-outline',
-                    label: 'Product and Services',
+                    label: 'Schedule a Meeting',
                     onPress: () =>
-                        afterClose(() => router.push('/(director)/(tabs)/product-and-services')),
+                        afterClose(() => router.push('/(director)/(tabs)/appointments')),
                 },
             ];
         },
@@ -535,11 +322,19 @@ export default function RevitalizationRoadmap() {
     }, []);
 
     const handleOpenCreateRoadmapModal = useCallback(() => {
-        createRoadmapModalRef.current?.present();
+        InteractionManager.runAfterInteractions(() => {
+            requestAnimationFrame(() => {
+                createRoadmapModalRef.current?.present();
+            });
+        });
     }, []);
 
     const handleCloseCreateRoadmapModal = useCallback(() => {
         createRoadmapModalRef.current?.dismiss();
+    }, []);
+
+    const handleCreateSheetDismissed = useCallback(() => {
+        setCreateSheetKey((key) => key + 1);
     }, []);
 
     const handleCreateRoadmapNext = useCallback(
@@ -559,6 +354,7 @@ export default function RevitalizationRoadmap() {
 
     const handleTabChange = (tab: 'roadmap-library' | 'mentors' | 'mentees') => {
         setActiveTab(tab);
+        router.setParams({ tab });
     };
 
     // ✅ Updated handlePhasePress (for clicking roadmap cards)
@@ -676,6 +472,12 @@ export default function RevitalizationRoadmap() {
         return filtered;
     }, [menteesData, search, selectedFilter]);
 
+    useEffect(() => {
+        if (activeTab !== 'mentees') return;
+        console.log('[Roadmaps / Mentees tab] raw API pages:', menteesData?.pages);
+        console.log('[Roadmaps / Mentees tab] filtered list:', filteredMentees);
+    }, [activeTab, filteredMentees, menteesData?.pages]);
+
     const filteredRoadmaps = useMemo(() => {
         let filtered = roadmapLibrary;
 
@@ -687,8 +489,29 @@ export default function RevitalizationRoadmap() {
             );
         }
 
-        return filtered;
+        return filtered; 
     }, [roadmapLibrary, search]);
+
+    useEffect(() => {
+        if (activeTab !== 'roadmap-library') return;
+        console.log(
+            '[Roadmaps / Roadmap Library tab] data source: useAllRoadmaps() → roadmapService.getAllRoadmaps() → GET /roadmaps',
+        );
+        console.log('[Roadmaps / Roadmap Library tab] raw API data (roadmaps):', roadmaps);
+        console.log(
+            '[Roadmaps / Roadmap Library tab] transformed via getRoadmapCard (roadmapLibrary):',
+            roadmapLibrary,
+        );
+        console.log('[Roadmaps / Roadmap Library tab] filtered list (FlatList):', filteredRoadmaps);
+        console.log('[Roadmaps / Roadmap Library tab] loading:', isLoadingRoadmaps, 'error:', roadmapsError);
+    }, [
+        activeTab,
+        roadmaps,
+        roadmapLibrary,
+        filteredRoadmaps,
+        isLoadingRoadmaps,
+        roadmapsError,
+    ]);
 
     const mentorProfiles: ProfileItem[] = useMemo(() => {
         return filteredMentors.map(m => ({
@@ -744,7 +567,13 @@ export default function RevitalizationRoadmap() {
                         profiles={swiperProfiles}
                         onProfilePress={profile => {
                             if (activeTab === 'mentees') {
-                                router.push(Routes.roadmaps.pathsForMentee(profile.id));
+                                router.push({
+                                    pathname: '/(director)/(tabs)/roadmaps/roadmap-paths',
+                                    params: appendReturnTo(
+                                        { id: profile.id },
+                                        roadmapsMenteesReturnTo,
+                                    ),
+                                } as never);
                             } else {
                                 router.push(`/mentors/${profile.id}`);
                             }
@@ -865,16 +694,19 @@ export default function RevitalizationRoadmap() {
                         showMenu={true}
                         onPress={() =>
                             router.push({
-                                pathname: `/(director)/(tabs)/roadmaps/roadmap-paths` as any,
-                                params: { id: mentee.id },
-                            })
+                                pathname: '/(director)/(tabs)/roadmaps/roadmap-paths',
+                                params: appendReturnTo(
+                                    { id: mentee.id },
+                                    roadmapsMenteesReturnTo,
+                                ),
+                            } as never)
                         }
                         onCall={() => dialPhone(mentee.phoneNumber)}
                         onChat={() => openSMS(mentee.phoneNumber)}
                         onMail={() => sendEmail(mentee.email)}
                         onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
                         onMenuPress={() => handleMenuPress(mentee)}
-                        paramsData={params?.tab}
+                        paramsData={activeTab === 'mentees' ? 'mentees' : params?.tab}
                     />
                 </View>
             );
@@ -895,7 +727,7 @@ export default function RevitalizationRoadmap() {
     return (
         <GradientBackground>
             <View style={styles.flex1}>
-                <TopBar notifications={3} showUserName={true} showNotifications={true} />
+                <TopBar showUserName={true} showNotifications={true} />
                 <RoadmapHeader
                     handleOpenCreateRoadmapModal={handleOpenCreateRoadmapModal}
                     activeTab={activeTab}
@@ -962,9 +794,11 @@ export default function RevitalizationRoadmap() {
                 />
 
                 <CreateRoadmapSheet
+                    key={createSheetKey}
                     ref={createRoadmapModalRef}
                     onClose={handleCloseCreateRoadmapModal}
                     onCancel={handleCreateRoadmapCancel}
+                    onDismissed={handleCreateSheetDismissed}
                     mode="create"
                 />
             </View>

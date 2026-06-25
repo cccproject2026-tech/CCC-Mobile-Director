@@ -9,6 +9,8 @@ interface Props {
     onPress?: () => void;
     showMenu?: boolean;
     onMenuPress?: () => void;
+    showRemove?: boolean;
+    onRemovePress?: () => void;
     selectionMode?: boolean;
     isSelected?: boolean;
     onToggleSelection?: () => void;
@@ -20,6 +22,8 @@ export const RoadmapCard: React.FC<Props> = ({
     onPress,
     showMenu,
     onMenuPress,
+    showRemove = false,
+    onRemovePress,
     selectionMode = false,
     isSelected = false,
     onToggleSelection,
@@ -27,7 +31,7 @@ export const RoadmapCard: React.FC<Props> = ({
     const isCompleted = data.status === 'completed';
     const hasProgress = data.taskProgress && !isCompleted;
     const showArrow = data.showArrow && !isCompleted;
-    const hasActions = showMenu || showArrow;
+    const hasActions = showMenu || showArrow || showRemove;
     const cardPressHandler = selectionMode ? onToggleSelection : onPress;
 
     const progressPercentage = useMemo(() => {
@@ -102,6 +106,22 @@ export const RoadmapCard: React.FC<Props> = ({
             </TouchableOpacity>
         ) : null;
 
+    const topRightAction = showRemove || menuButton;
+
+    const removeButton =
+        showRemove && onRemovePress ? (
+            <TouchableOpacity
+                style={styles.removeButton}
+                activeOpacity={1}
+                hitSlop={16}
+                onPress={onRemovePress}
+                accessibilityRole="button"
+                accessibilityLabel="Remove assignment"
+            >
+                <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
+            </TouchableOpacity>
+        ) : null;
+
     const cardBody = (
         <>
             {selectionMode ? (
@@ -123,7 +143,7 @@ export const RoadmapCard: React.FC<Props> = ({
                             style={[
                                 styles.title,
                                 !hasActions && styles.titleNoActions,
-                                menuButton && styles.titleWithMenu,
+                                topRightAction && styles.titleWithMenu,
                             ]}
                             numberOfLines={2}
                         >
@@ -147,6 +167,7 @@ export const RoadmapCard: React.FC<Props> = ({
                                 name="chevron-forward"
                                 size={20}
                                 color="rgba(255,255,255,0.6)"
+                                style={styles.chevronIcon}
                             />
                         ) : null}
                     </View>
@@ -195,6 +216,7 @@ export const RoadmapCard: React.FC<Props> = ({
                 >
                     {cardBody}
                 </Wrapper>
+                {removeButton}
                 {menuButton}
             </View>
         );
@@ -203,6 +225,7 @@ export const RoadmapCard: React.FC<Props> = ({
     return (
         <View style={styles.cardOuter} pointerEvents="box-none">
             <View style={styles.card}>{cardBody}</View>
+            {removeButton}
             {menuButton}
         </View>
     );
@@ -227,6 +250,17 @@ const styles = StyleSheet.create({
         right: 10,
         zIndex: 20,
         padding: 4,
+    },
+    removeButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 20,
+        padding: 6,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255, 107, 107, 0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 107, 107, 0.35)',
     },
     cardSelected: {
         borderColor: '#7B3FF2',
@@ -337,6 +371,9 @@ const styles = StyleSheet.create({
     },
     titleWithMenu: {
         paddingRight: 28,
+    },
+    chevronIcon: {
+        marginTop: 10,
     },
     titleNoActions: {
         paddingRight: 0,

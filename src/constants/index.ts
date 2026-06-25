@@ -11,7 +11,7 @@ export interface MenuItem {
 }
 
 export const MENU_ITEMS: MenuItem[] = [
-    { id: 'new-interests', label: 'New Interests', icon: 'people-outline', route: '/(director)/(tabs)/new-interests', badge: 6 },
+    { id: 'new-interests', label: 'New Interests', icon: 'people-outline', route: '/(director)/(tabs)/new-interests' },
     { id: 'all-mentors', label: 'All Mentors', icon: 'school-outline', route: '/(director)/(tabs)/mentors' },
     { id: 'all-pastors', label: 'All Pastors', icon: 'people-outline', route: '/(director)/(tabs)/mentees' },
     {

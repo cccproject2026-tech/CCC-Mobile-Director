@@ -47,14 +47,17 @@ export default function MenteeCard(props: MenteeCardProps) {
     const isSelectionMode = onToggleSelect !== undefined;
 
     const handleCardPress = () => {
+        if (onPress) {
+            onPress();
+            return;
+        }
         if (paramsData === "mentees") {
             router.push({
-                pathname: "/(director)/(tabs)/roadmaps",
+                pathname: "/(director)/(tabs)/roadmaps/roadmap-paths",
                 params: { id: data?.id ?? "" },
             });
             return;
         }
-        onPress?.();
     };
 
     const cardMenuButton =
@@ -183,12 +186,16 @@ export default function MenteeCard(props: MenteeCardProps) {
             {showChevronOnly ? (
                 <Pressable
                     onPress={() => {
+                        if (onPress) {
+                            onPress();
+                            return;
+                        }
                         if (paramsData === "Field-Mentor-Home") {
                             onPress?.();
                             return;
                         }
                         router.push({
-                            pathname: "/(director)/(tabs)/roadmaps",
+                            pathname: "/(director)/(tabs)/roadmaps/roadmap-paths",
                             params: { id: data?.id ?? "" },
                         });
                     }}

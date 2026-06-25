@@ -15,7 +15,6 @@ const LOGO = require('@/assets/images/app/CCClogo.png');
 
 type Props = {
     showUserName?: boolean;
-    notifications?: number;
     showNotifications?: boolean;
     showDrawer?: boolean;
     showBackButton?: boolean;
@@ -30,7 +29,6 @@ type Props = {
 
 const TopBar: React.FC<Props> = ({
     showUserName = false,
-    notifications,
     showNotifications = true,
     showDrawer = true,
     showBackButton = false,
@@ -47,12 +45,8 @@ const TopBar: React.FC<Props> = ({
     const router = useRouter();
     const safeBack = useSafeBack();
     const { user } = useAuthStore();
-    const liveUnreadCount = useUnreadNotificationCount(
-        user?.role,
-        showNotifications && notifications === undefined,
-    );
-    const badgeCount = notifications ?? liveUnreadCount;
-    const badgeLabel = formatNotificationBadgeCount(badgeCount);
+    const liveUnreadCount = useUnreadNotificationCount(user?.role, showNotifications);
+    const badgeLabel = formatNotificationBadgeCount(liveUnreadCount);
     const onMenuPress = () => navigation.dispatch(DrawerActions.openDrawer());
     const handleNotificationsPress = () => {
         router.push('/(director)/(tabs)/notifications');
@@ -129,7 +123,7 @@ const TopBar: React.FC<Props> = ({
                 {showNotifications && (
                     <Pressable onPress={handleNotificationsPress} hitSlop={10} style={styles.notificationButton}>
                         <Ionicons name="notifications-outline" size={size - 10} color={color} />
-                        {badgeCount > 0 && (
+                        {liveUnreadCount > 0 && (
                             <View
                                 style={[
                                     styles.notificationBadge,

@@ -2,7 +2,7 @@
 import { icons } from "@/constants";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs, usePathname } from "expo-router";
+import { Tabs, usePathname, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { Image, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ const hiddenTab = {
 
 export default function DirectorTabLayout() {
     const pathname = usePathname();
+    const router = useRouter();
     const { bottom } = useSafeAreaInsets();
 
     const isTabBarVisible = useMemo(() => {
@@ -144,6 +145,12 @@ export default function DirectorTabLayout() {
                             style={{ width: 28, height: 28, tintColor: color }}
                         />
                     ),
+                }}
+                listeners={{
+                    tabPress: (e) => {
+                        e.preventDefault();
+                        router.replace('/(director)/(tabs)/profile');
+                    },
                 }}
             />
 

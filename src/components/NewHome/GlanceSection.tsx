@@ -142,6 +142,7 @@ const handleReschedule = (appointment: any) => {
     const role = useAuthStore.getState().user?.role;
     openScheduleMeeting(router, role, {
         mode: 'reschedule',
+        appointment,
         appointmentId: String(appointment?.id ?? ''),
     });
 };

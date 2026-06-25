@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { GradientBackground } from '@/components/ui/design-system';
 import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
-import { appendReturnTo, buildReturnTo, getReturnToParam } from '@/utils/navigation';
+import { appendReturnTo, buildReturnTo, getReturnToParam, normalizeReturnToHref, parseStringHref } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -82,7 +82,7 @@ export default function RoadmapCreationScreen() {
             return;
         }
 
-        const commonParams = {
+        const navigationParams = {
             roadmapId,
             isEditMode: isEditMode ? 'true' : 'false',
             name,
@@ -91,47 +91,34 @@ export default function RoadmapCreationScreen() {
             selectedDivision: selectedDivision || 'All',
             bannerImage: bannerImage || '',
             ...(params.nestedRoadmapId && { nestedRoadmapId: params.nestedRoadmapId }),
-            ...(returnTo ? { returnTo } : {}),
+            type: roadmapType,
         };
 
-        const formReturnTo = buildReturnTo(pathname, {
-            roadmapId,
-            type: roadmapType,
-            isEditMode: isEditMode ? 'true' : 'false',
-            ...(params.nestedRoadmapId ? { nestedRoadmapId: params.nestedRoadmapId as string } : {}),
-        });
+        const destinationReturnTo =
+            returnTo ||
+            buildReturnTo(pathname, {
+                roadmapId,
+                type: roadmapType,
+                isEditMode: isEditMode ? 'true' : 'false',
+                ...(params.nestedRoadmapId ? { nestedRoadmapId: params.nestedRoadmapId as string } : {}),
+            });
 
-        if (roadmapType === 'phase') {
-            router.push({
-                pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                params: appendReturnTo(
-                    {
-                        ...commonParams,
-                        type: 'phase',
-                    },
-                    formReturnTo,
-                ),
-            });
-        } else {
-            router.push({
-                pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
-                params: appendReturnTo(
-                    {
-                        ...commonParams,
-                        type: 'single',
-                    },
-                    formReturnTo,
-                ),
-            });
-        }
+        router.push({
+            pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-form',
+            params: appendReturnTo(navigationParams, destinationReturnTo),
+        } as never);
     };
 
     const handleCancel = () => {
+        if (returnTo) {
+            router.replace(parseStringHref(normalizeReturnToHref(returnTo)!));
+            return;
+        }
         router.back();
     };
 
     const handleBack = () => {
-        router.back();
+        handleCancel();
     };
 
     if (isLoading) {

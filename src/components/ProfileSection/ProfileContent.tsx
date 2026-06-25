@@ -28,12 +28,15 @@ interface ProfileContentProps {
     isLoading: boolean;
     isError: boolean;
     returnTo?: string;
+    /** Where to open documents for pastor/mentor profiles (keeps Profile tab for director only). */
+    documentsScope?: 'mentees' | 'mentors';
 }
 
 export default function ProfileContent({ userId, isOwnProfile, bottomInsets, profileData,
     isLoading,
     isError,
-    returnTo }: ProfileContentProps) {
+    returnTo,
+    documentsScope }: ProfileContentProps) {
     const router = useRouter();
     const goBack = useSafeBack({ returnTo });
     useReturnToAwareBack(returnTo);
@@ -172,6 +175,18 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
         }
     }, [userId, deleteProfile, goBack]);
 
+    const handleOpenDocuments = useCallback(() => {
+        if (isOwnProfile) {
+            router.push('/(director)/(tabs)/profile/documents' as never);
+            return;
+        }
+        if (documentsScope === 'mentors') {
+            router.push(`/mentors/${userId}/documents` as never);
+            return;
+        }
+        router.push(`/mentees/${userId}/documents` as never);
+    }, [documentsScope, isOwnProfile, router, userId]);
+
     const renderAvatar = () => (
         <View style={styles.avatarContainer}>
             <Image
@@ -232,7 +247,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
 
                         {!isEditing && (
                             <View style={styles.actionButtons}>
-                                <TouchableOpacity style={styles.actionButton} onPress={() => router.push('/(director)/(tabs)/profile/documents' as any)}>
+                                <TouchableOpacity style={styles.actionButton} onPress={handleOpenDocuments}>
                                     <Text style={styles.actionButtonText}>Document</Text>
                                     <Image source={icons.attachmentIcon} style={styles.smallIcon} />
                                 </TouchableOpacity>

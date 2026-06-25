@@ -16,6 +16,8 @@ export interface ActionBottomSheetProps {
     image?: string;
     actions: ActionItem[];
     onClose: () => void;
+    /** Called after the sheet finishes dismissing — use to clear selection state. */
+    onDismissed?: () => void;
     colorScheme?: {
         background?: string;
         text?: string;
@@ -30,6 +32,7 @@ const ActionBottomSheet = forwardRef<BottomSheetModal, ActionBottomSheetProps>(
         image,
         actions,
         onClose,
+        onDismissed,
         colorScheme = {
             background: "#06577C",
             text: "#FFFFFF",
@@ -59,7 +62,13 @@ const ActionBottomSheet = forwardRef<BottomSheetModal, ActionBottomSheetProps>(
             <BottomSheetModal
                 ref={ref}
                 snapPoints={snapPoints}
-                onDismiss={onClose}
+                onDismiss={() => {
+                    if (onDismissed) {
+                        onDismissed();
+                    } else {
+                        onClose();
+                    }
+                }}
                 enablePanDownToClose
                 backdropComponent={backdrop}
                 handleIndicatorStyle={{ display: "none" }}

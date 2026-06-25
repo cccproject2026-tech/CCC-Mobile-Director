@@ -320,7 +320,7 @@ export default function Mentees() {
         return (
             <GradientBackground>
                 <View style={styles.innerContainer}>
-                    <TopBar notifications={3} showUserName showNotifications />
+                    <TopBar showUserName showNotifications />
                     <View style={styles.errorContainer}>
                         <Ionicons name="alert-circle-outline" size={40} color="rgba(255,255,255,0.4)" />
                         <Text style={styles.errorText}>Failed to load pastors. Please try again.</Text>
@@ -333,7 +333,7 @@ export default function Mentees() {
     return (
         <GradientBackground>
             <View style={styles.innerContainer}>
-                <TopBar notifications={3} showUserName showNotifications />
+                <TopBar showUserName showNotifications />
 
                 <View style={styles.contentContainer}>
                     {/* Header */}

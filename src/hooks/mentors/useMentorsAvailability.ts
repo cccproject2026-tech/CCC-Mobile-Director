@@ -6,6 +6,7 @@ import {
     TimeSlot,
     WeeklyAvailability,
 } from "@/types/appointment.types";
+import { formatAvailabilitySlotLabel } from "@/utils/appointments/timezone";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 
@@ -242,10 +243,7 @@ interface UseWeeklyAvailabilityOptions {
   role?: string;
 }
 
-// Helper function to format time slot
-export const formatTimeSlot = (slot: TimeSlot): string => {
-  return `${slot.startTime} ${slot.startPeriod} - ${slot.endTime} ${slot.endPeriod}`;
-};
+export const formatTimeSlot = (slot: TimeSlot): string => formatAvailabilitySlotLabel(slot);
 
 // Helper function to convert time slot to 24-hour format for comparison
 export const convertTo24Hour = (time: string, period: "AM" | "PM"): number => {

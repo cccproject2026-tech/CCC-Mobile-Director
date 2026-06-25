@@ -23,6 +23,7 @@ export default function MentorMenteeProfileScreen() {
             isLoading={isLoading}
             isError={isError}
             returnTo={getReturnToParam(params)}
+            documentsScope="mentees"
         />
     );
 }

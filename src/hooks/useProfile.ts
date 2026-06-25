@@ -281,39 +281,41 @@ export const useDocumentsByUserId = (userId: string | undefined) => {
     });
 };
 
-export const useUploadDocument = () => {
+export const useUploadDocument = (userId?: string) => {
     const queryClient = useQueryClient();
     const { user } = useAuthStore();
+    const targetUserId = userId ?? user?.id;
 
     return useMutation({
         mutationFn: async (file: any) => {
-            if (!user?.id) {
+            if (!targetUserId) {
                 throw new Error("User ID is required");
             }
-            return profileService.uploadDocument(user.id, file);
+            return profileService.uploadDocument(targetUserId, file);
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: ["documents", user?.id || ""],
+                queryKey: ["documents", targetUserId || ""],
             });
         },
     });
 };
 
-export const useDeleteDocument = () => {
+export const useDeleteDocument = (userId?: string) => {
     const queryClient = useQueryClient();
     const { user } = useAuthStore();
+    const targetUserId = userId ?? user?.id;
 
     return useMutation({
         mutationFn: async (documentUrl: string) => {
-            if (!user?.id) {
+            if (!targetUserId) {
                 throw new Error("User ID is required");
             }
-            return profileService.deleteDocument(user.id, documentUrl);
+            return profileService.deleteDocument(targetUserId, documentUrl);
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({
-                queryKey: ["documents", user?.id || ""],
+                queryKey: ["documents", targetUserId || ""],
             });
         },
     });

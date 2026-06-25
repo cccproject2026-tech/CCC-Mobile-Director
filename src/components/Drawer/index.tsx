@@ -1,6 +1,7 @@
 import { MenuItem } from '@/constants';
 import { homeLayout, roadmapTheme } from '@/components/ui/design-system';
 import { Colors } from '@/constants/Colors';
+import { useInterests } from '@/hooks/useInterest';
 import { useMenteesNavigationStore } from '@/stores/menteesNavigation.store';
 import { useMentorsNavigationStore } from '@/stores/mentorsNavigation.store';
 import { useAuthStore } from '@/stores/auth.store';
@@ -32,6 +33,10 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
 
     const currentUserRole = (user?.role ?? '') as 'director' | 'super admin';
 
+    const { data: interestsData } = useInterests();
+    const newInterestsCount =
+        interestsData?.filter((item) => item?.status === 'new')?.length || 0;
+
     const initExpanded = (items: MenuItem[], expandAll: boolean) => {
         const result: Record<string, boolean> = {};
         const traverse = (items: MenuItem[]) =>
@@ -51,13 +56,16 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
                 const isAllowed = !item.roles || item.roles.includes(currentUserRole);
                 if (isAllowed) {
                     const newItem: MenuItem = { ...item };
+                    if (item.id === 'new-interests' && newInterestsCount > 0) {
+                        newItem.badge = newInterestsCount;
+                    }
                     if (item.children?.length) newItem.children = filterItems(item.children);
                     if (newItem.children?.length || !item.children?.length) acc.push(newItem);
                 }
                 return acc;
             }, []);
         return filterItems(props.menuItems);
-    }, [props.menuItems, currentUserRole]);
+    }, [props.menuItems, currentUserRole, newInterestsCount]);
 
     const [expandedItems, setExpandedItems] = useState(() =>
         initExpanded(filteredMenuItems, !!props.expandAllByDefault)
@@ -136,7 +144,9 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
 
                     {item.badge && item.badge > 0 && (
                         <View style={styles.badge}>
-                            <Text style={styles.badgeText}>{item.badge}</Text>
+                            <Text style={styles.badgeText}>
+                                {item.badge > 99 ? '99+' : item.badge}
+                            </Text>
                         </View>
                     )}
 

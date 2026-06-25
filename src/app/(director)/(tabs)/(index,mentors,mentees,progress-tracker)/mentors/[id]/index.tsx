@@ -4,8 +4,6 @@ import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-
-
 export default function MentorMenteeProfileScreen() {
     const { bottom } = useSafeAreaInsets();
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,7 +18,7 @@ export default function MentorMenteeProfileScreen() {
             profileData={profileData!}
             isLoading={isLoading}
             isError={isError}
+            documentsScope="mentors"
         />
     );
 }
-

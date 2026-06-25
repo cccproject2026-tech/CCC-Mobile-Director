@@ -5,7 +5,7 @@ import {
     isOverdue,
 } from '@/utils/assignedAssessmentParser';
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
@@ -14,6 +14,8 @@ interface Props {
     onDevelopmentPlanPress?: () => void;
     showMenu?: boolean;
     onMenuPress?: () => void;
+    showRemove?: boolean;
+    onRemovePress?: () => void;
     selectionMode?: boolean;
     isSelected?: boolean;
     onToggleSelection?: () => void;
@@ -25,6 +27,8 @@ export const AssessmentCard: React.FC<Props> = ({
     onDevelopmentPlanPress,
     showMenu = false,
     onMenuPress,
+    showRemove = false,
+    onRemovePress,
     selectionMode = false,
     isSelected = false,
     onToggleSelection,
@@ -124,7 +128,14 @@ export const AssessmentCard: React.FC<Props> = ({
                     {renderTypeBadge()}
                 </View>
 
-                <View style={[styles.textContent, showMenu && onMenuPress && styles.textContentWithMenu]}>
+                <View
+                    style={[
+                        styles.textContent,
+                        (showMenu && onMenuPress) || (showRemove && onRemovePress)
+                            ? styles.textContentWithMenu
+                            : undefined,
+                    ]}
+                >
                     <Text style={styles.title} numberOfLines={2}>{displayName}</Text>
                     {data.description && (
                         <Text style={styles.description} numberOfLines={2}>
@@ -160,10 +171,21 @@ export const AssessmentCard: React.FC<Props> = ({
                 </View>
             </Pressable>
 
+            {showRemove && onRemovePress ? (
+                <Pressable
+                    style={styles.removeButton}
+                    hitSlop={16}
+                    onPress={onRemovePress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Remove assignment"
+                >
+                    <Ionicons name="trash-outline" size={20} color="#FF6B6B" />
+                </Pressable>
+            ) : null}
+
             {showMenu && onMenuPress ? (
-                <TouchableOpacity
+                <Pressable
                     style={styles.menuButton}
-                    activeOpacity={1}
                     hitSlop={16}
                     onPress={onMenuPress}
                     accessibilityRole="button"
@@ -174,7 +196,7 @@ export const AssessmentCard: React.FC<Props> = ({
                         size={20}
                         color="#fff"
                     />
-                </TouchableOpacity>
+                </Pressable>
             ) : null}
         </View>
     );
@@ -196,6 +218,17 @@ const styles = StyleSheet.create({
         right: 10,
         zIndex: 20,
         padding: 4,
+    },
+    removeButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 20,
+        padding: 6,
+        borderRadius: 8,
+        backgroundColor: 'rgba(255, 107, 107, 0.12)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 107, 107, 0.35)',
     },
     content: {
         flexDirection: 'row',

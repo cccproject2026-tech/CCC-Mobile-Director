@@ -182,7 +182,7 @@ export default function InterestReceivedScreen() {
         <View style={styles.screenRoot}>
         <GradientBackground>
             <View style={styles.container}>
-                <TopBar notifications={3} showUserName showNotifications />
+                <TopBar showUserName showNotifications />
 
                 <View style={styles.inner}>
                     <ScreenBackHeader title="Interest Received" />

@@ -5,6 +5,14 @@ export type TimezoneDisplay = {
   timeZone?: string;
 };
 
+/** All appointment availability and meeting times are shown in Kolkata (IST). */
+export const APP_TIMEZONE = "Asia/Kolkata";
+export const APP_TIMEZONE_BADGE = "IST";
+
+export function getAppTimezone(): TimezoneDisplay {
+  return { badge: APP_TIMEZONE_BADGE, timeZone: APP_TIMEZONE };
+}
+
 function safeResolvedTimeZone(): string | undefined {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -20,25 +28,52 @@ export function getDeviceTimezone(): TimezoneDisplay {
 
 export function formatDateLocal(iso: string, opts?: { timeZone?: string }): string {
   const d = new Date(iso);
-  const timeZone = opts?.timeZone;
+  const timeZone = opts?.timeZone ?? APP_TIMEZONE;
   return d.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-    ...(timeZone ? { timeZone } : {}),
+    timeZone,
   });
 }
 
 export function formatTimeLocal(iso: string, opts?: { timeZone?: string; hour12?: boolean }): string {
   const d = new Date(iso);
-  const timeZone = opts?.timeZone;
+  const timeZone = opts?.timeZone ?? APP_TIMEZONE;
   const hour12 = opts?.hour12 ?? true;
   return d.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hour12,
-    ...(timeZone ? { timeZone } : {}),
+    timeZone,
   });
+}
+
+export function formatAppointmentTime(
+  iso: string,
+  opts?: { hour12?: boolean },
+): string {
+  return formatTimeLocal(iso, { timeZone: APP_TIMEZONE, hour12: opts?.hour12 ?? true });
+}
+
+export function formatAppointmentDate(iso: string): string {
+  return formatDateLocal(iso, { timeZone: APP_TIMEZONE });
+}
+
+export type AvailabilitySlotParts = {
+  startTime: string;
+  startPeriod: string;
+  endTime: string;
+  endPeriod: string;
+};
+
+/** Plain API slot strings are stored as Kolkata (IST) wall-clock times. */
+export function formatAvailabilitySlotLabel(slot: AvailabilitySlotParts): string {
+  return `${slot.startTime} ${slot.startPeriod} - ${slot.endTime} ${slot.endPeriod} ${APP_TIMEZONE_BADGE}`;
+}
+
+export function formatAvailabilityTimeLabel(time: string, period: string): string {
+  return `${time} ${period} ${APP_TIMEZONE_BADGE}`;
 }
 
 export function formatDateTimeLocal(

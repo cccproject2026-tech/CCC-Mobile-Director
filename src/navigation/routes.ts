@@ -98,5 +98,10 @@ export const Routes = {
         pathname: "/roadmaps/roadmap-paths",
         params: { id: pastorId },
       }) as Href,
+    indexWithTab: (tab: "roadmap-library" | "mentors" | "mentees"): Href =>
+      ({
+        pathname: "/roadmaps",
+        params: { tab },
+      }) as Href,
   },
 } as const;

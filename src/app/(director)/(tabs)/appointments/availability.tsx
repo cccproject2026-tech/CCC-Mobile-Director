@@ -1,7 +1,7 @@
-import { Header } from "@/components/Header/Header";
 import { MentorAvailabilityWorkspace } from "@/components/mentor/availability/MentorAvailabilityWorkspace";
 import TopBar from "@/components/Header/TopBar";
 import AppGradientBackground from "@/components/layout/AppGradientBackground";
+import { ScreenBackHeader } from "@/components/ui/design-system";
 import { useAuthStore } from "@/stores/auth.store";
 import { useSafeBack } from "@/hooks/useSafeBack";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
@@ -18,7 +18,6 @@ const AvailabilityScreen = () => {
   const [activeTab, setActiveTab] = useState<"appointments" | "availability">(
     "availability",
   );
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -29,7 +28,7 @@ const AvailabilityScreen = () => {
   const handleTabPress = (tab: "appointments" | "availability") => {
     setActiveTab(tab);
     if (tab === "appointments") {
-      safeBack();
+      router.replace("/(director)/(tabs)/appointments");
     }
   };
 
@@ -41,7 +40,7 @@ const AvailabilityScreen = () => {
           <TopBar role="director" showUserName />
         </View>
         <View style={{ flex: 1 }}>
-          <Header title="Schedule" showNewMeeting={false} />
+          <ScreenBackHeader title="Schedule" onPressBack={safeBack} />
 
           <View style={styles.tabContainer}>
             <Pressable
@@ -74,11 +73,7 @@ const AvailabilityScreen = () => {
 
           <View style={{ flex: 1, paddingBottom: bottom + 8 }}>
             {mentorId ? (
-              <MentorAvailabilityWorkspace
-                key={refreshKey}
-                mentorId={mentorId}
-                onAvailabilitySaved={() => setRefreshKey((k) => k + 1)}
-              />
+              <MentorAvailabilityWorkspace mentorId={mentorId} />
             ) : (
               <View style={styles.signInHint}>
                 <Text style={styles.signInText}>

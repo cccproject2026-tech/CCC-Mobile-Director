@@ -1,5 +1,12 @@
 import { router } from 'expo-router';
-import { currentPathnameRef, currentReturnToRef, safeGoBack } from '@/utils/navigation';
+import { handleScheduleMeetingStackBack } from '@/lib/scheduling/scheduleMeetingNavigation';
+import { useAuthStore } from '@/stores/auth.store';
+import {
+  currentPathnameRef,
+  currentReturnToRef,
+  currentSearchParamsRef,
+  safeGoBack,
+} from '@/utils/navigation';
 
 type RouterWithBack = typeof router & { back: () => void };
 
@@ -13,8 +20,20 @@ export function patchRouterBackOnce(): void {
   originalBack = routerApi.back.bind(routerApi);
 
   routerApi.back = () => {
+    const pathname = currentPathnameRef.current ?? '';
+    const role = useAuthStore.getState().user?.role;
+    if (
+      handleScheduleMeetingStackBack(
+        router,
+        pathname,
+        role,
+        currentSearchParamsRef.current,
+      )
+    ) {
+      return;
+    }
     safeGoBack(router, {
-      currentPathname: currentPathnameRef.current,
+      currentPathname: pathname,
       returnTo: currentReturnToRef.current,
     });
   };

@@ -16,12 +16,12 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { GradientBackground } from '@/components/ui/design-system';
-import { useLocalSearchParams, type Href } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeBack } from '@/hooks/useSafeBack';
 import { useReturnToAwareBack } from '@/hooks/useReturnToAwareBack';
-import { getReturnToParam } from '@/utils/navigation';
+import { getReturnToParam, normalizeReturnToHref, parseStringHref } from '@/utils/navigation';
 import { Routes } from '@/navigation/routes';
 
 import {
@@ -40,6 +40,7 @@ export type FieldType = 'text' | 'textarea' | 'upload' | 'datepicker' | 'assessm
 
 export default function RoadmapFormScreen() {
     const { bottom } = useSafeAreaInsets();
+    const router = useRouter();
     const params = useLocalSearchParams();
     const addFieldSheet = useContext(AddFieldSheetContext);
 
@@ -59,6 +60,19 @@ export default function RoadmapFormScreen() {
 
     const safeBack = useSafeBack({ returnTo, fallback: backFallback });
     useReturnToAwareBack(returnTo);
+
+    const navigateAfterSuccess = () => {
+        const destination = normalizeReturnToHref(returnTo);
+        if (destination) {
+            router.replace(parseStringHref(destination));
+            return;
+        }
+        if (roadmapType === 'phase') {
+            router.replace(Routes.roadmaps.phaseListFor(roadmapId));
+            return;
+        }
+        safeBack();
+    };
 
     console.log('RoadmapFormScreen params:', params);
     console.log('Roadmap Type:', roadmapType);
@@ -814,7 +828,7 @@ export default function RoadmapFormScreen() {
                     const response = await createNestedMutation.mutateAsync({ roadmapId, payload });
                     logResponse('Create single roadmap with tasks', response);
                     Alert.alert('Success', 'Roadmap created successfully!', [
-                        { text: 'OK', onPress: () => safeBack() },
+                        { text: 'OK', onPress: navigateAfterSuccess },
                     ]);
                 } else {
                     const nested = parentRoadmap?.roadmaps?.[0];
@@ -844,7 +858,7 @@ export default function RoadmapFormScreen() {
                     logResponse('Update single roadmap with tasks', response);
 
                     Alert.alert('Success', 'Roadmap updated successfully!', [
-                        { text: 'OK', onPress: () => safeBack() },
+                        { text: 'OK', onPress: navigateAfterSuccess },
                     ]);
                 }
             }
@@ -868,7 +882,7 @@ export default function RoadmapFormScreen() {
                     const response = await createNestedMutation.mutateAsync({ roadmapId, payload });
                     logResponse('Create phase task', response);
                     Alert.alert('Success', 'Phase created successfully!', [
-                        { text: 'OK', onPress: () => safeBack() },
+                        { text: 'OK', onPress: navigateAfterSuccess },
                     ]);
                 } else {
                     const updatedRoadmaps =
@@ -905,7 +919,7 @@ export default function RoadmapFormScreen() {
                     logResponse('Update phase task', response);
 
                     Alert.alert('Success', 'Phase updated successfully!', [
-                        { text: 'OK', onPress: () => safeBack() },
+                        { text: 'OK', onPress: navigateAfterSuccess },
                     ]);
                 }
             }
@@ -922,6 +936,10 @@ export default function RoadmapFormScreen() {
     };
 
     const handleCancel = () => {
+        if (!isEditMode) {
+            router.back();
+            return;
+        }
         safeBack();
     };
 

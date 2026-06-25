@@ -58,6 +58,8 @@ export default function AssessmentsScreen() {
     );
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [menuAssessment, setMenuAssessment] = useState<ApiAssessment | null>(null);
+    const [menuOpenSeq, setMenuOpenSeq] = useState(0);
+    const [menuSheetEpoch, setMenuSheetEpoch] = useState(0);
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     useEffect(() => {
         if (params.tab && ['library', 'assigned', 'mentor'].includes(params.tab)) {
@@ -108,16 +110,20 @@ export default function AssessmentsScreen() {
         );
     }, [libraryAssessments, search]);
 
-    const filteredAssigned = useMemo(() => {
-        let list = assignedAssessments ?? [];
+    const filteredPastors = useMemo(() => {
         const q = search.toLowerCase().trim();
-        if (q) {
-            list = list.filter(
-                (a) =>
-                    a.name?.toLowerCase().includes(q) ||
-                    a.description?.toLowerCase().includes(q),
-            );
-        }
+        if (!q) return pastors;
+        return pastors.filter(
+            (p) =>
+                p.firstName?.toLowerCase().includes(q) ||
+                p.lastName?.toLowerCase().includes(q) ||
+                p.email?.toLowerCase().includes(q) ||
+                `${p.firstName ?? ''} ${p.lastName ?? ''}`.toLowerCase().includes(q),
+        );
+    }, [pastors, search]);
+
+    const filteredAssigned = useMemo(() => {
+        const list = assignedAssessments ?? [];
         if (statusFilter === 'all') return list;
         return list.filter((a) => {
             const s = a.progressStatus ?? 'not_started';
@@ -125,7 +131,7 @@ export default function AssessmentsScreen() {
             if (statusFilter === 'in_progress') return s === 'submitted';
             return s === 'not_started';
         });
-    }, [assignedAssessments, search, statusFilter]);
+    }, [assignedAssessments, statusFilter]);
 
     const filteredMentors = useMemo(() => {
         const q = search.toLowerCase().trim();
@@ -137,6 +143,35 @@ export default function AssessmentsScreen() {
                 m.email?.toLowerCase().includes(q),
         );
     }, [mentors, search]);
+
+    const selectedPastorName = useMemo(() => {
+        const pastor = pastors.find((p) => p.id === selectedPastorId);
+        if (!pastor) return 'this user';
+        return `${pastor.firstName ?? ''} ${pastor.lastName ?? ''}`.trim() || pastor.email || 'this user';
+    }, [pastors, selectedPastorId]);
+
+    const handleRemoveAssignedAssessment = useCallback(
+        (assessment: AssignedAssessmentView) => {
+            const assessmentName =
+                assessment.name ?? (assessment as { title?: string }).title ?? 'this assessment';
+
+            Alert.alert(
+                'Remove Assessment',
+                `Do you want to remove "${assessmentName}" from ${selectedPastorName}?`,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Remove',
+                        style: 'destructive',
+                        onPress: () => {
+                            // TODO: integrate unassign API when backend is ready
+                        },
+                    },
+                ],
+            );
+        },
+        [selectedPastorName],
+    );
 
     const onRefresh = useCallback(() => {
         if (mainTab === 'library') refetchLibrary();
@@ -157,7 +192,11 @@ export default function AssessmentsScreen() {
 
     const handleCloseModal = useCallback(() => {
         bottomSheetModalRef.current?.dismiss();
+    }, []);
+
+    const handleSheetDismissed = useCallback(() => {
         setMenuAssessment(null);
+        setMenuSheetEpoch((key) => key + 1);
     }, []);
 
     const buildMenuItems = useCallback(
@@ -230,6 +269,7 @@ export default function AssessmentsScreen() {
 
     const handleAssessmentMenuPress = useCallback((assessment: ApiAssessment) => {
         setMenuAssessment(assessment);
+        setMenuOpenSeq((seq) => seq + 1);
     }, []);
 
     useEffect(() => {
@@ -240,7 +280,7 @@ export default function AssessmentsScreen() {
             });
         });
         return () => task.cancel();
-    }, [menuAssessment]);
+    }, [menuAssessment?._id, menuOpenSeq]);
 
     const isRefreshing =
         (mainTab === 'library' && libraryFetching) ||
@@ -267,25 +307,37 @@ export default function AssessmentsScreen() {
         </View>
     );
 
-    const renderPastorPicker = () => (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pastorPicker}>
-            {pastors.map((p) => {
-                const active = p.id === selectedPastorId;
-                const name = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || p.email;
-                return (
-                    <TouchableOpacity
-                        key={p.id}
-                        style={[styles.pastorChip, active && styles.pastorChipActive]}
-                        onPress={() => setSelectedPastorId(p.id)}
-                    >
-                        <Text style={[styles.pastorChipText, active && styles.pastorChipTextActive]}>
-                            {name}
-                        </Text>
-                    </TouchableOpacity>
-                );
-            })}
-        </ScrollView>
-    );
+    const renderPastorPicker = () => {
+        if (filteredPastors.length === 0) {
+            return (
+                <Text style={styles.hintText}>
+                    {search.trim()
+                        ? 'No pastors found matching your search.'
+                        : 'No pastors available.'}
+                </Text>
+            );
+        }
+
+        return (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pastorPicker}>
+                {filteredPastors.map((p) => {
+                    const active = p.id === selectedPastorId;
+                    const name = `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() || p.email;
+                    return (
+                        <TouchableOpacity
+                            key={p.id}
+                            style={[styles.pastorChip, active && styles.pastorChipActive]}
+                            onPress={() => setSelectedPastorId(p.id)}
+                        >
+                            <Text style={[styles.pastorChipText, active && styles.pastorChipTextActive]}>
+                                {name}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
+            </ScrollView>
+        );
+    };
 
     const renderLibrary = () => {
         if (libraryLoading) return renderLoading('Loading assessments...');
@@ -345,7 +397,9 @@ export default function AssessmentsScreen() {
                             <AssessmentCard
                                 key={`${assessment._id}-${assessment.assignmentId ?? ''}`}
                                 data={assessment}
+                                showRemove
                                 onPress={() => handleAssignedPress(assessment)}
+                                onRemovePress={() => handleRemoveAssignedAssessment(assessment)}
                             />
                         ))}
                     </>
@@ -412,7 +466,17 @@ export default function AssessmentsScreen() {
             </View>
 
             <View style={styles.searchContainer}>
-                <SearchBar value={search} onChangeValue={setSearch} placeholder="Search..." />
+                <SearchBar
+                    value={search}
+                    onChangeValue={setSearch}
+                    placeholder={
+                        mainTab === 'assigned'
+                            ? 'Search pastors...'
+                            : mainTab === 'mentor'
+                              ? 'Search mentors...'
+                              : 'Search assessments...'
+                    }
+                />
             </View>
 
             <View style={styles.mainTabs}>
@@ -448,16 +512,20 @@ export default function AssessmentsScreen() {
                     {mainTab === 'mentor' && renderMentor()}
                 </ScrollView>
             </View>
-            {menuAssessment ? (
-                <ActionBottomSheet
-                    ref={bottomSheetModalRef}
-                    title={menuAssessment.name || (menuAssessment as { title?: string }).title || 'Assessment'}
-                    subtitle={menuAssessment.type || ''}
-                    image={menuAssessment.bannerImage}
-                    actions={sheetActions}
-                    onClose={handleCloseModal}
-                />
-            ) : null}
+            <ActionBottomSheet
+                key={`assessment-menu-${menuSheetEpoch}`}
+                ref={bottomSheetModalRef}
+                title={
+                    menuAssessment?.name ||
+                    (menuAssessment as { title?: string } | null)?.title ||
+                    'Assessment'
+                }
+                subtitle={menuAssessment?.type || ''}
+                image={menuAssessment?.bannerImage}
+                actions={sheetActions}
+                onClose={handleCloseModal}
+                onDismissed={handleSheetDismissed}
+            />
         </GradientBackground>
     );
 }

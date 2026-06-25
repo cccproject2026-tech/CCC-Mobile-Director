@@ -19,10 +19,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAssessment, useUpdateSectionsMutation } from '@/hooks/useAssessments';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { ApiAssessmentSection } from '@/types/assessment.types';
-import AddSectionModal from '@/components/Modals/AddSectionModal';
-import AddLayerModal from '@/components/Modals/AddLayerModal';
-import RecommendationsModal from '@/components/Modals/RecommendationsModal';
+import { ApiAssessmentLayer, ApiAssessmentSection, ApiAssessmentSectionRecommendation } from '@/types/assessment.types';
+import AddSectionModal, { NewSectionPayload } from '@/components/Modals/AddSectionModal';
+// import RecommendationsModal from '@/components/Modals/RecommendationsModal';
+
+const CDP_LEVELS = [1, 2, 3, 4] as const;
+type CdpLevel = (typeof CDP_LEVELS)[number];
+
+function ensureSectionRecommendations(
+    recommendations?: ApiAssessmentSectionRecommendation[],
+): ApiAssessmentSectionRecommendation[] {
+    return CDP_LEVELS.map((level) => {
+        const existing = recommendations?.find((rec) => rec.level === level);
+        const items = existing?.items?.length ? [...existing.items] : [''];
+        return { level, items };
+    });
+}
+
+function normalizeAssessmentSections(sections: ApiAssessmentSection[]): ApiAssessmentSection[] {
+    return sections.map((section) => ({
+        ...section,
+        recommendations: ensureSectionRecommendations(section.recommendations),
+    }));
+}
 
 const EditSections = () => {
     const router = useRouter();
@@ -37,14 +56,14 @@ const EditSections = () => {
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
     const [addSectionModalVisible, setAddSectionModalVisible] = useState(false);
-    const [addLayerModalVisible, setAddLayerModalVisible] = useState(false);
-    const [recommendationsModalVisible, setRecommendationsModalVisible] = useState(false);
-    const [selectedLayerIndex, setSelectedLayerIndex] = useState<number | null>(null);
+    // const [recommendationsModalVisible, setRecommendationsModalVisible] = useState(false);
+    // const [selectedLayerIndex, setSelectedLayerIndex] = useState<number | null>(null);
 
     useEffect(() => {
         if (assessment) {
-            setSections(assessment.sections);
-            setOriginalSections(JSON.parse(JSON.stringify(assessment.sections)));
+            const normalized = normalizeAssessmentSections(assessment.sections);
+            setSections(normalized);
+            setOriginalSections(JSON.parse(JSON.stringify(normalized)));
         }
     }, [assessment]);
 
@@ -54,58 +73,81 @@ const EditSections = () => {
 
     const currentSection = sections[currentSectionIndex];
 
-    const handleAddSection = (newSection: any) => {
-        const sectionWithTempId = {
-            ...newSection,
-            _id: `temp-${Date.now()}`,
-            layers: newSection.layers.map((layer: any, idx: number) => ({
-                ...layer,
-                _id: `temp-layer-${Date.now()}-${idx}`,
-                choices: layer.choices.map((choice: any, cIdx: number) => ({
-                    ...choice,
-                    _id: `temp-choice-${Date.now()}-${idx}-${cIdx}`,
+    const currentSectionRecommendations = useMemo(
+        () => ensureSectionRecommendations(currentSection?.recommendations),
+        [currentSection?.recommendations],
+    );
+
+    const handleSectionCreated = (newSection: NewSectionPayload) => {
+        const timestamp = Date.now();
+        const sectionWithTempId: ApiAssessmentSection = {
+            _id: `temp-section-${timestamp}`,
+            title: newSection.title,
+            description: newSection.description,
+            layers: newSection.layers.map((layer, layerIndex) => ({
+                _id: `temp-layer-${timestamp}-${layerIndex}`,
+                title: layer.title,
+                choices: layer.choices.map((choice, choiceIndex) => ({
+                    _id: `temp-choice-${timestamp}-${layerIndex}-${choiceIndex}`,
+                    text: choice.text,
                 })),
+                recommendations: [],
             })),
+            recommendations: ensureSectionRecommendations(
+                newSection.recommendations.map((rec) => ({
+                    level: rec.level,
+                    items: rec.items,
+                })),
+            ),
         };
-        setSections([...sections, sectionWithTempId]);
+
+        const newSectionIndex = sections.length;
+        setSections((prev) => [...prev, sectionWithTempId]);
+        setCurrentSectionIndex(newSectionIndex);
         setAddSectionModalVisible(false);
-        setCurrentSectionIndex(sections.length);
     };
 
     const handleAddLayer = () => {
-        setAddLayerModalVisible(true);
+        setSections((prev) =>
+            prev.map((section, sectionIndex) => {
+                if (sectionIndex !== currentSectionIndex) return section;
+
+                const layerNumber = section.layers.length + 1;
+                const newLayer: ApiAssessmentLayer = {
+                    _id: `temp-layer-${Date.now()}`,
+                    title: `Layer ${layerNumber}`,
+                    choices: [
+                        {
+                            _id: `temp-choice-${Date.now()}`,
+                            text: '',
+                        },
+                    ],
+                    recommendations: [],
+                };
+
+                return {
+                    ...section,
+                    layers: [...section.layers, newLayer],
+                };
+            }),
+        );
     };
 
-    const handleLayerCreated = (layer: any) => {
-        const updatedSections = [...sections];
-        const layerWithTempId = {
-            ...layer,
-            title: 'Assessment Layer',
-            _id: `temp-layer-${Date.now()}`,
-            choices: layer.choices.map((choice: any, idx: number) => ({
-                ...choice,
-                _id: `temp-choice-${Date.now()}-${idx}`,
-            })),
-        };
-        updatedSections[currentSectionIndex].layers.push(layerWithTempId);
-        setSections(updatedSections);
-        setAddLayerModalVisible(false);
-    };
+    // Layer-level recommendations menu (disabled — CDP is edited per section below).
+    // const handleOpenRecommendations = (layerIndex: number) => {
+    //     setSelectedLayerIndex(layerIndex);
+    //     setRecommendationsModalVisible(true);
+    // };
 
-    const handleOpenRecommendations = (layerIndex: number) => {
-        setSelectedLayerIndex(layerIndex);
-        setRecommendationsModalVisible(true);
-    };
-
-    const handleSaveRecommendations = (recommendations: string[]) => {
-        if (selectedLayerIndex !== null) {
-            const updatedSections = [...sections];
-            updatedSections[currentSectionIndex].layers[selectedLayerIndex].recommendations = recommendations;
-            setSections(updatedSections);
-            setRecommendationsModalVisible(false);
-            setSelectedLayerIndex(null);
-        }
-    };
+    // const handleSaveRecommendations = (recommendations: string[]) => {
+    //     if (selectedLayerIndex !== null) {
+    //         const updatedSections = [...sections];
+    //         updatedSections[currentSectionIndex].layers[selectedLayerIndex].recommendations = recommendations;
+    //         setSections(updatedSections);
+    //         setRecommendationsModalVisible(false);
+    //         setSelectedLayerIndex(null);
+    //     }
+    // };
 
     const handleUpdateSectionTitle = (text: string) => {
         const updated = [...sections];
@@ -120,39 +162,129 @@ const EditSections = () => {
     };
 
     const handleUpdateChoice = (layerIndex: number, choiceIndex: number, text: string) => {
-        const updated = [...sections];
-        updated[currentSectionIndex].layers[layerIndex].choices[choiceIndex].text = text;
-        setSections(updated);
+        setSections((prev) =>
+            prev.map((section, sectionIndex) => {
+                if (sectionIndex !== currentSectionIndex) return section;
+
+                return {
+                    ...section,
+                    layers: section.layers.map((layer, idx) => {
+                        if (idx !== layerIndex) return layer;
+                        return {
+                            ...layer,
+                            choices: layer.choices.map((choice, cIdx) =>
+                                cIdx === choiceIndex ? { ...choice, text } : choice,
+                            ),
+                        };
+                    }),
+                };
+            }),
+        );
     };
 
     const handleAddChoice = (layerIndex: number) => {
-        const updated = [...sections];
         const newChoice = {
             text: '',
             _id: `temp-choice-${Date.now()}`,
         };
-        updated[currentSectionIndex].layers[layerIndex].choices.push(newChoice);
-        setSections(updated);
+
+        setSections((prev) =>
+            prev.map((section, sectionIndex) => {
+                if (sectionIndex !== currentSectionIndex) return section;
+
+                return {
+                    ...section,
+                    layers: section.layers.map((layer, idx) => {
+                        if (idx !== layerIndex) return layer;
+                        return {
+                            ...layer,
+                            choices: [...layer.choices, newChoice],
+                        };
+                    }),
+                };
+            }),
+        );
     };
 
     const handleDeleteChoice = (layerIndex: number, choiceIndex: number) => {
-        const updated = [...sections];
-        updated[currentSectionIndex].layers[layerIndex].choices.splice(choiceIndex, 1);
-        setSections(updated);
+        setSections((prev) =>
+            prev.map((section, sectionIndex) => {
+                if (sectionIndex !== currentSectionIndex) return section;
+
+                return {
+                    ...section,
+                    layers: section.layers.map((layer, idx) => {
+                        if (idx !== layerIndex) return layer;
+                        if (layer.choices.length <= 1) return layer;
+                        return {
+                            ...layer,
+                            choices: layer.choices.filter((_, cIdx) => cIdx !== choiceIndex),
+                        };
+                    }),
+                };
+            }),
+        );
+    };
+
+    const updateCurrentSectionRecommendations = (
+        level: CdpLevel,
+        updater: (items: string[]) => string[],
+    ) => {
+        setSections((prev) =>
+            prev.map((section, sectionIndex) => {
+                if (sectionIndex !== currentSectionIndex) return section;
+
+                const recommendations = ensureSectionRecommendations(section.recommendations);
+                return {
+                    ...section,
+                    recommendations: recommendations.map((rec) =>
+                        rec.level !== level
+                            ? rec
+                            : { ...rec, items: updater(rec.items) },
+                    ),
+                };
+            }),
+        );
+    };
+
+    const handleUpdateSectionPlan = (level: CdpLevel, planIndex: number, text: string) => {
+        updateCurrentSectionRecommendations(level, (items) =>
+            items.map((item, index) => (index === planIndex ? text : item)),
+        );
+    };
+
+    const handleAddSectionPlan = (level: CdpLevel) => {
+        updateCurrentSectionRecommendations(level, (items) => {
+            if (items.length >= 8) return items;
+            return [...items, ''];
+        });
+    };
+
+    const handleRemoveSectionPlan = (level: CdpLevel, planIndex: number) => {
+        updateCurrentSectionRecommendations(level, (items) => {
+            if (items.length <= 1) return items;
+            return items.filter((_, index) => index !== planIndex);
+        });
     };
 
     const handleSaveChanges = async () => {
         try {
-            const cleanedSections = sections.map(section => ({
+            const cleanedSections = sections.map((section) => ({
                 title: section.title,
                 description: section.description,
-                layers: section.layers.map(layer => ({
+                layers: section.layers.map((layer) => ({
                     title: layer.title,
-                    choices: layer.choices.map(choice => ({
+                    choices: layer.choices.map((choice) => ({
                         text: choice.text,
                     })),
                     recommendations: layer.recommendations || [],
                 })),
+                recommendations: ensureSectionRecommendations(section.recommendations).map(
+                    (rec) => ({
+                        level: rec.level,
+                        items: rec.items.map((item) => item.trim()).filter(Boolean),
+                    }),
+                ),
             }));
 
             console.log('Sending to API:', JSON.stringify({ sections: cleanedSections }, null, 2));
@@ -278,7 +410,7 @@ const EditSections = () => {
                             ]}>
                                 {sections.map((section, index) => (
                                     <TouchableOpacity
-                                        key={section._id}
+                                        key={section._id ?? `section-${index}`}
                                         onPress={() => handleSectionDotPress(index)}
                                     >
                                         <View
@@ -352,23 +484,28 @@ const EditSections = () => {
 
                     {/* Layers */}
                     {currentSection.layers.map((layer, layerIndex) => (
-                        <View key={layer._id} style={styles.layerContainer}>
-                            {/* Layer Header with Three Dots */}
+                        <View key={layer._id ?? `layer-${layerIndex}`} style={styles.layerContainer}>
+                            {/* Layer Header */}
                             <View style={styles.layerHeaderRow}>
                                 <View style={styles.layerTitleContainer}>
-                                    <Text style={styles.layerNumber}>{layerIndex + 1}</Text>
+                                    <Text style={styles.layerNumber}>Layer {layerIndex + 1}</Text>
                                 </View>
+                                {/* Layer 3-dot menu — disabled; use section CDP below instead.
                                 <TouchableOpacity
                                     style={styles.menuButton}
                                     onPress={() => handleOpenRecommendations(layerIndex)}
                                 >
                                     <Ionicons name="ellipsis-vertical" size={18} color="#fff" />
                                 </TouchableOpacity>
+                                */}
                             </View>
 
                             {/* Choices List */}
                             {layer.choices.map((choice, choiceIndex) => (
-                                <View key={choice._id} style={styles.choiceRow}>
+                                <View
+                                    key={choice._id ?? `choice-${layerIndex}-${choiceIndex}`}
+                                    style={styles.choiceRow}
+                                >
                                     <Text style={styles.choiceNumber}>{choiceIndex + 1}</Text>
                                     <TextInput
                                         style={styles.choiceInput}
@@ -393,6 +530,65 @@ const EditSections = () => {
                             </TouchableOpacity>
                         </View>
                     ))}
+
+                    {/* Customized Development Plans (per section) */}
+                    <View style={styles.cdpSection}>
+                        <Text style={styles.cdpSectionTitle}>
+                            Customized Development Plans (this section)
+                        </Text>
+
+                        {currentSectionRecommendations.map((rec) => (
+                            <View key={rec.level} style={styles.cdpLevelContainer}>
+                                <Text style={styles.cdpLevelTitle}>
+                                    Level {rec.level} - Customized Development Plans
+                                </Text>
+
+                                {rec.items.map((plan, planIndex) => (
+                                    <View key={`${rec.level}-${planIndex}`} style={styles.planRow}>
+                                        <TextInput
+                                            style={styles.planInput}
+                                            placeholder={`Plan ${planIndex + 1}`}
+                                            placeholderTextColor="rgba(255,255,255,0.5)"
+                                            value={plan}
+                                            onChangeText={(text) =>
+                                                handleUpdateSectionPlan(
+                                                    rec.level,
+                                                    planIndex,
+                                                    text,
+                                                )
+                                            }
+                                            multiline
+                                        />
+                                        {rec.items.length > 1 && (
+                                            <TouchableOpacity
+                                                style={styles.removePlanButton}
+                                                onPress={() =>
+                                                    handleRemoveSectionPlan(rec.level, planIndex)
+                                                }
+                                            >
+                                                <Ionicons
+                                                    name="close-circle"
+                                                    size={24}
+                                                    color="#FF6B6B"
+                                                />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                ))}
+
+                                {rec.items.length < 8 && (
+                                    <TouchableOpacity
+                                        style={styles.addPlanButton}
+                                        onPress={() => handleAddSectionPlan(rec.level)}
+                                    >
+                                        <Ionicons name="add" size={16} color="#fff" />
+                                        <Text style={styles.addPlanText}>Plan</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        ))}
+                    </View>
+
                     <View style={[styles.bottomContainer]}>
                         {/* Action Buttons */}
                         <View style={styles.actionButtons}>
@@ -452,18 +648,11 @@ const EditSections = () => {
                 <AddSectionModal
                     visible={addSectionModalVisible}
                     onClose={() => setAddSectionModalVisible(false)}
-                    onSectionCreated={handleAddSection}
+                    onSectionCreated={handleSectionCreated}
                     sectionNumber={sections.length + 1}
                 />
 
-                <AddLayerModal
-                    visible={addLayerModalVisible}
-                    onClose={() => setAddLayerModalVisible(false)}
-                    onLayerCreated={handleLayerCreated}
-                    layerNumber={currentSection.layers.length + 1}
-                />
-
-                <RecommendationsModal
+                {/* <RecommendationsModal
                     visible={recommendationsModalVisible}
                     onClose={() => {
                         setRecommendationsModalVisible(false);
@@ -481,7 +670,7 @@ const EditSections = () => {
                             : []
                     }
                     onSave={handleSaveRecommendations}
-                />
+                /> */}
                 </GradientBackground>
             </BottomSheetModalProvider>
         </KeyboardAvoidingView>
@@ -687,7 +876,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         color: '#fff',
-        minWidth: 24,
         marginTop: 2,
     },
     layerTitleInput: {
@@ -739,6 +927,65 @@ const styles = StyleSheet.create({
         borderStyle: 'dashed',
     },
     addChoiceText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    cdpSection: {
+        marginTop: 8,
+        marginBottom: 20,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.2)',
+    },
+    cdpSectionTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#fff',
+        marginBottom: 14,
+    },
+    cdpLevelContainer: {
+        backgroundColor: 'rgba(30, 60, 100, 0.35)',
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 14,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.15)',
+    },
+    cdpLevelTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
+        marginBottom: 12,
+    },
+    planRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 10,
+        marginBottom: 10,
+    },
+    planInput: {
+        flex: 1,
+        fontSize: 14,
+        color: '#fff',
+        backgroundColor: 'rgba(20, 40, 80, 0.4)',
+        borderRadius: 10,
+        padding: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        lineHeight: 20,
+    },
+    removePlanButton: {
+        paddingTop: 8,
+    },
+    addPlanButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        gap: 6,
+        paddingVertical: 8,
+    },
+    addPlanText: {
         fontSize: 13,
         fontWeight: '600',
         color: '#fff',

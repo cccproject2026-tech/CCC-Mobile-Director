@@ -1,7 +1,10 @@
 import '@/utils/patchRouterBack';
+import { handleScheduleMeetingStackBack } from '@/lib/scheduling/scheduleMeetingNavigation';
+import { useAuthStore } from '@/stores/auth.store';
 import {
   currentPathnameRef,
   currentReturnToRef,
+  currentSearchParamsRef,
   DIRECTOR_HOME_HREF,
   getReturnToParam,
   safeGoBack,
@@ -15,14 +18,19 @@ export function NavigationBackHandler() {
   const pathname = usePathname();
   const params = useGlobalSearchParams();
   const returnTo = getReturnToParam(params);
+  const role = useAuthStore((s) => s.user?.role);
 
   useEffect(() => {
     currentPathnameRef.current = pathname;
     currentReturnToRef.current = returnTo;
-  }, [pathname, returnTo]);
+    currentSearchParamsRef.current = params;
+  }, [pathname, returnTo, params]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (handleScheduleMeetingStackBack(router, pathname, role, params)) {
+        return true;
+      }
       safeGoBack(router, {
         currentPathname: currentPathnameRef.current,
         returnTo: currentReturnToRef.current,
@@ -32,7 +40,7 @@ export function NavigationBackHandler() {
     });
 
     return () => subscription.remove();
-  }, []);
+  }, [pathname, params, role]);
 
   return null;
 }

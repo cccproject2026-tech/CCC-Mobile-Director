@@ -59,7 +59,7 @@ const ApplicationReview = () => {
     if (isLoading) {
         return (
             <GradientBackground>
-                <TopBar notifications={3} showUserName={true} showNotifications={true} />
+                <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading application...</Text>
@@ -71,7 +71,7 @@ const ApplicationReview = () => {
     if (!application || error) {
         return (
             <GradientBackground>
-                <TopBar notifications={3} showUserName={true} showNotifications={true} />
+                <TopBar showUserName={true} showNotifications={true} />
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyText}>Application not found</Text>
                 </View>
@@ -83,7 +83,7 @@ const ApplicationReview = () => {
 
     return (
         <GradientBackground>
-            <TopBar notifications={3} showUserName={true} showNotifications={true} />
+            <TopBar showUserName={true} showNotifications={true} />
 
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>

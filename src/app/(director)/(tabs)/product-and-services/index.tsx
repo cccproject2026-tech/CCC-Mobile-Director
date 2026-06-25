@@ -245,7 +245,7 @@ export default function ProductAndServices() {
             style={[styles.container,]}
         >
             <View style={styles.flex1}>
-                <TopBar notifications={3} showUserName />
+                <TopBar showUserName />
 
                 <View style={[styles.flex1, styles.contentTop]}>
                     {/* Header */}
