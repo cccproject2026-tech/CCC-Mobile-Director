@@ -11,7 +11,10 @@ import {
 } from '@/utils/google-calendar/google-calendar-scheduling';
 import { getAppointmentJoinUrl } from '@/utils/meetingLinkDetails';
 import { labelToPlatform } from '@/utils/appointments/platform';
-import { validateSchedule } from '@/utils/appointments/validation';
+import {
+  SCHEDULE_MEETING_MIN_NOTICE_HOURS,
+  validateSchedule,
+} from '@/utils/appointments/validation';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useCreateAppointment } from './useCreateAppointment';
@@ -34,8 +37,6 @@ export type UseMeetingSchedulerParams = {
   /** YYYY-MM-DD */
   selectedDayYmd: string;
   selectedSlot: APITimeSlot | null;
-  meetingTitle: string;
-  meetingDescription: string;
   meetingOptionLabel: string;
   settings?: WeeklyAvailability | null;
   mentorAppointments?: Appointment[];
@@ -61,8 +62,6 @@ export function useMeetingScheduler(params: UseMeetingSchedulerParams) {
     existingAppointment,
     selectedDayYmd,
     selectedSlot,
-    meetingTitle,
-    meetingDescription,
     meetingOptionLabel,
     settings,
     mentorAppointments = [],
@@ -84,8 +83,7 @@ export function useMeetingScheduler(params: UseMeetingSchedulerParams) {
       !currentUserId ||
       !selectedPerson?.id ||
       !selectedSlot?.startTime ||
-      !selectedDayYmd ||
-      !meetingTitle.trim()
+      !selectedDayYmd
     ) {
       throw new Error('Missing required details.');
     }
@@ -103,6 +101,7 @@ export function useMeetingScheduler(params: UseMeetingSchedulerParams) {
       userAppointments,
       excludeAppointmentId:
         mode === "reschedule" ? existingAppointment?.id : undefined,
+      minNoticeFloorHours: SCHEDULE_MEETING_MIN_NOTICE_HOURS,
     });
     if (issue) {
       const err = new Error(issue.message);
@@ -115,9 +114,14 @@ export function useMeetingScheduler(params: UseMeetingSchedulerParams) {
 
     const roleLower = String(currentUserRole || '').toLowerCase();
     const isMentorUser = roleLower === 'mentor';
+    const isDirectorUser = roleLower === 'director';
 
-    const payloadMentorId = isMentorUser ? currentUserId : selectedPerson.id;
-    const payloadUserId = isMentorUser ? selectedPerson.id : currentUserId;
+    const payloadMentorId = isMentorUser || isDirectorUser
+      ? currentUserId
+      : selectedPerson.id;
+    const payloadUserId = isMentorUser || isDirectorUser
+      ? selectedPerson.id
+      : currentUserId;
 
     const initiatorRole =
       roleLower === 'mentor' || roleLower === 'director' || roleLower === 'pastor'
@@ -144,11 +148,7 @@ export function useMeetingScheduler(params: UseMeetingSchedulerParams) {
 
     const notes = assessmentId
       ? assessmentMeetingNote(assessmentId)
-      : buildMeetingNotes(
-          meetingTitle,
-          meetingDescription,
-          `Meeting with ${selectedPerson.name}`,
-        );
+      : `Meeting with ${selectedPerson.name}`;
 
     const createPayload = {
       userId: payloadUserId,
@@ -186,19 +186,4 @@ export function useMeetingScheduler(params: UseMeetingSchedulerParams) {
   }
 
   return { submit, isSubmitting };
-}
-
-function buildMeetingNotes(
-  title: string,
-  description: string,
-  fallback: string,
-): string {
-  const trimmedTitle = title.trim();
-  const trimmedDescription = description.trim();
-  if (trimmedTitle && trimmedDescription) {
-    return `${trimmedTitle}\n\n${trimmedDescription}`;
-  }
-  if (trimmedTitle) return trimmedTitle;
-  if (trimmedDescription) return trimmedDescription;
-  return fallback;
 }

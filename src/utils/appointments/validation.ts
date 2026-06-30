@@ -18,6 +18,9 @@ export type MeetingValidationIssue = {
   message: string;
 };
 
+/** Minimum hours from now before a slot can be booked in schedule-meeting flow. */
+export const SCHEDULE_MEETING_MIN_NOTICE_HOURS = 2;
+
 export type ValidateScheduleParams = {
   meetingDateIso: string;
   meetingDayYmd: string;
@@ -26,6 +29,8 @@ export type ValidateScheduleParams = {
   userAppointments?: Appointment[];
   /** Reschedule: ignore the appointment being moved. */
   excludeAppointmentId?: string;
+  /** Enforced minimum notice even when settings allow less (e.g. schedule-meeting UI). */
+  minNoticeFloorHours?: number;
 };
 
 function isCancelledStatus(status: unknown) {
@@ -166,15 +171,19 @@ export function validateSchedule(
   const now = new Date();
   const meetingDateTime = new Date(meetingDateIso);
 
-  // 1) Minimum notice
-  if (settings?.minSchedulingNoticeHours) {
+  // 1) Minimum notice (settings + optional floor, e.g. 2h prep time for invitees)
+  const minNoticeHours = Math.max(
+    settings?.minSchedulingNoticeHours ?? 0,
+    params.minNoticeFloorHours ?? 0,
+  );
+  if (minNoticeHours > 0) {
     const hoursNotice =
       (meetingDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-    if (hoursNotice < settings.minSchedulingNoticeHours) {
+    if (hoursNotice < minNoticeHours) {
       return {
         code: "min_notice",
         title: "Notice period required",
-        message: `This mentor requires at least ${settings.minSchedulingNoticeHours} hours notice for appointments.`,
+        message: `Appointments must be scheduled at least ${minNoticeHours} hour${minNoticeHours === 1 ? "" : "s"} from now.`,
       };
     }
   }
@@ -239,12 +248,20 @@ export function isSlotWithinMinNotice(
   return hoursNotice >= minHours;
 }
 
+export function effectiveMinSchedulingNoticeHours(
+  settings?: WeeklyAvailability | null,
+  floorHours = 0,
+): number {
+  return Math.max(settings?.minSchedulingNoticeHours ?? 0, floorHours);
+}
+
 export function filterSlotsByMinNotice(
   dayYmd: string,
   slots: TimeSlot[],
   settings?: WeeklyAvailability | null,
+  floorHours = 0,
 ): TimeSlot[] {
-  const min = settings?.minSchedulingNoticeHours;
+  const min = effectiveMinSchedulingNoticeHours(settings, floorHours);
   if (!min || min <= 0) return slots;
   return slots.filter((s) => isSlotWithinMinNotice(dayYmd, s, min));
 }

@@ -5,6 +5,7 @@ import { useInterests } from '@/hooks/useInterest';
 import { useMenteesNavigationStore } from '@/stores/menteesNavigation.store';
 import { useMentorsNavigationStore } from '@/stores/mentorsNavigation.store';
 import { useAuthStore } from '@/stores/auth.store';
+import { useUserProfile } from '@/hooks/useProfile';
 import { Ionicons } from '@expo/vector-icons';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,9 +30,11 @@ interface CustomDrawerProps extends DrawerContentComponentProps {
 export default function CustomDrawerContent(props: CustomDrawerProps) {
     const router = useRouter();
     const { top, bottom } = useSafeAreaInsets();
-    const { user, logout } = useAuthStore();
+    const { user: authUser, logout } = useAuthStore();
+    const { data: profileUser } = useUserProfile(authUser?.id ?? '');
 
-    const currentUserRole = (user?.role ?? '') as 'director' | 'super admin';
+    const currentUserRole = (authUser?.role ?? profileUser?.role ?? '') as 'director' | 'super admin';
+    const profilePicture = profileUser?.profilePicture ?? authUser?.profilePicture;
 
     const { data: interestsData } = useInterests();
     const newInterestsCount =
@@ -171,17 +174,22 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
         );
     };
 
-    const displayName = user
-        ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
-        : 'Guest User';
+    const displayName = useMemo(() => {
+        const firstName = profileUser?.firstName ?? authUser?.firstName ?? '';
+        const lastName = profileUser?.lastName ?? authUser?.lastName ?? '';
+        const name = `${firstName} ${lastName}`.trim();
+        return name || 'Guest User';
+    }, [authUser?.firstName, authUser?.lastName, profileUser?.firstName, profileUser?.lastName]);
+
+    const displayRole = profileUser?.role ?? authUser?.role;
 
     return (
         <View style={styles.root}>
             {/* Header — gradient */}
             <LinearGradient colors={[...Colors.appBgGradient]} style={[styles.header, { paddingTop: top + 16 }]}>
                 <View style={styles.avatarWrap}>
-                    {user?.profilePicture ? (
-                        <Image source={{ uri: user.profilePicture }} style={styles.avatarImage} />
+                    {profilePicture ? (
+                        <Image source={{ uri: profilePicture }} style={styles.avatarImage} />
                     ) : (
                         <Ionicons name="person-outline" size={26} color={roadmapTheme.accentMint} />
                     )}
@@ -189,9 +197,9 @@ export default function CustomDrawerContent(props: CustomDrawerProps) {
 
                 <View style={styles.headerInfo}>
                     <Text style={styles.userName} numberOfLines={1}>{displayName}</Text>
-                    {user?.role ? (
+                    {displayRole ? (
                         <View style={styles.rolePill}>
-                            <Text style={styles.roleText}>{user.role}</Text>
+                            <Text style={styles.roleText}>{displayRole}</Text>
                         </View>
                     ) : null}
                 </View>

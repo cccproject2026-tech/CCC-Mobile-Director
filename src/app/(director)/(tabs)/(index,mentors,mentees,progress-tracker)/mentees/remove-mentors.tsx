@@ -142,35 +142,47 @@ export default function RemoveMentorsFromMenteeScreen() {
                 <FlatList
                     data={filteredMentors}
                     keyExtractor={item => item.id}
-                    renderItem={({ item }) => (
-                        <View style={styles.mentorCardWrapper}>
-                            <TouchableOpacity style={styles.checkbox} onPress={() => toggleSelectMentor(item.id)}>
-                                <View style={[styles.checkboxInner, selectedMentors.includes(item.id) && styles.checkboxSelected]}>
-                                    {selectedMentors.includes(item.id) && (
+                    renderItem={({ item }) => {
+                        const isSelected = selectedMentors.includes(item.id);
+                        return (
+                            <Pressable
+                                style={[
+                                    styles.mentorCardWrapper,
+                                    isSelected && styles.mentorCardWrapperSelected,
+                                ]}
+                                onPress={() => toggleSelectMentor(item.id)}
+                            >
+                                <View
+                                    style={[
+                                        styles.checkboxInner,
+                                        isSelected && styles.checkboxSelected,
+                                    ]}
+                                >
+                                    {isSelected ? (
                                         <Ionicons name="checkmark" size={14} color="#fff" />
-                                    )}
+                                    ) : null}
                                 </View>
-                            </TouchableOpacity>
-                            <View style={styles.mentorCardContent}>
-                                <MentorCard
-                                    mentor={{
-                                        id: item.id,
-                                        name: `${item.firstName} ${item.lastName ?? ''}`,
-                                        role: item.role ?? 'Mentor',
-                                        menteesCount: item.assignedId ? item.assignedId.length : 0,
-                                        description: item.profileInfo ?? '',
-                                        profilePicture: item.profilePicture,
-                                    }}
-                                    showMenu={true}
-                                    layout={viewMode}
-                                    onCall={() => dialPhone(item.phoneNumber)}
-                                    onChat={() => chatNotAvailableYet()}
-                                    onMail={() => sendEmail(item.email)}
-                                    onWhatsApp={() => openWhatsApp(item.phoneNumber)}
-                                />
-                            </View>
-                        </View>
-                    )}
+                                <View style={styles.mentorCardContent}>
+                                    <MentorCard
+                                        embedded
+                                        mentor={{
+                                            id: item.id,
+                                            name: `${item.firstName} ${item.lastName ?? ''}`,
+                                            role: item.role ?? 'Mentor',
+                                            menteesCount: item.assignedId ? item.assignedId.length : 0,
+                                            description: item.profileInfo ?? '',
+                                            profilePicture: item.profilePicture,
+                                        }}
+                                        layout={viewMode}
+                                        onCall={() => dialPhone(item.phoneNumber)}
+                                        onChat={() => chatNotAvailableYet()}
+                                        onMail={() => sendEmail(item.email)}
+                                        onWhatsApp={() => openWhatsApp(item.phoneNumber)}
+                                    />
+                                </View>
+                            </Pressable>
+                        );
+                    }}
                     contentContainerStyle={[styles.listContent, { paddingBottom: 120 + bottom }]}
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
@@ -285,20 +297,35 @@ const styles = StyleSheet.create({
     },
     selectionBadgeText: { fontSize: 13, color: '#F87171', fontWeight: '700' },
     listContent: { paddingHorizontal: 16 },
-    mentorCardWrapper: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-    checkbox: { marginRight: 12 },
+    mentorCardWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.09)',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.14)',
+        padding: 12,
+        marginBottom: 12,
+        overflow: 'hidden',
+        gap: 10,
+    },
+    mentorCardWrapperSelected: {
+        borderColor: 'rgba(248,113,113,0.45)',
+        backgroundColor: 'rgba(248,113,113,0.08)',
+    },
     checkboxInner: {
         width: 24,
         height: 24,
-        borderRadius: 7,
+        borderRadius: 6,
         borderWidth: 1.5,
         borderColor: 'rgba(255,255,255,0.35)',
         backgroundColor: 'rgba(255,255,255,0.08)',
         alignItems: 'center',
         justifyContent: 'center',
+        flexShrink: 0,
     },
     checkboxSelected: { backgroundColor: '#F87171', borderColor: '#F87171' },
-    mentorCardContent: { flex: 1 },
+    mentorCardContent: { flex: 1, minWidth: 0 },
     emptyContainer: { paddingVertical: 48, alignItems: 'center', gap: 10 },
     emptyText: { color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: '500' },
     bottomContainer: {

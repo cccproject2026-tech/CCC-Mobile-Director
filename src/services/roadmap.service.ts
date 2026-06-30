@@ -2,6 +2,7 @@
 
 import { apiClient } from './api/client';
 import { ENDPOINTS } from './api/endpoints';
+import { API_CONFIG } from '@/config';
 import {
     CreateRoadmapRequest,
     CreateRoadmapResponse,
@@ -206,9 +207,19 @@ export const roadmapService = {
         }
 
         buildFormData(formData, payload);
+
+        const updateEndpoint = ENDPOINTS.ROADMAPS.UPDATE(roadmapId);
+        const updateUrl = `${API_CONFIG.BASE_URL}${updateEndpoint}`;
+
+        console.log('[RoadmapService] ────────────────────────────────────────');
+        console.log('[RoadmapService] PATCH', updateUrl);
+        console.log('[RoadmapService] Endpoint:', updateEndpoint);
+        console.log('[RoadmapService] Roadmap ID:', roadmapId);
+        console.log('[RoadmapService] Update payload:', payload);
+        console.log('[RoadmapService] ────────────────────────────────────────');
         
         const response = await apiClient.patch<UpdateRoadmapResponse>(
-            ENDPOINTS.ROADMAPS.UPDATE(roadmapId),
+            updateEndpoint,
             formData,
             {
                 headers: { 'Content-Type': 'multipart/form-data' },

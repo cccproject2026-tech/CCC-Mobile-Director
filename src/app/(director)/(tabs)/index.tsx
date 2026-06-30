@@ -4,6 +4,7 @@ import OverviewSection from "@/components/Home/OverviewSection";
 import { GradientBackground, homeLayout } from "@/components/ui/design-system";
 import { Colors } from "@/constants/Colors";
 import { useAuthStore } from "@/stores/auth.store";
+import { useUserProfile } from "@/hooks/useProfile";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useCallback, useMemo, useState, useRef } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
@@ -26,8 +27,16 @@ export default function Index() {
   const { bottom } = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const tabBarHeight = useBottomTabBarHeight();
-  const { user } = useAuthStore();
-  console.log("user Data", user);
+  const { user: authUser } = useAuthStore();
+  const { data: profileUser } = useUserProfile(authUser?.id ?? "");
+
+  const profilePicture = profileUser?.profilePicture ?? authUser?.profilePicture;
+  const welcomeName = useMemo(() => {
+    const firstName = profileUser?.firstName ?? authUser?.firstName ?? "";
+    const lastName = profileUser?.lastName ?? authUser?.lastName ?? "";
+    return `${firstName} ${lastName}`.trim();
+  }, [authUser?.firstName, authUser?.lastName, profileUser?.firstName, profileUser?.lastName]);
+
   const [greetingPeriod, setGreetingPeriod] = useState<'morning' | 'afternoon' | 'evening'>('morning');
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -91,8 +100,8 @@ export default function Index() {
           <WelcomeCard
             compact
             onClick={() => { }}
-            avatar={user?.profilePicture || undefined}
-            message={`Welcome back, ${user?.firstName} ${user?.lastName}`}
+            avatar={profilePicture || undefined}
+            message={`Welcome back, ${welcomeName}`}
             bg="rgba(255,255,255,0.12)"
             borderColor="rgba(255,255,255,0.25)"
           />

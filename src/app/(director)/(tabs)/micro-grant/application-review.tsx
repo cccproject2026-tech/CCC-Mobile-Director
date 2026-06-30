@@ -1,4 +1,4 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React, { useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
 import { GradientBackground } from '@/components/ui/design-system';
 import { useMicroGrantApplicationDetails, useUpdateApplicationStatus } from '@/hooks/useMicroGrant';
+import { useReturnToAwareBack } from '@/hooks/useReturnToAwareBack';
+import { useSafeBack } from '@/hooks/useSafeBack';
 import {
     MICROGRANT_CONFIRMATION_LABELS,
     MICROGRANT_PAGE_TITLE,
@@ -13,10 +15,24 @@ import {
     getMicrograntOtherNote,
     getMicrograntReportingProcedureItems,
 } from '@/utils/microgrant';
+import { getReturnToParam } from '@/utils/navigation';
 
 const ApplicationReview = () => {
     const router = useRouter();
-    const { id: routeSlug } = useLocalSearchParams();
+    const params = useLocalSearchParams<{ id: string | string[]; returnTo?: string | string[] }>();
+    const { id } = params;
+    const routeSlug = Array.isArray(id) ? id[0] : id;
+    const returnTo = getReturnToParam(params);
+    const detailsReturnTo =
+        returnTo ??
+        (routeSlug
+            ? `/(director)/(tabs)/micro-grant/application-details?id=${encodeURIComponent(routeSlug)}`
+            : undefined);
+    const handleBack = useSafeBack({
+        returnTo: detailsReturnTo,
+        fallback: '/(director)/(tabs)/micro-grant',
+    });
+    useReturnToAwareBack(detailsReturnTo);
     const { bottom } = useSafeAreaInsets();
 
     const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(
@@ -32,6 +48,11 @@ const ApplicationReview = () => {
 
     const reportingItems = getMicrograntReportingProcedureItems();
 
+    const userName = useMemo(
+        () => (application ? displayNameFromMicrograntDetail(application, userProfile) : ''),
+        [application, userProfile],
+    );
+
     const handleReject = () => {
         if (!statusApplicationId) return;
         updateStatusMutation.mutate(
@@ -40,11 +61,24 @@ const ApplicationReview = () => {
         );
     };
 
-    const handleAccept = () => {
+    const confirmAccept = () => {
         if (!statusApplicationId) return;
         updateStatusMutation.mutate(
             { applicationId: statusApplicationId, status: 'accepted' },
             { onSuccess: () => router.push('/(director)/(tabs)/micro-grant') },
+        );
+    };
+
+    const handleAccept = () => {
+        if (!statusApplicationId) return;
+
+        Alert.alert(
+            'Accept Application',
+            `Are you sure you want to accept ${userName || 'this application'}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Accept', onPress: confirmAccept },
+            ],
         );
     };
 
@@ -56,10 +90,18 @@ const ApplicationReview = () => {
         );
     };
 
+    const backButton = (
+        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="#fff" />
+            <Text style={styles.backText}>Back</Text>
+        </TouchableOpacity>
+    );
+
     if (isLoading) {
         return (
             <GradientBackground>
                 <TopBar showUserName={true} showNotifications={true} />
+                <View style={styles.header}>{backButton}</View>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fff" />
                     <Text style={styles.loadingText}>Loading application...</Text>
@@ -72,6 +114,7 @@ const ApplicationReview = () => {
         return (
             <GradientBackground>
                 <TopBar showUserName={true} showNotifications={true} />
+                <View style={styles.header}>{backButton}</View>
                 <View style={styles.emptyContainer}>
                     <Text style={styles.emptyText}>Application not found</Text>
                 </View>
@@ -79,18 +122,11 @@ const ApplicationReview = () => {
         );
     }
 
-    const userName = displayNameFromMicrograntDetail(application, userProfile);
-
     return (
         <GradientBackground>
             <TopBar showUserName={true} showNotifications={true} />
 
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#fff" />
-                    <Text style={styles.backText}>Back</Text>
-                </TouchableOpacity>
-            </View>
+            <View style={styles.header}>{backButton}</View>
 
             <ScrollView
                 style={styles.scrollView}

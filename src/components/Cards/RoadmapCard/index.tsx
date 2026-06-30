@@ -32,6 +32,7 @@ export const RoadmapCard: React.FC<Props> = ({
     const hasProgress = data.taskProgress && !isCompleted;
     const showArrow = data.showArrow && !isCompleted;
     const hasActions = showMenu || showArrow || showRemove;
+    const showArrowIcon = showArrow && hasActions && !selectionMode;
     const cardPressHandler = selectionMode ? onToggleSelection : onPress;
 
     const progressPercentage = useMemo(() => {
@@ -61,12 +62,6 @@ export const RoadmapCard: React.FC<Props> = ({
             {data.phaseNumber ? (
                 <View style={styles.phaseBadge}>
                     <Text style={styles.phaseBadgeText}>Phase {data.phaseNumber}</Text>
-                </View>
-            ) : null}
-
-            {isCompleted ? (
-                <View style={styles.checkmarkOverlay}>
-                    <Ionicons name="checkmark" size={32} color="#fff" />
                 </View>
             ) : null}
         </View>
@@ -127,7 +122,7 @@ export const RoadmapCard: React.FC<Props> = ({
             {selectionMode ? (
                 <View style={styles.selectionCheckbox}>
                     <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                        {isSelected ? <Ionicons name="checkmark" size={18} color="#fff" /> : null}
+                        {isSelected ? <Ionicons name="checkmark" size={16} color="#0E5A62" /> : null}
                     </View>
                 </View>
             ) : null}
@@ -142,8 +137,8 @@ export const RoadmapCard: React.FC<Props> = ({
                         <Text
                             style={[
                                 styles.title,
-                                !hasActions && styles.titleNoActions,
-                                topRightAction && styles.titleWithMenu,
+                                !hasActions && !selectionMode && styles.titleNoActions,
+                                (topRightAction || selectionMode) && styles.titleWithMenu,
                             ]}
                             numberOfLines={2}
                         >
@@ -151,7 +146,7 @@ export const RoadmapCard: React.FC<Props> = ({
                         </Text>
                     </View>
 
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <View style={styles.descriptionRow}>
                         {data.description ? (
                             <Text
                                 style={[
@@ -161,8 +156,10 @@ export const RoadmapCard: React.FC<Props> = ({
                             >
                                 {data.description}
                             </Text>
-                        ) : null}
-                        {showArrow && hasActions ? (
+                        ) : (
+                            <View style={styles.descriptionSpacer} />
+                        )}
+                        {showArrowIcon ? (
                             <Ionicons
                                 name="chevron-forward"
                                 size={20}
@@ -172,10 +169,20 @@ export const RoadmapCard: React.FC<Props> = ({
                         ) : null}
                     </View>
 
-                    {showCompletionTimeOnLeft ? (
-                        <Text style={styles.completionTime}>
-                            {data.completionTime?.replace('\n', '')}
-                        </Text>
+                    {(showCompletionTimeOnLeft || isCompleted) ? (
+                        <View style={styles.bottomMeta}>
+                            {showCompletionTimeOnLeft ? (
+                                <Text style={styles.completionTime}>
+                                    {data.completionTime?.replace('\n', '')}
+                                </Text>
+                            ) : null}
+                            {isCompleted ? (
+                                <View style={styles.completedBadge}>
+                                    <Ionicons name="checkmark-circle" size={14} color="#6FD4BE" />
+                                    <Text style={styles.completedBadgeText}>Completed</Text>
+                                </View>
+                            ) : null}
+                        </View>
                     ) : null}
 
                     {data.completionTime && !data.status ? (
@@ -263,9 +270,9 @@ const styles = StyleSheet.create({
         borderColor: 'rgba(255, 107, 107, 0.35)',
     },
     cardSelected: {
-        borderColor: '#7B3FF2',
-        borderWidth: 2,
-        backgroundColor: 'rgba(123, 63, 242, 0.1)',
+        borderColor: 'rgba(111,212,190,0.45)',
+        borderWidth: 1.5,
+        backgroundColor: 'rgba(111,212,190,0.08)',
     },
     selectionCheckbox: {
         position: 'absolute',
@@ -274,18 +281,18 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     checkbox: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.5)',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        width: 24,
+        height: 24,
+        borderRadius: 6,
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.35)',
+        backgroundColor: 'rgba(255,255,255,0.08)',
         alignItems: 'center',
         justifyContent: 'center',
     },
     checkboxSelected: {
-        backgroundColor: '#7B3FF2',
-        borderColor: '#7B3FF2',
+        backgroundColor: '#6FD4BE',
+        borderColor: '#6FD4BE',
     },
     inner: {
         flexDirection: 'row',
@@ -328,17 +335,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 0.2,
     },
-    checkmarkOverlay: {
-        position: 'absolute',
-        right: 8,
-        top: 8,
-        width: 40,
-        height: 40,
-        borderRadius: 8,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     completionTime: {
         color: 'rgba(255,255,255,0.8)',
         fontSize: 12,
@@ -372,6 +368,36 @@ const styles = StyleSheet.create({
     titleWithMenu: {
         paddingRight: 28,
     },
+    descriptionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    descriptionSpacer: {
+        flex: 1,
+    },
+    bottomMeta: {
+        marginTop: 8,
+        gap: 6,
+        alignItems: 'flex-start',
+    },
+    completedBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+        backgroundColor: 'rgba(111, 212, 190, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(111, 212, 190, 0.35)',
+        flexShrink: 0,
+    },
+    completedBadgeText: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#6FD4BE',
+    },
     chevronIcon: {
         marginTop: 10,
     },
@@ -382,9 +408,10 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '400',
         color: 'rgba(255, 255, 255, 0.75)',
-        marginBottom: 10,
+        marginBottom: 0,
         lineHeight: 18,
-        width: '80%',
+        flex: 1,
+        paddingRight: 8,
     },
     descriptionNoActions: {
         paddingRight: 0,

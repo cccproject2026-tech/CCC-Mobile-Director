@@ -1,4 +1,5 @@
 import {
+    AddRoadmapCommentPayload,
     RoadmapComment,
     RoadmapExtraAnswer,
     RoadmapExtrasDocument,
@@ -99,6 +100,29 @@ export function mapStatusChip(status?: string): string {
     if (s.includes('progress')) return 'In Progress';
     if (s.includes('due') || s.includes('overdue')) return 'Due';
     return 'Not Started';
+}
+
+export function recordMatchesNestedTask(
+    record: { nestedRoadMapItemId?: string | null; taskId?: string | null },
+    nestedTaskId: string,
+): boolean {
+    const ids = [record.nestedRoadMapItemId, record.taskId]
+        .filter((v): v is string => v != null && String(v).trim() !== '')
+        .map(String);
+    if (ids.length === 0) return false;
+    return ids.some((id) => id === nestedTaskId);
+}
+
+export function withNestedTaskScope(
+    payload: AddRoadmapCommentPayload,
+    nestedTaskId?: string,
+): AddRoadmapCommentPayload {
+    if (!nestedTaskId) return payload;
+    return {
+        ...payload,
+        nestedRoadMapItemId: payload.nestedRoadMapItemId ?? nestedTaskId,
+        taskId: payload.taskId ?? nestedTaskId,
+    };
 }
 
 export function documentsByFieldName(docs: RoadmapExtrasDocument[]): Map<string, RoadmapExtrasDocument[]> {

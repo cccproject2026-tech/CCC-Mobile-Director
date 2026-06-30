@@ -8,9 +8,16 @@ import CustomMenu, { MenuItem } from "../Menu/CustomMenu";
 type Props = {
     handleOpenCreateRoadmapModal: () => void;
     activeTab: 'roadmap-library' | 'mentors' | 'mentees';
+    selectionMode?: boolean;
+    onToggleSelectionMode?: () => void;
 };
 
-const RoadmapHeader = ({ handleOpenCreateRoadmapModal, activeTab }: Props) => {
+const RoadmapHeader = ({
+    handleOpenCreateRoadmapModal,
+    activeTab,
+    selectionMode = false,
+    onToggleSelectionMode,
+}: Props) => {
     const safeBack = useSafeBack();
     const [showOutcomeMenu, setShowOutcomeMenu] = useState(false);
     const [showOutcomeModal, setShowOutcomeModal] = useState(false);
@@ -103,19 +110,24 @@ const RoadmapHeader = ({ handleOpenCreateRoadmapModal, activeTab }: Props) => {
             {/* Right Section - Pill Buttons + Menu */}
             <View style={styles.navigationRight}>
                 {/* Select Button - Only show for roadmap library tab */}
-                {activeTab === "roadmap-library" && (
+                {activeTab === "roadmap-library" && onToggleSelectionMode ? (
                     <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() =>
-                            router.push(
-                                "/(director)/(tabs)/roadmaps/select-roadmap"
-                            )
-                        }
+                        style={[
+                            styles.actionButton,
+                            selectionMode && styles.actionButtonActive,
+                        ]}
+                        onPress={onToggleSelectionMode}
                     >
-                        <Ionicons name="checkmark" size={18} color="#FFFFFF" />
-                        <Text style={styles.actionButtonText}>Select</Text>
+                        <Ionicons
+                            name={selectionMode ? 'close' : 'checkmark'}
+                            size={18}
+                            color="#FFFFFF"
+                        />
+                        <Text style={styles.actionButtonText}>
+                            {selectionMode ? 'Cancel' : 'Select'}
+                        </Text>
                     </TouchableOpacity>
-                )}
+                ) : null}
 
                 {/* Roadmap Button */}
                 <TouchableOpacity
@@ -222,6 +234,11 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         color: '#FFFFFF',
+    },
+    actionButtonActive: {
+        backgroundColor: 'rgba(111,212,190,0.18)',
+        borderWidth: 1,
+        borderColor: 'rgba(111,212,190,0.45)',
     },
     iconButton: {
         padding: 4,
