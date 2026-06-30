@@ -101,11 +101,11 @@ export default function InterestFormScreen() {
     /* -------------------------------------------------------
        ACTIONS
     -------------------------------------------------------- */
-    const handleAccept = () => {
-        if (!interest?.id) return Alert.alert("Error", "Interest ID not found");
+    const confirmAccept = () => {
+        if (!interest?.id) return Alert.alert('Error', 'Interest ID not found');
 
         updateStatus(
-            { interestId: interest.user?._id as string, status: "accepted" },
+            { interestId: interest.user?._id as string, status: 'accepted' },
             {
                 onSuccess: () => {
                     if (isPastorApplicant) {
@@ -115,9 +115,22 @@ export default function InterestFormScreen() {
                     router.back();
                 },
                 onError: (error) => {
-                    Alert.alert("Error", error.message || "Failed to accept the request");
+                    Alert.alert('Error', error.message || 'Failed to accept the request');
                 },
-            }
+            },
+        );
+    };
+
+    const handleAccept = () => {
+        if (!interest?.id) return Alert.alert('Error', 'Interest ID not found');
+
+        Alert.alert(
+            'Accept Interest',
+            `Are you sure you want to accept ${userName}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Accept', onPress: confirmAccept },
+            ],
         );
     };
 

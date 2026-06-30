@@ -31,7 +31,7 @@ type DocTab = 'myDocuments' | 'mentors';
 
 const TABS = [
     { key: 'myDocuments' as DocTab, label: 'My Documents' },
-    { key: 'mentors' as DocTab, label: 'Mentors' },
+    // { key: 'mentors' as DocTab, label: 'Mentors' },
 ];
 
 type Props = {

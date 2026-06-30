@@ -66,6 +66,7 @@ function fitImageSize(naturalWidth: number, naturalHeight: number) {
 export default function DocumentPreviewModal({ visible, document, onClose }: Props) {
     const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
     const [imageLoading, setImageLoading] = useState(true);
+    const [pdfLoading, setPdfLoading] = useState(true);
 
     const isImage = document ? isImageType(document.fileType) : false;
     const isPdf = document ? isPdfType(document.fileType, document.fileName) : false;
@@ -101,6 +102,12 @@ export default function DocumentPreviewModal({ visible, document, onClose }: Pro
             }
         );
     }, [visible, document?.fileUrl, isImage]);
+
+    useEffect(() => {
+        if (visible && isPdf) {
+            setPdfLoading(true);
+        }
+    }, [visible, document?.fileUrl, isPdf]);
 
     if (!document) return null;
 
@@ -158,15 +165,18 @@ export default function DocumentPreviewModal({ visible, document, onClose }: Pro
                         </View>
                     ) : isPdf && pdfViewerUri ? (
                         <View style={styles.pdfArea}>
+                            {pdfLoading ? (
+                                <View style={styles.pdfLoadingOverlay}>
+                                    <ActivityIndicator color="#0F3B5C" size="large" />
+                                    <Text style={styles.pdfLoadingText}>Loading document...</Text>
+                                </View>
+                            ) : null}
                             <WebView
                                 source={{ uri: pdfViewerUri }}
-                                style={styles.webview}
-                                startInLoadingState
-                                renderLoading={() => (
-                                    <View style={styles.loadingBox}>
-                                        <ActivityIndicator color="#fff" size="large" />
-                                    </View>
-                                )}
+                                style={[styles.webview, pdfLoading && styles.webviewHidden]}
+                                onLoadStart={() => setPdfLoading(true)}
+                                onLoadEnd={() => setPdfLoading(false)}
+                                onError={() => setPdfLoading(false)}
                             />
                         </View>
                     ) : (
@@ -252,10 +262,27 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         backgroundColor: '#fff',
         minHeight: SCREEN_HEIGHT * 0.45,
+        position: 'relative',
+    },
+    pdfLoadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff',
+        zIndex: 2,
+        gap: 12,
+    },
+    pdfLoadingText: {
+        color: '#0F3B5C',
+        fontSize: 14,
+        fontWeight: '600',
     },
     webview: {
         flex: 1,
         backgroundColor: '#fff',
+    },
+    webviewHidden: {
+        opacity: 0,
     },
     loadingBox: {
         alignItems: 'center',

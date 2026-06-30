@@ -6,6 +6,10 @@ export default function MicroGrantLayout() {
             screenOptions={{
                 headerShown: false,
             }}
-        />
+        >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="application-details" />
+            <Stack.Screen name="application-review" />
+        </Stack>
     );
 }

@@ -186,6 +186,8 @@ export interface RoadmapComment {
     _id: string;
     text: string;
     addedDate: string;
+    nestedRoadMapItemId?: string | null;
+    taskId?: string | null;
     mentorId?: {
         _id?: string;
         firstName?: string;
@@ -238,6 +240,8 @@ export interface AddRoadmapCommentPayload {
     text: string;
     userId: string;
     mentorId: string;
+    nestedRoadMapItemId?: string;
+    taskId?: string;
 }
 
 export interface CreateRoadmapQueryPayload {

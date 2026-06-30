@@ -12,11 +12,12 @@ import { useMentors } from '@/hooks/useMentors';
 import { Mentee, Mentor } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter, usePathname } from 'expo-router';
+import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    ScrollView,
+    FlatList,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -25,15 +26,39 @@ import {
 import {
     chatNotAvailableYet,
     dialPhone,
-    featureNotAvailableYet,
     openWhatsApp,
     sendEmail,
 } from '@/utils/contactActions';
 
-type TabKey = 'all' | 'mentor-wise' | 'in-progress';
+type TabKey = 'all' | 'mentor-wise' | 'in-progress' | 'completed';
+
+function filterMenteesForTab(mentees: Mentee[], tab: TabKey, search: string): Mentee[] {
+    let list = mentees;
+
+    if (search.trim()) {
+        const q = search.toLowerCase();
+        list = list.filter((m) =>
+            `${m.firstName} ${m.lastName ?? ''}`.toLowerCase().includes(q),
+        );
+    }
+
+    switch (tab) {
+        case 'in-progress':
+            return list.filter((m) => {
+                const progress = m.progress ?? 0;
+                return progress > 0 && progress < 100;
+            });
+        case 'completed':
+            return list.filter((m) => (m.progress ?? 0) === 100);
+        case 'all':
+        default:
+            return list;
+    }
+}
 
 export default function ProgressTrackerIndex() {
     const router = useRouter();
+    const pathname = usePathname();
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<TabKey>('all');
     const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -41,11 +66,31 @@ export default function ProgressTrackerIndex() {
     const [viewMode, setViewMode] = useState<'list' | 'card'>('card');
     const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
 
-    const { data: menteesData, isLoading: menteesLoading } = useMentees();
-    const mentees: Mentee[] = menteesData?.pages.flatMap((page) => page.mentees) ?? [];
+    const {
+        data: menteesData,
+        isLoading: menteesLoading,
+        fetchNextPage: fetchNextMenteesPage,
+        hasNextPage: hasNextMenteesPage,
+        isFetchingNextPage: isFetchingNextMenteesPage,
+    } = useMentees();
+    const mentees = useMemo(
+        () => menteesData?.pages.flatMap((page) => page.mentees) ?? [],
+        [menteesData],
+    );
 
-    const { data: mentorsData, isLoading: mentorsLoading } = useMentors(10);
-    const mentors: Mentor[] = mentorsData?.pages.flatMap((page) => page.mentors) ?? [];
+    const {
+        data: mentorsData,
+        isLoading: mentorsLoading,
+        fetchNextPage: fetchNextMentorsPage,
+        hasNextPage: hasNextMentorsPage,
+        isFetchingNextPage: isFetchingNextMentorsPage,
+    } = useMentors(10);
+    const mentors = useMemo(
+        () => mentorsData?.pages.flatMap((page) => page.mentors) ?? [],
+        [mentorsData],
+    );
+
+    const listRef = useRef<FlatList<Mentee | Mentor>>(null);
 
     const getFilterOptions = (): FilterOption[] => [
         { label: 'Course Completion', options: ['Latest', 'Oldest'], isExpandable: true },
@@ -74,9 +119,12 @@ export default function ProgressTrackerIndex() {
                 setTimeout(() => {
                     if (!selectedMentee?.id) return;
                     router.push({
-                        pathname: '/(director)/(tabs)/roadmaps',
-                        params: { id: selectedMentee.id },
-                    });
+                        pathname: '/(director)/(tabs)/roadmaps/roadmap-paths',
+                        params: appendReturnTo(
+                            { id: selectedMentee.id },
+                            buildReturnTo(pathname, {}),
+                        ),
+                    } as never);
                 }, 300);
             },
         },
@@ -157,25 +205,160 @@ export default function ProgressTrackerIndex() {
         { key: 'all', label: 'All Mentees' },
         { key: 'mentor-wise', label: 'Mentor Wise' },
         { key: 'in-progress', label: 'In Progress' },
+        { key: 'completed', label: 'Completed Mentees' },
     ];
 
-    const isLoading = menteesLoading || mentorsLoading;
+    const handleTabChange = useCallback((tabKey: string) => {
+        setActiveTab(tabKey as TabKey);
+    }, []);
 
-    const handleMentorPress = (mentor: Mentor) => {
+    const handleMentorPress = useCallback((mentor: Mentor) => {
         router.push(`/(director)/(tabs)/progress-tracker/mentors/${mentor.id}` as any);
-    };
+    }, [router]);
 
-    const filteredMentees: Mentee[] = useMemo(() => {
-        let list = mentees;
-        if (search) {
-            const q = search.toLowerCase();
-            list = list.filter(m => `${m.firstName} ${m.lastName ?? ''}`.toLowerCase().includes(q));
+    const filteredMentees = useMemo(
+        () => filterMenteesForTab(mentees, activeTab, search),
+        [mentees, activeTab, search],
+    );
+
+    const isMentorTab = activeTab === 'mentor-wise';
+
+    const listData = useMemo(() => {
+        if (isMentorTab) return mentors;
+        return filteredMentees;
+    }, [filteredMentees, isMentorTab, mentors]);
+
+    useEffect(() => {
+        console.log('[ProgressTracker] tab data', {
+            activeTab,
+            search,
+            totalMenteesLoaded: mentees.length,
+            filteredMenteesCount: filteredMentees.length,
+            listDataCount: listData.length,
+            apiPagesLoaded: menteesData?.pages.length ?? 0,
+            hasNextMenteesPage,
+            hasNextMentorsPage,
+            tabData: listData.map((item) => {
+                if (isMentorTab) {
+                    const mentor = item as Mentor;
+                    return {
+                        id: mentor.id,
+                        name: `${mentor.firstName} ${mentor.lastName ?? ''}`.trim(),
+                        type: 'mentor',
+                    };
+                }
+                const mentee = item as Mentee;
+                return {
+                    id: mentee.id,
+                    name: `${mentee.firstName} ${mentee.lastName ?? ''}`.trim(),
+                    hasCompleted: mentee.hasCompleted,
+                    progress: mentee.progress,
+                    type: 'mentee',
+                };
+            }),
+        });
+    }, [
+        activeTab,
+        filteredMentees,
+        hasNextMenteesPage,
+        hasNextMentorsPage,
+        isMentorTab,
+        listData,
+        mentees.length,
+        menteesData?.pages.length,
+        search,
+    ]);
+
+    const isInitialLoading = isMentorTab
+        ? mentorsLoading && mentors.length === 0
+        : menteesLoading && mentees.length === 0;
+
+    const isFetchingNextPage = isMentorTab
+        ? isFetchingNextMentorsPage
+        : isFetchingNextMenteesPage;
+
+    const hasNextPage = isMentorTab ? hasNextMentorsPage : hasNextMenteesPage;
+
+    const handleLoadMore = useCallback(() => {
+        if (!hasNextPage || isFetchingNextPage) return;
+        if (isMentorTab) {
+            fetchNextMentorsPage();
+        } else {
+            fetchNextMenteesPage();
         }
-        if (activeTab === 'in-progress') {
-            list = list.filter(m => !m.hasCompleted && (m.progress ?? 0) < 100);
-        }
-        return list;
-    }, [mentees, search, activeTab]);
+    }, [
+        fetchNextMenteesPage,
+        fetchNextMentorsPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isMentorTab,
+    ]);
+
+    const renderListItem = useCallback(
+        ({ item }: { item: Mentee | Mentor }) => {
+            if (isMentorTab) {
+                const mentor = item as Mentor; 
+                return (
+                    <MentorCard
+                        showMenu={false}
+                        mentor={{
+                            id: mentor.id,
+                            name: `${mentor.firstName} ${mentor.lastName ?? ''}`,
+                            role: mentor.role === 'field_mentor' ? 'Field Mentor' : 'Mentor',
+                            menteesCount: mentor.assignedId?.length ?? 0,
+                            description: mentor.profileInfo ?? 'No profile info',
+                            profilePicture: mentor.profilePicture,
+                        }}
+                        layout={viewMode}
+                        onCall={() => dialPhone(mentor.phoneNumber)}
+                        onWhatsApp={() => openWhatsApp(mentor.phoneNumber)}
+                        onMail={() => sendEmail(mentor.email)}
+                        onChat={() => chatNotAvailableYet()}
+                        onPress={() => handleMentorPress(mentor)}
+                    />
+                );
+            }
+
+            const mentee = item as Mentee;
+            return (
+                <MenteeProgressCard
+                    data={mentee}
+                    layout={viewMode}
+                    showMenu={false}
+                    onPress={() =>
+                        router.push(
+                            `/(director)/(tabs)/progress-tracker/${mentee.id}` as any,
+                        )
+                    }
+                    onCall={() => dialPhone(mentee.phoneNumber)}
+                    onChat={() => chatNotAvailableYet()}
+                    onMail={() => sendEmail(mentee.email)}
+                    onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
+                    onMenuPress={() => handleMenuPress(mentee)}
+                />
+            );
+        },
+        [handleMenuPress, handleMentorPress, isMentorTab, router, viewMode],
+    );
+
+    const listEmptyComponent = (
+        <View style={styles.emptyContainer}>
+            <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
+            <Text style={styles.emptyText}>
+                {isMentorTab
+                    ? 'No mentors found'
+                    : activeTab === 'completed'
+                      ? 'No completed mentees found'
+                      : 'No pastors found'}
+            </Text>
+        </View>
+    );
+
+    const listFooterComponent = isFetchingNextPage ? (
+        <View style={styles.footerLoader}>
+            <ActivityIndicator color="#fff" />
+        </View>
+    ) : null;
 
     return (
         <GradientBackground>
@@ -210,71 +393,32 @@ export default function ProgressTrackerIndex() {
                         variant="frosted"
                         tabs={tabs}
                         activeTab={activeTab}
-                        onChange={tabKey => setActiveTab(tabKey as TabKey)}
+                        onChange={handleTabChange}
                     />
 
                     {/* List */}
-                    {isLoading ? (
+                    {isInitialLoading ? (
                         <View style={styles.centerState}>
                             <ActivityIndicator size="large" color="#fff" />
                         </View>
                     ) : (
-                        <ScrollView
-                            style={styles.scroll}
-                            contentContainerStyle={styles.scrollContent}
+                        <FlatList
+                            ref={listRef}
+                            key={activeTab}
+                            style={styles.flatList}
+                            data={listData}
+                            keyExtractor={(item) => item.id}
+                            renderItem={renderListItem}
+                            extraData={`${activeTab}-${listData.length}-${search}`}
+                            contentContainerStyle={styles.flatListContent}
                             showsVerticalScrollIndicator={false}
-                        >
-                            {activeTab === 'mentor-wise'
-                                ? mentors.length === 0 ? (
-                                    <View style={styles.emptyContainer}>
-                                        <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
-                                        <Text style={styles.emptyText}>No mentors found</Text>
-                                    </View>
-                                ) : mentors.map(item => (
-                                    <MentorCard
-                                        key={item.id}
-                                        showMenu={false}
-                                        mentor={{
-                                            id: item.id,
-                                            name: `${item.firstName} ${item.lastName ?? ''}`,
-                                            role: item.role === 'field_mentor' ? 'Field Mentor' : 'Mentor',
-                                            menteesCount: item.assignedId?.length ?? 0,
-                                            description: item.profileInfo ?? 'No profile info',
-                                            profilePicture: item.profilePicture,
-                                        }}
-                                        layout={viewMode}
-                                        onCall={() => dialPhone(item.phoneNumber)}
-                                        onWhatsApp={() => openWhatsApp(item.phoneNumber)}
-                                        onMail={() => sendEmail(item.email)}
-                                        onChat={() => chatNotAvailableYet()}
-                                        onPress={() => handleMentorPress(item)}
-                                    />
-                                ))
-                                : filteredMentees.length === 0 ? (
-                                    <View style={styles.emptyContainer}>
-                                        <Ionicons name="people-outline" size={40} color="rgba(255,255,255,0.3)" />
-                                        <Text style={styles.emptyText}>No pastors found</Text>
-                                    </View>
-                                ) : filteredMentees.map(mentee => (
-                                    <MenteeProgressCard
-                                        key={mentee.id}
-                                        data={mentee as Mentee}
-                                        layout={viewMode}
-                                        showMenu={false}
-                                        onPress={() =>
-                                            router.push(
-                                                `/(director)/(tabs)/progress-tracker/${mentee.id}` as any
-                                            )
-                                        }
-                                        onCall={() => dialPhone(mentee.phoneNumber)}
-                                        onChat={() => chatNotAvailableYet()}
-                                        onMail={() => sendEmail(mentee.email)}
-                                        onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
-                                        onMenuPress={() => handleMenuPress(mentee)}
-                                    />
-                                ))
-                            }
-                        </ScrollView>
+                            removeClippedSubviews={false}
+                            maxToRenderPerBatch={10}
+                            onEndReached={handleLoadMore}
+                            onEndReachedThreshold={0.5}
+                            ListEmptyComponent={listEmptyComponent}
+                            ListFooterComponent={listFooterComponent}
+                        />
                     )}
                 </View>
 
@@ -334,8 +478,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     searchContainer: { paddingHorizontal: 16, marginBottom: 16 },
-    scroll: { flex: 1 },
-    scrollContent: { paddingHorizontal: 16, paddingBottom: 24 },
+    flatList: { flex: 1 },
+    flatListContent: { paddingHorizontal: 16, paddingBottom: 24, flexGrow: 1 },
+    footerLoader: { paddingVertical: 20, alignItems: 'center' },
     centerState: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     emptyContainer: { alignItems: 'center', paddingVertical: 48, gap: 12 },
     emptyText: { color: 'rgba(255,255,255,0.5)', fontSize: 15, fontWeight: '500' },

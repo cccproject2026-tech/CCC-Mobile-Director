@@ -15,7 +15,9 @@ import {
     unwrapExtrasDocuments,
     unwrapExtrasRows,
     unwrapQueries,
+    withNestedTaskScope,
 } from '@/utils/roadmapTaskParser';
+import { logQueriesGetResponse } from '@/utils/roadmapTaskApiDebug';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { roadmapKeys } from './useRoadmaps';
 
@@ -99,11 +101,11 @@ export function useRoadmapComments(
     });
 }
 
-export function useAddRoadmapComment(roadmapId: string, userId: string) {
+export function useAddRoadmapComment(roadmapId: string, userId: string, taskId?: string) {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (payload: AddRoadmapCommentPayload) =>
-            roadmapService.addComment(roadmapId, payload),
+            roadmapService.addComment(roadmapId, withNestedTaskScope(payload, taskId)),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: roadmapTaskKeys.comments(roadmapId, userId),
@@ -132,7 +134,18 @@ export function useRoadmapQueries(
                 status,
                 taskId,
             );
-            return unwrapQueries(raw);
+            const unwrapped = unwrapQueries(raw);
+            if (__DEV__) {
+                logQueriesGetResponse(
+                    roadmapId!,
+                    userId!,
+                    status,
+                    taskId,
+                    raw,
+                    unwrapped,
+                );
+            }
+            return unwrapped;
         },
         enabled: !!roadmapId && !!userId,
         staleTime: 30_000,

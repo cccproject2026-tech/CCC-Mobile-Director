@@ -53,7 +53,8 @@ const ApplicationCard: React.FC<Props> = memo(({
             onPress();
         } else if (userId) {
             router.push({
-                pathname: `/(director)/(tabs)/micro-grant/${userId}`,
+                pathname: '/(director)/(tabs)/micro-grant/application-details',
+                params: { id: userId },
             });
         }
     };

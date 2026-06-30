@@ -83,7 +83,7 @@ export const TabSwitcher: React.FC<TabSwitcherProps> = memo(
 
 const styles = StyleSheet.create({
     wrapper: {
-        marginBottom: 16,
+        marginBottom: 10,
     },
     scrollContent: {
         paddingHorizontal: 16,

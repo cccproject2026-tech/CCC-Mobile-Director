@@ -41,6 +41,6 @@ export default function ContactIcons({ onCall, onChat, onMail, onWhatsApp, small
 }
 
 const styles = StyleSheet.create({
-    row: { flexDirection: "row" },
-    btn: { alignItems: "center", justifyContent: "center", marginRight: 8 }
+    row: { flexDirection: "row", alignItems: "center" },
+    btn: { alignItems: "center", justifyContent: "center", marginRight: 4 },
 });

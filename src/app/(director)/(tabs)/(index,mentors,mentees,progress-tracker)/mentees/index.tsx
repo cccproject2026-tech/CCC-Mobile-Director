@@ -1,5 +1,5 @@
 import MenteeProgressCard from '@/components/Cards/MenteeCard/MenteeProgressCard';
-import { UserCardSkeleton } from '@/components/Cards/MentorCard/UserCardSkeleton';
+import FieldMentorInvitationCard from '@/components/Cards/MenteeCard/FieldMentorInvitationCard';
 import SearchBar from '@/components/Header/SearchBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
 import TopBar from '@/components/Header/TopBar';
@@ -10,7 +10,7 @@ import { useMentees } from '@/hooks/useMentees';
 import { Mentee } from '@/types/user.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect, usePathname } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -29,6 +29,7 @@ import {
     openWhatsApp,
     sendEmail,
 } from '@/utils/contactActions';
+import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
 
 function getRouteParam(value: string | string[] | undefined): string | undefined {
     if (Array.isArray(value)) return value[0];
@@ -44,6 +45,7 @@ function isAssignMentorDashboardFlow(params: Record<string, string | string[] | 
 
 export default function Mentees() {
     const router = useRouter();
+    const pathname = usePathname();
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] =
         useState<'all' | 'not-started' | 'in-progress' | 'completed'>('all');
@@ -113,9 +115,12 @@ export default function Mentees() {
                     onPress: () =>
                         afterClose(() =>
                             router.push({
-                                pathname: '/(director)/(tabs)/roadmaps',
-                                params: { id: menteeId },
-                            }),
+                                pathname: '/(director)/(tabs)/roadmaps/roadmap-paths',
+                                params: appendReturnTo(
+                                    { id: menteeId },
+                                    buildReturnTo(pathname, params),
+                                ),
+                            } as never),
                         ),
                 },
                 {
@@ -192,7 +197,7 @@ export default function Mentees() {
                 },
             ];
         },
-        [handleCloseModal, menuMode, router],
+        [handleCloseModal, menuMode, pathname, params, router],
     );
 
     const sheetActions = useMemo(
@@ -309,6 +314,8 @@ export default function Mentees() {
     const inProgressCount = useMemo(() => menteeList.filter((m: Mentee) => (m.progress ?? 0) > 0 && (m.progress ?? 0) < 100).length, [menteeList]);
     const completedCount = useMemo(() => menteeList.filter((m: Mentee) => m.progress === 100 || m.hasCompleted === true).length, [menteeList]);
 
+    const isFieldMentorInvitationHome = params?.type === 'Field-Mentor-Home';
+
     const tabs = [
         { key: 'all', label: 'All' },
         { key: 'not-started', label: 'Not Started', badge: notStartedCount },
@@ -382,37 +389,46 @@ export default function Mentees() {
 
                     {/* List / Skeleton */}
                     {isLoading && menteeList.length === 0 ? (
-                        <View style={styles.flatListContent}>
-                            <UserCardSkeleton layout={viewMode} />
-                            <UserCardSkeleton layout={viewMode} />
-                            <UserCardSkeleton layout={viewMode} />
-                            <UserCardSkeleton layout={viewMode} />
+                        <View style={styles.loadingContainer}>
+                            <ActivityIndicator size="large" color="#fff" />
+                            <Text style={styles.loadingText}>Loading pastors...</Text>
                         </View>
                     ) : (
                         <FlatList
                             style={styles.flatList}
                             data={filteredMentees}
                             keyExtractor={item => item.id}
-                            renderItem={({ item: mentee }) => (
-                                <MenteeProgressCard
-                                    data={mentee}
-                                    layout={viewMode}
-                                    showMenu={true}
-                                    onPress={() => router.push(`/mentees/${mentee.id}`)}
-                                    onCall={() => dialPhone(mentee.phoneNumber)}
-                                    onChat={() => chatNotAvailableYet()}
-                                    onMail={() => sendEmail(mentee.email)}
-                                    onWhatsApp={() => openWhatsApp(mentee.phoneNumber)}
-                                    onMenuPress={() => handleMenuPress(mentee)}
-                                    onInviteAsFieldMentor={() =>
-                                        router.push({
-                                            pathname: '/(director)/(tabs)/course-completed',
-                                            params: { initialTab: 'invited' },
-                                        } as any)
-                                    }
-                                    paramsData={params?.type}
-                                />
-                            )}
+                            renderItem={({ item: mentee }) => {
+                                const commonCardProps = {
+                                    data: mentee,
+                                    layout: viewMode,
+                                    showMenu: true,
+                                    onPress: () => router.push(`/mentees/${mentee.id}`),
+                                    onCall: () => dialPhone(mentee.phoneNumber),
+                                    onChat: () => chatNotAvailableYet(),
+                                    onMail: () => sendEmail(mentee.email),
+                                    onWhatsApp: () => openWhatsApp(mentee.phoneNumber),
+                                    onMenuPress: () => handleMenuPress(mentee),
+                                    paramsData: params?.type,
+                                };
+
+                                if (isFieldMentorInvitationHome) {
+                                    console.log("commonCardProps", commonCardProps);
+                                    return <FieldMentorInvitationCard {...commonCardProps} />;
+                                }
+
+                                return (
+                                    <MenteeProgressCard
+                                        {...commonCardProps}
+                                        onInviteAsFieldMentor={() =>
+                                            router.push({
+                                                pathname: '/(director)/(tabs)/course-completed',
+                                                params: { initialTab: 'invited' },
+                                            } as any)
+                                        }
+                                    />
+                                );
+                            }}
                             contentContainerStyle={styles.flatListContent}
                             showsVerticalScrollIndicator={false}
                             removeClippedSubviews={false}
@@ -524,6 +540,18 @@ const styles = StyleSheet.create({
     sortButtonText: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
     flatList: { flex: 1 },
     flatListContent: { paddingHorizontal: 16, paddingBottom: 24 },
+    loadingContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 48,
+        gap: 12,
+    },
+    loadingText: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 15,
+        fontWeight: '500',
+    },
     emptyContainer: { alignItems: 'center', paddingVertical: 48, gap: 12 },
     emptyText: { color: 'rgba(255,255,255,0.5)', fontSize: 15, fontWeight: '500' },
 });

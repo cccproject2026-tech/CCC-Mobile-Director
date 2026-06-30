@@ -169,11 +169,11 @@ export default function PhaseListScreen() {
             pathname: '/(director)/(tabs)/roadmaps/(creation)/roadmap-creation',
             params: appendReturnTo(
                 {
-                    roadmapId,
+                    roadmapId, 
                     type: 'phase',
                     isEditMode: 'false',
                 },
-                phaseListReturnTo,
+                phaseListReturnTo, 
             ),
         } as never);
     };

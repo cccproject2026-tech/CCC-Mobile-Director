@@ -9,7 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { GradientBackground } from '@/components/ui/design-system';
 import TopBar from '@/components/Header/TopBar';
 import { TabSwitcher } from '@/components/Header/TabSwitcher';
@@ -38,7 +38,17 @@ import {
     formatExtraValue,
     formatRoadmapDate,
     mapStatusChip,
+    recordMatchesNestedTask,
+    withNestedTaskScope,
 } from '@/utils/roadmapTaskParser';
+import {
+    buildTaskScreenGetApis,
+    buildTaskScreenWriteApis,
+    logTaskScreenGetApis,
+    logTaskScreenWriteApis,
+    logTaskScreenWriteRequest,
+    TaskScreenGetApi,
+} from '@/utils/roadmapTaskApiDebug';
 
 type TaskTab = 'response' | 'comments' | 'queries';
 type QueryTab = 'pending' | 'answered';
@@ -71,31 +81,169 @@ export default function RoadmapTaskScreen() {
     const [commentText, setCommentText] = useState('');
     const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
 
-    const { data: phaseRoadmap } = useRoadmap(roadmapId);
-    const { data: task, isLoading: taskLoading, error: taskError } = useNestedRoadmapTask(
-        roadmapId,
-        taskId,
-    );
-    const { data: pastorProfile } = useUserProfile(userId ?? '');
-    const { data: extras = [], isLoading: extrasLoading } = useRoadmapTaskExtras(
-        roadmapId,
-        userId,
-        taskId,
-    );
-    const { data: documents = [] } = useRoadmapTaskDocuments(roadmapId, userId, taskId);
-    const { data: comments = [], isLoading: commentsLoading } = useRoadmapComments(
-        roadmapId,
-        userId,
-    );
-    const { data: queries = [], isLoading: queriesLoading } = useRoadmapQueries(
-        roadmapId,
-        userId,
-        queryTab,
-        taskId,
+    const { data: phaseRoadmap, isLoading: phaseLoading, isError: phaseError, error: phaseErrorObj } =
+        useRoadmap(roadmapId);
+    const { data: task, isLoading: taskLoading, isError: taskIsError, error: taskError } =
+        useNestedRoadmapTask(roadmapId, taskId);
+    const {
+        data: pastorProfile,
+        isLoading: profileLoading,
+        isError: profileError,
+        error: profileErrorObj,
+    } = useUserProfile(userId ?? '');
+    const {
+        data: extras = [],
+        isLoading: extrasLoading,
+        isError: extrasError,
+        error: extrasErrorObj,
+    } = useRoadmapTaskExtras(roadmapId, userId, taskId);
+    const {
+        data: documents = [],
+        isLoading: documentsLoading,
+        isError: documentsError,
+        error: documentsErrorObj,
+    } = useRoadmapTaskDocuments(roadmapId, userId, taskId);
+    const {
+        data: comments = [],
+        isLoading: commentsLoading,
+        isError: commentsError,
+        error: commentsErrorObj,
+    } = useRoadmapComments(roadmapId, userId);
+    const {
+        data: queries = [],
+        isLoading: queriesLoading,
+        isError: queriesError,
+        error: queriesErrorObj,
+    } = useRoadmapQueries(roadmapId, userId, queryTab, taskId);
+
+    const writeApis = useMemo(
+        () => (roadmapId ? buildTaskScreenWriteApis(roadmapId) : []),
+        [roadmapId],
     );
 
-    const addComment = useAddRoadmapComment(roadmapId ?? '', userId ?? '');
+    const getApiCalls = useMemo((): TaskScreenGetApi[] => {
+        if (!roadmapId || !userId || !taskId) return [];
+
+        const defs = buildTaskScreenGetApis(roadmapId, userId, taskId, queryTab);
+        const stateByKey: Record<
+            string,
+            { response: unknown; isLoading: boolean; isError: boolean; error: unknown }
+        > = {
+            phaseRoadmap: {
+                response: phaseRoadmap,
+                isLoading: phaseLoading,
+                isError: phaseError,
+                error: phaseErrorObj,
+            },
+            nestedTask: {
+                response: task,
+                isLoading: taskLoading,
+                isError: taskIsError,
+                error: taskError,
+            },
+            pastorProfile: {
+                response: pastorProfile,
+                isLoading: profileLoading,
+                isError: profileError,
+                error: profileErrorObj,
+            },
+            taskExtras: {
+                response: extras,
+                isLoading: extrasLoading,
+                isError: extrasError,
+                error: extrasErrorObj,
+            },
+            taskDocuments: {
+                response: documents,
+                isLoading: documentsLoading,
+                isError: documentsError,
+                error: documentsErrorObj,
+            },
+            comments: {
+                response: comments,
+                isLoading: commentsLoading,
+                isError: commentsError,
+                error: commentsErrorObj,
+            },
+            queries: {
+                response: queries,
+                isLoading: queriesLoading,
+                isError: queriesError,
+                error: queriesErrorObj,
+            },
+        };
+
+        return defs.map((def) => ({
+            ...def,
+            ...stateByKey[def.key],
+        }));
+    }, [
+        roadmapId,
+        userId,
+        taskId,
+        queryTab,
+        phaseRoadmap,
+        phaseLoading,
+        phaseError,
+        phaseErrorObj,
+        task,
+        taskLoading,
+        taskIsError,
+        taskError,
+        pastorProfile,
+        profileLoading,
+        profileError,
+        profileErrorObj,
+        extras,
+        extrasLoading,
+        extrasError,
+        extrasErrorObj,
+        documents,
+        documentsLoading,
+        documentsError,
+        documentsErrorObj,
+        comments,
+        commentsLoading,
+        commentsError,
+        commentsErrorObj,
+        queries,
+        queriesLoading,
+        queriesError,
+        queriesErrorObj,
+    ]);
+
+    const loggedWriteApisRef = useRef(false);
+    const lastGetLogKeyRef = useRef('');
+
+    useEffect(() => {
+        if (!roadmapId || !userId || !taskId || loggedWriteApisRef.current) return;
+        logTaskScreenWriteApis(writeApis);
+        loggedWriteApisRef.current = true;
+    }, [roadmapId, userId, taskId, writeApis]);
+
+    useEffect(() => {
+        if (getApiCalls.length === 0) return;
+
+        const logKey = getApiCalls
+            .map(
+                (call) =>
+                    `${call.key}:${call.isLoading ? 'loading' : call.isError ? 'error' : 'done'}`,
+            )
+            .join('|');
+
+        if (logKey === lastGetLogKeyRef.current) return;
+        lastGetLogKeyRef.current = logKey;
+
+        logTaskScreenGetApis(getApiCalls);
+    }, [getApiCalls]);
+
+    const addComment = useAddRoadmapComment(roadmapId ?? '', userId ?? '', taskId);
     const replyQuery = useReplyRoadmapQuery(roadmapId ?? '', userId ?? '', taskId);
+
+    const taskComments = useMemo(() => {
+        if (!taskId) return comments;
+        return comments.filter((c) => recordMatchesNestedTask(c, taskId));
+    }, [comments, taskId]);
 
     const pastorName = pastorProfile
         ? `${pastorProfile.firstName ?? ''} ${pastorProfile.lastName ?? ''}`.trim()
@@ -117,18 +265,43 @@ export default function RoadmapTaskScreen() {
 
     const handleAddComment = async () => {
         const text = commentText.trim();
-        if (!text || !userId || !currentUserId) return;
-        await addComment.mutateAsync({ text, userId, mentorId: currentUserId });
+        if (!text || !userId || !currentUserId || !roadmapId) return;
+        const payload = withNestedTaskScope(
+            { text, userId, mentorId: currentUserId },
+            taskId,
+        );
+        const addCommentApi = writeApis.find((api) => api.key === 'addComment');
+        if (addCommentApi) {
+            logTaskScreenWriteRequest(addCommentApi, payload);
+        }
+        const response = await addComment.mutateAsync(payload);
+        if (addCommentApi) {
+            logTaskScreenWriteRequest(addCommentApi, payload, response);
+        }
         setCommentText('');
     };
 
     const handleReply = async (queryId: string) => {
         const repliedAnswer = (replyDrafts[queryId] ?? '').trim();
-        if (!repliedAnswer || !currentUserId) return;
-        await replyQuery.mutateAsync({
+        if (!repliedAnswer || !currentUserId || !roadmapId) return;
+        const payload = { repliedAnswer, repliedMentorId: currentUserId };
+        const replyApi = writeApis.find((api) => api.key === 'replyQuery');
+        const resolvedReplyApi = replyApi
+            ? {
+                  ...replyApi,
+                  endpoint: replyApi.endpoint.replace('{queryId}', queryId),
+              }
+            : undefined;
+        if (resolvedReplyApi) {
+            logTaskScreenWriteRequest(resolvedReplyApi, payload);
+        }
+        const response = await replyQuery.mutateAsync({
             queryId,
-            payload: { repliedAnswer, repliedMentorId: currentUserId },
+            payload,
         });
+        if (resolvedReplyApi) {
+            logTaskScreenWriteRequest(resolvedReplyApi, payload, response);
+        }
         setReplyDrafts((prev) => ({ ...prev, [queryId]: '' }));
     };
 
@@ -279,10 +452,10 @@ export default function RoadmapTaskScreen() {
             </View>
             {commentsLoading ? (
                 <ActivityIndicator color="#fff" style={{ marginTop: 16 }} />
-            ) : comments.length === 0 ? (
+            ) : taskComments.length === 0 ? (
                 <Text style={styles.emptyInline}>No comments yet.</Text>
             ) : (
-                comments.map((c) => {
+                taskComments.map((c) => {
                     const author = c.mentorId
                         ? `${c.mentorId.firstName ?? ''} ${c.mentorId.lastName ?? ''}`.trim()
                         : 'Mentor';
@@ -410,7 +583,7 @@ export default function RoadmapTaskScreen() {
                         <TabSwitcher
                             tabs={[
                                 { key: 'response', label: 'Response' },
-                                { key: 'comments', label: 'Comments', badge: comments.length || undefined },
+                                { key: 'comments', label: 'Comments', badge: taskComments.length || undefined },
                                 { key: 'queries', label: 'Queries' },
                             ]}
                             activeTab={activeTab}
@@ -434,14 +607,14 @@ export default function RoadmapTaskScreen() {
                         {activeTab === 'response' && renderResponse()}
                         {activeTab === 'comments' && renderComments()}
                         {activeTab === 'queries' && renderQueries()}
-
+{hasResponses &&
                         <TouchableOpacity
                             style={styles.detailLink}
                             onPress={() => router.push(Routes.roadmaps.detail(roadmapId))}
                         >
                             <Text style={styles.detailLinkText}>View roadmap template</Text>
                             <Ionicons name="chevron-forward" size={16} color="#fff" />
-                        </TouchableOpacity>
+                        </TouchableOpacity> }
                     </ScrollView>
                 </>
             )}

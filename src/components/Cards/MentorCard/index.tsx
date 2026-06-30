@@ -15,6 +15,7 @@ export interface MentorCardData {
 interface MentorCardProps {
     mentor: MentorCardData;
     layout?: "card" | "list";
+    embedded?: boolean;
     onCall?: () => void;
     onChat?: () => void;
     onMail?: () => void;
@@ -27,6 +28,7 @@ interface MentorCardProps {
 export default function MentorCard({
     mentor,
     layout = "card",
+    embedded = false,
     onCall,
     onChat,
     onMail,
@@ -35,8 +37,9 @@ export default function MentorCard({
     onMenu,
     showMenu,
 }: MentorCardProps) {
-    const menuButton =
-        onMenu && showMenu ? (
+    const hasMenu = Boolean(showMenu && onMenu);
+    const listMenuButton =
+        hasMenu ? (
             <TouchableOpacity
                 activeOpacity={1}
                 hitSlop={16}
@@ -48,28 +51,20 @@ export default function MentorCard({
             </TouchableOpacity>
         ) : null;
 
-    const cardMenuButton =
-        onMenu && showMenu ? (
-            <TouchableOpacity
-                style={styles.menuButton}
-                activeOpacity={1}
-                hitSlop={16}
-                onPress={onMenu}
-                accessibilityRole="button"
-                accessibilityLabel="Open menu"
-            >
-                <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
-            </TouchableOpacity>
-        ) : null;
+    const avatarSize = embedded ? 64 : 100;
+    const hasDescription = Boolean(mentor.description?.trim());
+    const showDescription = !embedded || hasDescription;
 
     if (layout === "list") {
         return (
-            <View style={styles.listContainer}>
+            <View style={[styles.listContainer, embedded && styles.embeddedListContainer]}>
                 <Pressable
                     style={{ flex: 1, flexDirection: "row", alignItems: "center", minWidth: 0 }}
                     onPress={onPress}
                 >
-                    <ImageContainer src={mentor.profilePicture} size={46} />
+                    <View style={styles.listAvatarWrap}>
+                        <ImageContainer src={mentor.profilePicture} size={46} />
+                    </View>
                     <View style={styles.listInfo}>
                         <Text style={styles.listName} numberOfLines={1}>
                             {mentor.name}
@@ -92,31 +87,43 @@ export default function MentorCard({
                         onWhatsApp={onWhatsApp}
                         btnStyles={{ marginRight: 3 }}
                     />
-                    {menuButton}
+                    {listMenuButton}
                 </View>
             </View>
         );
     }
 
     return (
-        <View style={styles.card} pointerEvents="box-none">
-            <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
-                <View style={styles.cardRow}>
-                    <View>
-                        <ImageContainer src={mentor.profilePicture} size={100} />
-                        <ContactIcons
-                            onCall={onCall}
-                            onChat={onChat}
-                            onMail={onMail}
-                            onWhatsApp={onWhatsApp}
-                            small
-                            btnStyles={{ marginRight: 5, marginTop: 4 }}
-                        />
+        <View
+            style={[
+                styles.card,
+                embedded && styles.embeddedCard,
+            ]}
+            pointerEvents="box-none"
+        >
+            <View style={[styles.cardRow, embedded && styles.embeddedCardRow]}>
+                    <View style={styles.avatarColumn}>
+                        <ImageContainer src={mentor.profilePicture} size={avatarSize} />
                     </View>
 
-                    <View style={[styles.cardInfo, cardMenuButton && styles.cardInfoWithMenu]}>
-                        <View style={[styles.row, styles.justifyBetween]}>
-                            <View style={styles.row}>
+                    <View
+                        style={[
+                            styles.cardInfo,
+                            embedded && styles.embeddedCardInfo,
+                            hasMenu && styles.cardInfoWithMenu,
+                        ]}
+                    >
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={onPress}
+                            disabled={!onPress}
+                        >
+                            <View
+                                style={[
+                                    styles.contentStack,
+                                    embedded && styles.embeddedContentStack,
+                                ]}
+                            >
                                 <Text style={styles.name} numberOfLines={1}>
                                     {mentor.name}
                                 </Text>
@@ -128,18 +135,49 @@ export default function MentorCard({
                                         </Text>
                                     </View>
                                 ) : null}
+                                <Text style={styles.role} numberOfLines={1}>
+                                    -{mentor.role}
+                                </Text>
+                                {showDescription ? (
+                                    <Text style={styles.desc} numberOfLines={embedded ? 2 : 3}>
+                                        {hasDescription
+                                            ? mentor.description
+                                            : "No description available"}
+                                    </Text>
+                                ) : null}
                             </View>
-                        </View>
+                        </TouchableOpacity>
 
-                        <Text style={styles.role}>-{mentor.role}</Text>
-                        <Text style={styles.desc} numberOfLines={2}>
-                            {mentor.description ?? "No description available"}
-                        </Text>
+                        <View
+                            style={[
+                                styles.contactRow,
+                                embedded ? styles.embeddedContactRow : styles.defaultContactRow,
+                            ]}
+                        >
+                            <ContactIcons
+                                onCall={onCall}
+                                onChat={onChat}
+                                onMail={onMail}
+                                onWhatsApp={onWhatsApp}
+                                small
+                                btnStyles={{ marginRight: 4 }}
+                            />
+                        </View>
                     </View>
                 </View>
-            </TouchableOpacity>
 
-            {cardMenuButton}
+            {hasMenu ? (
+                <TouchableOpacity
+                    style={styles.menuButton}
+                    activeOpacity={1}
+                    hitSlop={16}
+                    onPress={onMenu}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open menu"
+                >
+                    <Ionicons name="ellipsis-vertical" size={20} color="#fff" />
+                </TouchableOpacity>
+            ) : null}
         </View>
     );
 }
@@ -164,29 +202,84 @@ export const styles = StyleSheet.create({
         borderColor: "rgba(255,255,255,0.14)",
         padding: 14,
         marginBottom: 12,
+        overflow: "hidden",
+    },
+    embeddedCard: {
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        padding: 0,
+        marginBottom: 0,
+        overflow: "visible",
     },
     menuButton: {
         position: "absolute",
-        top: 14,
-        right: 14,
+        top: 0,
+        right: 0,
         zIndex: 30,
         backgroundColor: "transparent",
+        padding: 4,
     },
     cardInfoWithMenu: {
         paddingRight: 28,
     },
-    cardRow: { flexDirection: "row" },
-    cardInfo: { flex: 1 },
-    name: { fontSize: 16, fontWeight: "700", color: "#fff", marginRight: 16 },
+    cardRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        minWidth: 0,
+    },
+    embeddedCardRow: {
+        alignItems: "center",
+    },
+    avatarColumn: {
+        flexShrink: 0,
+        marginRight: 10,
+    },
+    cardInfo: {
+        flexGrow: 1,
+        flexShrink: 1,
+        flexBasis: 0,
+        minWidth: 0,
+        alignSelf: "flex-start",
+    },
+    embeddedCardInfo: {
+        alignSelf: "center",
+        justifyContent: "flex-start",
+    },
+    contentStack: {
+        gap: 8,
+    },
+    embeddedContentStack: {
+        gap: 6,
+    },
+    contactRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    defaultContactRow: {
+        marginTop: 8,
+    },
+    embeddedContactRow: {
+        marginTop: 6,
+    },
+    name: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#fff",
+        flexShrink: 1,
+    },
     role: {
         fontSize: 12,
         color: "rgba(255,255,255,0.6)",
-        marginBottom: 6,
         fontWeight: "600",
         textTransform: "capitalize",
     },
-    desc: { fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 20, marginTop: 8 },
-    avatar: { borderRadius: 12, overflow: "hidden", marginRight: 12 },
+    desc: {
+        fontSize: 13,
+        color: "rgba(255,255,255,0.7)",
+        lineHeight: 18,
+    },
+    avatar: { borderRadius: 12, overflow: "hidden" },
     img: { width: "100%", height: "100%" },
     placeholder: {
         flex: 1,
@@ -204,10 +297,27 @@ export const styles = StyleSheet.create({
         padding: 12,
         marginBottom: 10,
         justifyContent: "space-between",
+        overflow: "hidden",
+        minWidth: 0,
     },
-    listInfo: { flexDirection: "row", alignItems: "center", marginRight: 10 },
-    listName: { fontSize: 14, fontWeight: "700", color: "#fff", marginRight: 6 },
-    menteesBadge: { flexDirection: "row", alignItems: "center" },
+    embeddedListContainer: {
+        backgroundColor: "transparent",
+        borderWidth: 0,
+        borderRadius: 0,
+        padding: 0,
+        marginBottom: 0,
+    },
+    listAvatarWrap: {
+        marginRight: 10,
+        flexShrink: 0,
+    },
+    listInfo: { flex: 1, flexDirection: "column", marginRight: 10, gap: 4, minWidth: 0 },
+    listName: { fontSize: 14, fontWeight: "700", color: "#fff", flexShrink: 1 },
+    menteesBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        alignSelf: "flex-start",
+    },
     dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#6FD4BE", marginRight: 5 },
     menteesText: { fontSize: 11, color: "#6FD4BE", fontWeight: "600" },
     row: { flexDirection: "row", alignItems: "center" },

@@ -1,7 +1,7 @@
-// app/(director)/(tabs)/micro-grant/[id].tsx
+// app/(director)/(tabs)/micro-grant/application-details.tsx
 import {
     ActivityIndicator,
-    Linking,
+    Alert,
     ScrollView,
     StyleSheet,
     Text,
@@ -9,8 +9,8 @@ import {
     View,
     Image,
 } from 'react-native';
-import React, { useMemo } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import TopBar from '@/components/Header/TopBar';
@@ -23,16 +23,20 @@ import {
     getMicrograntOtherNote,
     normalizeMicrograntSupportingDocs,
 } from '@/utils/microgrant';
+import { downloadAndShareRemoteFile, fileNameFromUrl } from '@/utils/downloadRemoteFile';
+import { appendReturnTo, buildReturnTo } from '@/utils/navigation';
 
 const ApplicationDetails = () => {
     const router = useRouter();
-    const { id: routeSlug } = useLocalSearchParams();
+    const pathname = usePathname();
+    const { id } = useLocalSearchParams<{ id: string | string[] }>();
+    const routeSlug = Array.isArray(id) ? id[0] : id;
     const { bottom } = useSafeAreaInsets();
+    const [downloadingDocUrl, setDownloadingDocUrl] = useState<string | null>(null);
 
     const { application, userProfile, isLoading, error } = useMicroGrantApplicationDetails(
         routeSlug as string,
     );
-
     const answerEntries = useMemo(
         () => getMicrograntAnswerEntries(application?.application?.answers),
         [application?.application?.answers],
@@ -63,16 +67,25 @@ const ApplicationDetails = () => {
 
     const handleNext = () => {
         if (!routeSlug) return;
-        router.push(`/(director)/(tabs)/micro-grant/review/${routeSlug}` as any);
+        router.push({
+            pathname: '/(director)/(tabs)/micro-grant/application-review',
+            params: appendReturnTo(
+                { id: routeSlug },
+                buildReturnTo(pathname, { id: routeSlug }),
+            ),
+        });
     };
 
-    const handleOpenDoc = async (url: string) => {
-        if (!url) return;
+    const handleDownloadDoc = async (url: string, label: string) => {
+        if (!url || downloadingDocUrl) return;
+        setDownloadingDocUrl(url);
         try {
-            const canOpen = await Linking.canOpenURL(url);
-            if (canOpen) await Linking.openURL(url);
+            await downloadAndShareRemoteFile(url, fileNameFromUrl(url, label));
         } catch (e) {
-            console.error('Error opening supporting document:', e);
+            console.error('Error downloading supporting document:', e);
+            Alert.alert('Download failed', 'Could not download this document. Please try again.');
+        } finally {
+            setDownloadingDocUrl(null);
         }
     };
 
@@ -186,17 +199,26 @@ const ApplicationDetails = () => {
                     {supportingDocs.length === 0 ? (
                         <Text style={styles.fileHint}>No supporting documents uploaded.</Text>
                     ) : (
-                        supportingDocs.map((doc, index) => (
+                        supportingDocs.map((doc, index) => {
+                            const isDownloading = downloadingDocUrl === doc.url;
+                            return (
                             <TouchableOpacity
                                 key={`${doc.name}-${index}`}
-                                style={styles.downloadBtn}
-                                onPress={() => handleOpenDoc(doc.url)}
-                                disabled={!doc.url}
+                                style={[styles.downloadBtn, isDownloading && styles.downloadBtnDisabled]}
+                                onPress={() => handleDownloadDoc(doc.url, doc.name)}
+                                disabled={!doc.url || !!downloadingDocUrl}
                             >
-                                <Ionicons name="download-outline" size={20} color="#fff" />
-                                <Text style={styles.downloadText}>{doc.name}</Text>
+                                {isDownloading ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Ionicons name="download-outline" size={20} color="#fff" />
+                                )}
+                                <Text style={styles.downloadText}>
+                                    {isDownloading ? 'Downloading...' : doc.name}
+                                </Text>
                             </TouchableOpacity>
-                        ))
+                            );
+                        })
                     )}
                 </View>
 
@@ -284,6 +306,9 @@ const styles = StyleSheet.create({
         borderRadius: 10, gap: 8,
         marginTop: 12,
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+    },
+    downloadBtnDisabled: {
+        opacity: 0.7,
     },
     downloadText: { color: '#fff', fontSize: 14, fontWeight: '600' },
     fileHint: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 8 },

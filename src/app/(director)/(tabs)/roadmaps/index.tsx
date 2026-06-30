@@ -58,6 +58,8 @@ export default function RevitalizationRoadmap() {
     const [selectedMentee, setSelectedMentee] = useState<Mentee | null>(null);
     const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
     const [selectedRoadmap, setSelectedRoadmap] = useState<RoadmapCardData | null>(null);
+    const [roadmapSelectionMode, setRoadmapSelectionMode] = useState(false);
+    const [selectedRoadmapIds, setSelectedRoadmapIds] = useState<Set<string>>(new Set());
 
     const params = useLocalSearchParams();
     const validTabs = ['roadmap-library', 'mentors', 'mentees'] as const;
@@ -354,8 +356,76 @@ export default function RevitalizationRoadmap() {
 
     const handleTabChange = (tab: 'roadmap-library' | 'mentors' | 'mentees') => {
         setActiveTab(tab);
+        setRoadmapSelectionMode(false);
+        setSelectedRoadmapIds(new Set());
         router.setParams({ tab });
     };
+
+    const handleToggleRoadmapSelectionMode = useCallback(() => {
+        setRoadmapSelectionMode((prev) => {
+            if (prev) {
+                setSelectedRoadmapIds(new Set());
+            }
+            return !prev;
+        });
+    }, []);
+
+    const handleToggleRoadmapSelect = useCallback((roadmapId: string) => {
+        if (!roadmapId) return;
+        setSelectedRoadmapIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(roadmapId)) {
+                next.delete(roadmapId);
+            } else {
+                next.add(roadmapId);
+            }
+            return next;
+        });
+    }, []);
+
+    const handleAssignSelectedRoadmaps = useCallback(() => {
+        if (selectedRoadmapIds.size === 0) {
+            Alert.alert('No Selection', 'Please select at least one roadmap.');
+            return;
+        }
+        router.push({
+            pathname: '/(director)/(tabs)/roadmaps/assign-roadmaps',
+            params: { roadmapIds: JSON.stringify(Array.from(selectedRoadmapIds)) },
+        });
+    }, [router, selectedRoadmapIds]);
+
+    const handleDeleteSelectedRoadmaps = useCallback(() => {
+        if (selectedRoadmapIds.size === 0) {
+            Alert.alert('No Selection', 'Please select at least one roadmap.');
+            return;
+        }
+        const count = selectedRoadmapIds.size;
+        Alert.alert(
+            'Delete Roadmaps',
+            `Are you sure you want to delete ${count} roadmap${count > 1 ? 's' : ''}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await Promise.all(
+                                Array.from(selectedRoadmapIds).map((id) =>
+                                    deleteRoadmapMutation.mutateAsync(id),
+                                ),
+                            );
+                            setSelectedRoadmapIds(new Set());
+                            setRoadmapSelectionMode(false);
+                            Alert.alert('Success', 'Roadmap(s) deleted successfully.');
+                        } catch {
+                            Alert.alert('Error', 'Failed to delete roadmap(s). Please try again.');
+                        }
+                    },
+                },
+            ],
+        );
+    }, [deleteRoadmapMutation, selectedRoadmapIds]);
 
     // ✅ Updated handlePhasePress (for clicking roadmap cards)
     const handlePhasePress = useCallback(
@@ -492,6 +562,22 @@ export default function RevitalizationRoadmap() {
         return filtered; 
     }, [roadmapLibrary, search]);
 
+    const handleSelectAllRoadmaps = useCallback(() => {
+        const allIds = filteredRoadmaps
+            .map((r) => r._id)
+            .filter((id): id is string => Boolean(id));
+        setSelectedRoadmapIds((prev) => {
+            if (prev.size === allIds.length && allIds.length > 0) {
+                return new Set();
+            }
+            return new Set(allIds);
+        });
+    }, [filteredRoadmaps]);
+
+    const allRoadmapsSelected =
+        filteredRoadmaps.length > 0 &&
+        selectedRoadmapIds.size === filteredRoadmaps.length;
+
     useEffect(() => {
         if (activeTab !== 'roadmap-library') return;
         console.log(
@@ -607,6 +693,19 @@ export default function RevitalizationRoadmap() {
                     </Pressable>
                 </View>
             )}
+
+            {activeTab === 'roadmap-library' && roadmapSelectionMode ? (
+                <View style={styles.selectAllContainer}>
+                    <Text style={styles.selectionCountText}>
+                        {selectedRoadmapIds.size} selected
+                    </Text>
+                    <TouchableOpacity onPress={handleSelectAllRoadmaps}>
+                        <Text style={styles.selectAllText}>
+                            {allRoadmapsSelected ? 'Deselect All' : 'Select All'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            ) : null}
         </View>
     );
 
@@ -644,13 +743,17 @@ export default function RevitalizationRoadmap() {
     const renderItem = ({ item }: { item: any }) => {
         if (activeTab === 'roadmap-library') {
             const roadmap = item as RoadmapCardData;
+            const roadmapId = roadmap._id ?? '';
             return (
                 <View style={styles.cardWrapper}>
                     <RoadmapCard
                         data={roadmap}
-                        showMenu={true}
+                        showMenu={!roadmapSelectionMode}
                         onMenuPress={() => handleRoadmapMenuPress(roadmap)}
                         onPress={() => handlePhasePress(roadmap)}
+                        selectionMode={roadmapSelectionMode}
+                        isSelected={roadmapId ? selectedRoadmapIds.has(roadmapId) : false}
+                        onToggleSelection={() => handleToggleRoadmapSelect(roadmapId)}
                         paramsData={params?.tab}
                     />
                 </View>
@@ -731,6 +834,8 @@ export default function RevitalizationRoadmap() {
                 <RoadmapHeader
                     handleOpenCreateRoadmapModal={handleOpenCreateRoadmapModal}
                     activeTab={activeTab}
+                    selectionMode={roadmapSelectionMode}
+                    onToggleSelectionMode={handleToggleRoadmapSelectionMode}
                 />
                 <View style={styles.searchContainer}>
                     <SearchBar value={search} onChangeValue={setSearch} />
@@ -754,7 +859,12 @@ export default function RevitalizationRoadmap() {
                         ListFooterComponent={renderListFooter}
                         onEndReached={handleEndReached}
                         onEndReachedThreshold={0.5}
-                        contentContainerStyle={styles.listContent}
+                        contentContainerStyle={[
+                            styles.listContent,
+                            roadmapSelectionMode && activeTab === 'roadmap-library'
+                                ? { paddingBottom: bottom + 88 }
+                                : null,
+                        ]}
                         showsVerticalScrollIndicator={false}
                     />
                 )}
@@ -801,6 +911,35 @@ export default function RevitalizationRoadmap() {
                     onDismissed={handleCreateSheetDismissed}
                     mode="create"
                 />
+
+                {roadmapSelectionMode && activeTab === 'roadmap-library' ? (
+                    <View style={[styles.selectionActionBar, { paddingBottom: bottom + 12 }]}>
+                        <TouchableOpacity
+                            style={[
+                                styles.selectionActionButton,
+                                styles.assignButton,
+                                selectedRoadmapIds.size === 0 && styles.selectionActionButtonDisabled,
+                            ]}
+                            onPress={handleAssignSelectedRoadmaps}
+                            disabled={selectedRoadmapIds.size === 0}
+                        >
+                            <Ionicons name="person-add-outline" size={18} color="#0E5A62" />
+                            <Text style={styles.assignButtonText}>Assign Selected</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.selectionActionButton,
+                                styles.deleteButton,
+                                selectedRoadmapIds.size === 0 && styles.selectionActionButtonDisabled,
+                            ]}
+                            onPress={handleDeleteSelectedRoadmaps}
+                            disabled={selectedRoadmapIds.size === 0}
+                        >
+                            <Ionicons name="trash-outline" size={18} color="#FF6B6B" />
+                            <Text style={styles.deleteButtonText}>Delete Selected</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : null}
             </View>
         </GradientBackground>
     );
@@ -854,5 +993,66 @@ const styles = StyleSheet.create({
     cardWrapper: {
         paddingHorizontal: 16,
         marginBottom: 8,
+    },
+    selectAllContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        marginBottom: 12,
+    },
+    selectionCountText: {
+        color: 'rgba(255,255,255,0.65)',
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    selectAllText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    selectionActionBar: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        flexDirection: 'row',
+        gap: 12,
+        paddingHorizontal: 16,
+        paddingTop: 14,
+        backgroundColor: 'rgba(15,59,92,0.97)',
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.12)',
+    },
+    selectionActionButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    assignButton: {
+        backgroundColor: 'rgba(255,255,255,0.92)',
+        borderColor: 'rgba(255,255,255,0.18)',
+    },
+    deleteButton: {
+        backgroundColor: 'rgba(255, 107, 107, 0.12)',
+        borderColor: 'rgba(255, 107, 107, 0.35)',
+    },
+    selectionActionButtonDisabled: {
+        opacity: 0.4,
+    },
+    assignButtonText: {
+        color: '#0E5A62',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    deleteButtonText: {
+        color: '#FF6B6B',
+        fontSize: 14,
+        fontWeight: '700',
     },
 });

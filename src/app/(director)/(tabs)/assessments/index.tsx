@@ -489,6 +489,7 @@ export default function AssessmentsScreen() {
                     activeTab={mainTab}
                     onChange={(k) => setMainTab(k as MainTab)}
                     variant="frosted"
+               
                 />
             </View>
 
@@ -564,9 +565,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     searchContainer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-    mainTabs: { paddingHorizontal: 16, marginBottom: 8 },
-    content: { flex: 1 },
-    scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
+    mainTabs: { paddingHorizontal: 16, marginTop: 4, },
+    content: { flex: 1,marginTop:-4 },
+    scrollContent: { paddingHorizontal: 16, paddingTop: 0 },
     countText: { color: '#fff', fontSize: 14, fontWeight: '600', opacity: 0.8, marginBottom: 8 },
     hintText: {
         color: 'rgba(255,255,255,0.75)',

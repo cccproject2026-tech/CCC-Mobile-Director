@@ -5,6 +5,7 @@ import ProfileImage from "./ProfileImage";
 import ContactActions from "./ContactActions";
 import MenteeProgress from "./MenteeProgress";
 import MenteeActions from "./MenteeActions";
+import FieldMentorInvitationActions from "./FieldMentorInvitationActions";
 import { Mentee } from "@/types/user.types";
 import { styles } from "./styles";
 import { router } from "expo-router";
@@ -24,8 +25,11 @@ export interface MenteeCardProps {
 
     // actions
     onMenuPress?: () => void;
+    onMarkComplete?: () => void;
     onIssueCertificate?: () => void;
     onInviteAsFieldMentor?: () => void;
+    onInvitationSent?: () => void;
+    useLegacyFieldMentorActions?: boolean;
     disabled?: boolean;
     disabledMessage?: string;
     showMenu?: boolean;
@@ -43,10 +47,15 @@ export default function MenteeCard(props: MenteeCardProps) {
         showMenu,
         onMenuPress,
         paramsData,
+        useLegacyFieldMentorActions,
     } = props;
     const isSelectionMode = onToggleSelect !== undefined;
 
     const handleCardPress = () => {
+        if (useLegacyFieldMentorActions || paramsData === "Field-Mentor-Home") {
+            onPress?.();
+            return;
+        }
         if (onPress) {
             onPress();
             return;
@@ -180,18 +189,22 @@ export default function MenteeCard(props: MenteeCardProps) {
                 </View>
 
                 <MenteeProgress data={data} />
-                <MenteeActions {...props} />
+                {useLegacyFieldMentorActions ? (
+                    <FieldMentorInvitationActions {...props} />
+                ) : (
+                    <MenteeActions {...props} />
+                )}
             </TouchableOpacity>
 
             {showChevronOnly ? (
                 <Pressable
                     onPress={() => {
-                        if (onPress) {
-                            onPress();
+                        if (useLegacyFieldMentorActions || paramsData === "Field-Mentor-Home") {
+                            onPress?.();
                             return;
                         }
-                        if (paramsData === "Field-Mentor-Home") {
-                            onPress?.();
+                        if (onPress) {
+                            onPress();
                             return;
                         }
                         router.push({

@@ -20,6 +20,8 @@ import * as ImagePicker from 'expo-image-picker';
 import TopBar from '@/components/Header/TopBar';
 import RoadMapFormHeader from '@/components/Header/RoadMapFormHeader';
 import { GradientBackground } from '@/components/ui/design-system';
+import { API_CONFIG } from '@/config';
+import { ENDPOINTS } from '@/services/api/endpoints';
 
 import { useRoadmap, useUpdateRoadmap } from '@/hooks/roadmap/useRoadmaps';
 
@@ -38,8 +40,11 @@ export default function RoadmapEditScreen() {
     const [completionTime, setCompletionTime] = useState('');
     const [uploadedBannerImage, setUploadedBannerImage] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [divisions, setDivisions] = useState<string[]>([]);
+    const [newDivision, setNewDivision] = useState('');
 
     const updateRoadmapMutation = useUpdateRoadmap();
+    const isPhaseRoadmap = roadmapType === 'Phase';
 
     useEffect(() => {
         if (!roadmap) return;
@@ -53,7 +58,33 @@ export default function RoadmapEditScreen() {
         setRoadmapType(
             roadmap.type === 'phase' ? 'Phase' : 'Single',
         );
+        setDivisions(
+            roadmap.divisions?.length
+                ? roadmap.divisions
+                : roadmap.type === 'phase'
+                  ? ['All']
+                  : [],
+        );
+        setNewDivision('');
     }, [roadmap]);
+
+    const handleAddDivision = () => {
+        const trimmed = newDivision.trim();
+        if (!trimmed) return;
+
+        setDivisions((prev) => {
+            const exists = prev.some(
+                (division) => division.toLowerCase() === trimmed.toLowerCase(),
+            );
+            if (exists) return prev;
+            return [...prev, trimmed];
+        });
+        setNewDivision('');
+    };
+
+    const handleRemoveDivision = (index: number) => {
+        setDivisions((prev) => prev.filter((_, i) => i !== index));
+    };
 
     const handleSave = async () => {
         const missingFields = [];
@@ -82,7 +113,21 @@ export default function RoadmapEditScreen() {
                 description,
                 duration: completionTime,
                 imageUrl: uploadedBannerImage || '',
+                ...(isPhaseRoadmap && {
+                    divisions: divisions.length > 0 ? divisions : ['All'],
+                }),
             };
+
+            const updateEndpoint = ENDPOINTS.ROADMAPS.UPDATE(roadmapId);
+            const updateUrl = `${API_CONFIG.BASE_URL}${updateEndpoint}`;
+
+            console.log('[RoadmapEdit] ────────────────────────────────────────');
+            console.log('[RoadmapEdit] Update method: PATCH');
+            console.log('[RoadmapEdit] Update API URL:', updateUrl);
+            console.log('[RoadmapEdit] Update endpoint:', updateEndpoint);
+            console.log('[RoadmapEdit] Roadmap ID:', roadmapId);
+            console.log('[RoadmapEdit] Update payload:', payload);
+            console.log('[RoadmapEdit] ────────────────────────────────────────');
 
             await updateRoadmapMutation.mutateAsync({
                 roadmapId,
@@ -277,6 +322,52 @@ export default function RoadmapEditScreen() {
                             onChangeText={setCompletionTime}
                         />
                     </View>
+
+                    {isPhaseRoadmap && (
+                        <View style={styles.section}>
+                            <Text style={styles.label}>Division of Phase</Text>
+
+                            <View style={styles.divisionInputContainer}>
+                                <TextInput
+                                    key={`division-input-${divisions.length}`}
+                                    style={[styles.textInput, styles.divisionInput]}
+                                    placeholder="None"
+                                    placeholderTextColor="rgba(255,255,255,0.5)"
+                                    value={newDivision}
+                                    onChangeText={setNewDivision}
+                                    editable={!updateRoadmapMutation.isPending}
+                                />
+                                <TouchableOpacity
+                                    style={[
+                                        styles.addButton,
+                                        updateRoadmapMutation.isPending && styles.uploadButtonDisabled,
+                                    ]}
+                                    onPress={handleAddDivision}
+                                    disabled={updateRoadmapMutation.isPending}
+                                >
+                                    <Ionicons name="add" size={20} color="#fff" />
+                                    <Text style={styles.addButtonText}>Add</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {divisions.length > 0 && (
+                                <View style={styles.tagsContainer}>
+                                    {divisions.map((division, index) => (
+                                        <View key={`${division}-${index}`} style={styles.tag}>
+                                            <Text style={styles.tagText}>{division}</Text>
+                                            <TouchableOpacity
+                                                onPress={() => handleRemoveDivision(index)}
+                                                style={styles.tagRemove}
+                                                disabled={updateRoadmapMutation.isPending}
+                                            >
+                                                <Ionicons name="close" size={16} color="#fff" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+                        </View>
+                    )}
 
                     <View style={styles.section}>
                         <View style={styles.uploadBannerContainer}>
@@ -481,4 +572,59 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
     },
     editTasksButton: { color: 'white', fontWeight: '600' },
+    divisionInputContainer: {
+        flexDirection: 'row',
+        gap: 12,
+        alignItems: 'flex-end',
+    },
+    divisionInput: {
+        flex: 1,
+    },
+    addButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255,255,255,0.4)',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        gap: 4,
+        minWidth: 80,
+        justifyContent: 'center',
+    },
+    addButtonText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    tagsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 12,
+    },
+    tag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 20,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        gap: 8,
+        marginRight: 8,
+        marginBottom: 8,
+    },
+    tagText: {
+        fontSize: 15,
+        color: '#fff',
+        fontWeight: '600',
+    },
+    tagRemove: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 });

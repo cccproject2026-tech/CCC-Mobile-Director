@@ -97,14 +97,13 @@ export default function ScheduleMeetingConfirmScreen() {
   );
 
   const canSubmit = Boolean(
-    draft.person?.id &&
-      draft.meetingTitle.trim() &&
-      draft.selectedDayYmd &&
-      draft.selectedSlot,
+    draft.person?.id && draft.selectedDayYmd && draft.selectedSlot,
   );
 
-  const isMentor = String(user?.role || "").toLowerCase() === "mentor";
-  const availabilityOwnerId = isMentor ? user?.id : draft.person?.id;
+  const roleLower = String(user?.role || "").toLowerCase();
+  const isMentor = roleLower === "mentor";
+  const isDirector = roleLower === "director";
+  const availabilityOwnerId = isMentor || isDirector ? user?.id : draft.person?.id;
 
   const { appointments: mentorAppointments } = useAppointments(
     availabilityOwnerId ? { mentorId: availabilityOwnerId } : {},
@@ -136,8 +135,6 @@ export default function ScheduleMeetingConfirmScreen() {
     existingAppointment,
     selectedDayYmd: draft.selectedDayYmd,
     selectedSlot: draft.selectedSlot,
-    meetingTitle: draft.meetingTitle,
-    meetingDescription: draft.meetingDescription,
     meetingOptionLabel: draft.meetingOptionLabel,
     settings: weeklyAvailability ?? undefined,
     mentorAppointments,
@@ -161,19 +158,6 @@ export default function ScheduleMeetingConfirmScreen() {
           <Text style={styles.subtitle}>Review details before scheduling.</Text>
 
           <View style={styles.card}>
-            <Row label="Title" value={draft.meetingTitle.trim() || "—"} icon="document-text-outline" />
-            <Divider />
-            {draft.meetingDescription.trim() ? (
-              <>
-                <Row
-                  label="Description"
-                  value={draft.meetingDescription.trim()}
-                  icon="reader-outline"
-                  multiline
-                />
-                <Divider />
-              </>
-            ) : null}
             <Row label="Person" value={draft.person?.name} icon="person-outline" />
             <Divider />
             <Row label="Date" value={draft.selectedDayYmd} icon="calendar-outline" />

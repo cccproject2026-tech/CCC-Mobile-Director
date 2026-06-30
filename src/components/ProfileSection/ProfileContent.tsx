@@ -41,6 +41,7 @@ export default function ProfileContent({ userId, isOwnProfile, bottomInsets, pro
     const goBack = useSafeBack({ returnTo });
     useReturnToAwareBack(returnTo);
 
+    console.log("profileData", profileData);
     const updateProfile = useUpdateProfile(
         profileData?.user?.email || "",
         profileData?.user?.id || ""

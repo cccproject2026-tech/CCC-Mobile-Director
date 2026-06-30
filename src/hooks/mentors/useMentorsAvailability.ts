@@ -7,8 +7,8 @@ import {
     WeeklyAvailability,
 } from "@/types/appointment.types";
 import { formatAvailabilitySlotLabel } from "@/utils/appointments/timezone";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React from "react";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useMemo } from "react";
 
 /** YYYY-MM-DD from API values (plain date or ISO datetime). */
 export function normalizeAvailabilityDateString(
@@ -126,6 +126,68 @@ export function mergeMonthlyAvailabilityWithWeeklySlotDates(
 
     for (const key of keys) {
         if (!calendarDateInMonth(key, month, year)) continue;
+        const chosen = pickRicherAvailabilityDay(
+            monthlyByDate.get(key),
+            weeklyByDate.get(key),
+        );
+        if (chosen && (chosen.slots?.length ?? 0) > 0) {
+            out.push(chosen);
+        }
+    }
+
+    return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Merge all monthly days with weekly slot dates (no single-month filter).
+ * Used by schedule-meeting calendar after prefetching multiple months.
+ */
+export function mergeAllSchedulingAvailability(
+    monthly: MonthlyAvailabilityDay[] | null | undefined,
+    weeklySlots: any[] | null | undefined,
+): MonthlyAvailabilityDay[] {
+    const monthlyByDate = new Map<string, MonthlyAvailabilityDay>();
+    for (const day of monthly ?? []) {
+        const key = normalizeAvailabilityDateString(day.date);
+        if (!key) continue;
+        const slots = Array.isArray(day.slots) ? day.slots : [];
+        const normalized: MonthlyAvailabilityDay = {
+            ...day,
+            date: key,
+            slots,
+            day: dayOfWeekFromYmd(key, day.day),
+        };
+        const prev = monthlyByDate.get(key);
+        if (!prev || slots.length > (prev.slots?.length ?? 0)) {
+            monthlyByDate.set(key, normalized);
+        }
+    }
+
+    const weeklyByDate = new Map<string, MonthlyAvailabilityDay>();
+    for (const ws of weeklySlots ?? []) {
+        const key = normalizeAvailabilityDateString(ws?.date);
+        if (!key) continue;
+        const slots = slotsFromWeeklyOrMonthlyDay(ws);
+        if (slots.length === 0) continue;
+        const dow = dayOfWeekFromYmd(key, ws?.day);
+        const normalized: MonthlyAvailabilityDay = {
+            date: key,
+            day: dow,
+            slots,
+        };
+        const prev = weeklyByDate.get(key);
+        if (!prev || slots.length > (prev.slots?.length ?? 0)) {
+            weeklyByDate.set(key, normalized);
+        }
+    }
+
+    const keys = new Set<string>([
+        ...monthlyByDate.keys(),
+        ...weeklyByDate.keys(),
+    ]);
+    const out: MonthlyAvailabilityDay[] = [];
+
+    for (const key of keys) {
         const chosen = pickRicherAvailabilityDay(
             monthlyByDate.get(key),
             weeklyByDate.get(key),
@@ -379,6 +441,107 @@ export const useMonthlyAvailability = (
     isPending: query.isPending,
     isError: query.isError,
     error: query.error,
+  };
+};
+
+/** Months prefetched for the schedule-meeting calendar (includes current month). */
+export const SCHEDULING_CALENDAR_MONTH_COUNT = 12;
+
+export function buildSchedulingMonthRange(
+  anchorMonth = new Date().getMonth() + 1,
+  anchorYear = new Date().getFullYear(),
+  count = SCHEDULING_CALENDAR_MONTH_COUNT,
+): { month: number; year: number }[] {
+  const out: { month: number; year: number }[] = [];
+  let m = anchorMonth;
+  let y = anchorYear;
+  for (let i = 0; i < count; i += 1) {
+    out.push({ month: m, year: y });
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return out;
+}
+
+interface UseSchedulingMonthlyAvailabilityOptions {
+  monthCount?: number;
+  role?: string;
+  enabled?: boolean;
+  staleTimeMs?: number;
+}
+
+/**
+ * Prefetch multiple months of availability in parallel for schedule-meeting.
+ * Month navigation uses cached data — no per-month reload spinner.
+ */
+export const useSchedulingMonthlyAvailability = (
+  mentorId: string | null,
+  options?: UseSchedulingMonthlyAvailabilityOptions,
+) => {
+  const monthCount = options?.monthCount ?? SCHEDULING_CALENDAR_MONTH_COUNT;
+  const monthRange = useMemo(
+    () => buildSchedulingMonthRange(undefined, undefined, monthCount),
+    [monthCount],
+  );
+
+  const queries = useQueries({
+    queries: monthRange.map(({ month, year }) => ({
+      queryKey: ["monthly-availability", mentorId, month, year] as const,
+      queryFn: async () => {
+        if (!mentorId) {
+          throw new Error("mentorId is required for monthly availability");
+        }
+        return appointmentService.getMonthlyAvailability(mentorId, month, year);
+      },
+      enabled: Boolean(mentorId) && options?.enabled !== false,
+      staleTime: options?.staleTimeMs ?? 5 * 60 * 1000,
+      retry: 2,
+    })),
+  });
+
+  /** Stable fingerprint — `queries` array identity changes every render from useQueries. */
+  const monthlyDataFingerprint = queries
+    .map((q) => `${q.dataUpdatedAt ?? 0}:${Array.isArray(q.data) ? q.data.length : 0}`)
+    .join("|");
+
+  const availability = useMemo(() => {
+    const byDate = new Map<string, MonthlyAvailabilityDay>();
+    for (const q of queries) {
+      if (!Array.isArray(q.data)) continue;
+      for (const day of q.data) {
+        const key = normalizeAvailabilityDateString(day.date);
+        if (!key) continue;
+        const slots = Array.isArray(day.slots) ? day.slots : [];
+        const prev = byDate.get(key);
+        if (!prev || slots.length > (prev.slots?.length ?? 0)) {
+          byDate.set(key, {
+            ...day,
+            date: key,
+            slots,
+            day: dayOfWeekFromYmd(key, day.day),
+          });
+        }
+      }
+    }
+    return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fingerprint tracks query data versions
+  }, [monthlyDataFingerprint]);
+
+  const isLoading = queries.some((q) => q.isLoading);
+  const isFetching = queries.some((q) => q.isFetching);
+  const isError = queries.some((q) => q.isError);
+  const hasData = availability.length > 0;
+
+  return {
+    availability,
+    isLoading,
+    isFetching,
+    isError,
+    /** True only on first visit before any month data is ready. */
+    isInitialLoading: isLoading && !hasData,
   };
 };
 
